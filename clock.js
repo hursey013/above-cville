@@ -59,12 +59,20 @@ setInterval(() => {
   fetchStates()
     .then(({ data }) => (data.states ? fetchMetadata(data.states) : []))
     .then(states =>
-      states.map(({ data }) =>
+      states.map(({ data }) => {
         ref
           .child(data.icao24)
-          .set({ timestamp: data.timestamp })
-          .then(res => console.log(JSON.stringify(data, null, 2)))
-      )
+          .once("value")
+          .then(snapshot =>
+            snapshot.val().timestamp &&
+            snapshot.val().timestamp.isAfter(moment().subtract(1, "hours"))
+              ? ref
+                  .child(data.icao24)
+                  .set({ timestamp: data.timestamp })
+                  .then(res => console.log(JSON.stringify(data, null, 2)))
+              : console.log("Skipping...")
+          );
+      })
     )
     .catch(error => console.log(error.toJSON()));
 }, 5000);
