@@ -57,10 +57,10 @@ const fetchStates = () =>
       password: process.env.PASSWORD
     },
     params: {
-      lamin: 38.009616,
       lomin: -78.523665,
-      lamax: 38.070591,
-      lomax: -78.446311
+      lamin: 38.009616,
+      lomax: -78.446311,
+      lamax: 38.070591
     }
   });
 
@@ -68,22 +68,26 @@ setInterval(() => {
   fetchStates()
     .then(({ data }) => (data.states ? fetchMetadata(data.states) : []))
     .then(states =>
-      states.map(({ data }) => {
+      states.map(({ data }) =>
         ref
           .child(data.icao24)
           .once("value")
-          .then(snapshot =>
-            snapshot.val().timestamp &&
-            snapshot.val().timestamp.isAfter(moment().subtract(1, "hours"))
-              ? Promise.all([
-                  ref.child(data.icao24).set({ timestamp: data.timestamp }),
-                  T.post("statuses/update", {
-                    status: `Look up! A ${data.manufacturerName} ${data.model} is currently flying overhead.`
-                  })
-                ])
-              : console.log("Skipping...")
-          );
-      })
+          .then(
+            snapshot =>
+              (!snapshot.exists() ||
+                (snapshot.val() &&
+                  moment(snapshot.val().timestamp).isAfter(
+                    moment().subtract(1, "hours")
+                  ))) &&
+              Promise.all([
+                ref.child(data.icao24).set({ timestamp: data.timestamp }),
+                T.post("statuses/update", {
+                  status: `Look up! A ${data.manufacturerName} ${data.model} is currently flying overhead.`
+                })
+              ])
+          )
+          .catch(error => console.error(error))
+      )
     )
-    .catch(error => console.log(error.toJSON()));
+    .catch(error => console.error(error.toJSON()));
 }, 5000);
