@@ -1,0 +1,24 @@
+{
+  "name": "above-cville",
+  "version": "1.0.0",
+  "description": "",
+  "main": "clock.js",
+  "scripts": {
+    "start": "node clock.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hursey013/above-cville.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hursey013/above-cville/issues"
+  },
+  "homepage": "https://github.com/hursey013/above-cville#readme",
+  "dependencies": {
+    "axios": "^0.20.0",
+    "firebase-admin": "^9.2.0"
+  }
+}
