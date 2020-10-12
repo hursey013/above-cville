@@ -1,5 +1,7 @@
 "use strict";
 
+const moment = require("moment");
+
 // Init Firebase
 const admin = require("firebase-admin");
 admin.initializeApp({
@@ -18,6 +20,10 @@ admin.initializeApp({
   }),
   databaseURL: process.env.DB_URL
 });
+
+// Init Realtime Database
+const db = admin.database();
+const ref = db.ref("states");
 
 // Init Axios
 const axios = require("axios").default;
@@ -52,8 +58,13 @@ const fetchStates = () =>
 setInterval(() => {
   fetchStates()
     .then(({ data }) => (data.states ? fetchMetadata(data.states) : []))
-    .then(data =>
-      data.map(state => console.log(JSON.stringify(state.data, null, 2)))
+    .then(states =>
+      states.map(({ data }) =>
+        ref
+          .child(data.icao24)
+          .set({ timestamp: data.timestamp })
+          .then(res => console.log(JSON.stringify(data, null, 2)))
+      )
     )
     .catch(error => console.log(error.toJSON()));
 }, 5000);
