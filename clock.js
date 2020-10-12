@@ -75,10 +75,12 @@ setInterval(() => {
           .then(snapshot =>
             snapshot.val().timestamp &&
             snapshot.val().timestamp.isAfter(moment().subtract(1, "hours"))
-              ? ref
-                  .child(data.icao24)
-                  .set({ timestamp: data.timestamp })
-                  .then(res => console.log(JSON.stringify(data, null, 2)))
+              ? Promise.all([
+                  ref.child(data.icao24).set({ timestamp: data.timestamp }),
+                  T.post("statuses/update", {
+                    status: `Look up! A ${data.manufacturerName} ${data.model} is currently flying overhead.`
+                  })
+                ])
               : console.log("Skipping...")
           );
       })
