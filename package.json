@@ -20,6 +20,7 @@
   "dependencies": {
     "axios": "^0.20.0",
     "firebase-admin": "^9.2.0",
-    "moment": "^2.29.1"
+    "moment": "^2.29.1",
+    "twit": "^2.2.11"
   }
 }
