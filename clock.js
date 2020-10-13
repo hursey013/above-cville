@@ -82,7 +82,7 @@ setInterval(async () => {
         await Promise.all([
           ref.child(icao24).set({ timestamp: time }),
           T.post("statuses/update", {
-            status: `Look up! A ${manufacturerName} ${model} is currently flying overhead.`
+            status: `Look up! A ${manufacturerName} ${model} is currently flying ${geo_altitude} overhead at ${velocity}.`
           })
         ]);
       }
