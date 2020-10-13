@@ -49,14 +49,10 @@ const fetchStates = () =>
       password: process.env.PASSWORD
     },
     params: {
-      // lomin: -78.523665,
-      // lamin: 38.009616,
-      // lomax: -78.446311,
-      // lamax: 38.070591
-      lomin: -78.839354,
-      lamin: 37.728546,
-      lomax: -78.207886,
-      lamax: 38.277819
+      lomin: -78.523665,
+      lamin: 38.009616,
+      lomax: -78.446311,
+      lamax: 38.070591
     }
   });
 
@@ -72,19 +68,23 @@ setInterval(async () => {
 
   await Promise.all(
     (states || []).map(async ({ 0: icao24, 9: velocity, 13: geo_altitude }) => {
-      const snap = await ref.child(icao24).once("value");
+      try {
+        const snap = await ref.child(icao24).once("value");
 
-      if (isUpdated(snap)) {
-        const {
-          data: { manufacturerName, model }
-        } = await fetchMetadata(icao24);
+        if (isUpdated(snap)) {
+          const {
+            data: { manufacturerName, model }
+          } = await fetchMetadata(icao24);
 
-        await Promise.all([
-          ref.child(icao24).set({ timestamp: time }),
-          T.post("statuses/update", {
-            status: `Look up! A ${manufacturerName} ${model} is currently flying ${geo_altitude} overhead at ${velocity}.`
-          })
-        ]);
+          await Promise.all([
+            ref.child(icao24).set({ timestamp: time }),
+            T.post("statuses/update", {
+              status: `Look up! A ${manufacturerName} ${model} is currently flying ${geo_altitude} overhead at ${velocity}.`
+            })
+          ]);
+        }
+      } catch (error) {
+        console.error(error.toJSON());
       }
     })
   );
