@@ -1,5 +1,6 @@
 "use strict";
 
+const convert = require("convert-units");
 const moment = require("moment");
 
 // Init Firebase
@@ -61,9 +62,6 @@ const isNewState = snap =>
   (snap.val() &&
     moment(snap.val().timestamp).isAfter(moment().subtract(1, "hours")));
 
-const msToMph = ms => Math.round(ms * 2.237);
-const mToFt = m => Math.round(m * 3.281);
-
 setInterval(async () => {
   try {
     const { states, time } = await fetchStates();
@@ -87,8 +85,16 @@ setInterval(async () => {
                     : `An aircraft `
                 }${operator &&
                   `operated by ${operator} `}is currently flying ${baro_altitude &&
-                  `${mToFt(baro_altitude)} ft `}overhead${velocity &&
-                  ` at ${msToMph(velocity)} mph`}.`
+                  `${Math.round(
+                    convert(baro_altitude)
+                      .from("m")
+                      .to("ft")
+                  )} ft `}overhead${velocity &&
+                  ` at ${Math.round(
+                    convert(velocity)
+                      .from("m/s")
+                      .to("m/h")
+                  )} mph`}.`
               })
             ]);
           }
