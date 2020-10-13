@@ -56,13 +56,12 @@ const fetchStates = () =>
     }
   });
 
-const msToMph = ms => Math.round(ms * 2.237);
-
 const isNewState = snap =>
   !snap.exists() ||
   (snap.val() &&
     moment(snap.val().timestamp).isAfter(moment().subtract(1, "hours")));
 
+const msToMph = ms => Math.round(ms * 2.237);
 const mToFt = m => Math.round(m * 3.281);
 
 setInterval(async () => {
@@ -77,15 +76,20 @@ setInterval(async () => {
 
         if (isNewState(snap)) {
           const {
-            data: { manufacturerName, model }
+            data: { manufacturerName, model, operator }
           } = await fetchMetadata(icao24);
 
           await Promise.all([
             ref.child(icao24).set({ timestamp: time }),
             T.post("statuses/update", {
-              status: `Look up! A ${manufacturerName} ${model} is currently flying ${mToFt(
-                baro_altitude
-              )} ft overhead at ${msToMph(velocity)} mph.`
+              status: `Look up! ${
+                manufacturerName && model
+                  ? `A ${manufacturerName} ${model} `
+                  : `An aircraft `
+              }${operator &&
+                `operated by ${operator} `}is currently flying ${baro_altitude &&
+                `${mToFt(baro_altitude)} ft `}overhead${velocity &&
+                ` at ${msToMph(velocity)} mph`}.`
             })
           ]);
         }
