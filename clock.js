@@ -40,15 +40,7 @@ const instance = axios.create({
   baseURL: "https://opensky-network.org/api/"
 });
 
-const fetchMetadata = async states => {
-  const results = [];
-
-  for (const state of states) {
-    results.push(instance.get(`/metadata/aircraft/icao/${state[0]}`));
-  }
-
-  return await Promise.all(results);
-};
+const fetchMetadata = id => instance.get(`/metadata/aircraft/icao/${id}`);
 
 const fetchStates = () =>
   instance.get("/states/all", {
@@ -57,37 +49,43 @@ const fetchStates = () =>
       password: process.env.PASSWORD
     },
     params: {
-      lomin: -78.523665,
-      lamin: 38.009616,
-      lomax: -78.446311,
-      lamax: 38.070591
+      // lomin: -78.523665,
+      // lamin: 38.009616,
+      // lomax: -78.446311,
+      // lamax: 38.070591
+      lomin: -78.839354,
+      lamin: 37.728546,
+      lomax: -78.207886,
+      lamax: 38.277819
     }
   });
 
-setInterval(() => {
-  fetchStates()
-    .then(({ data }) => (data.states ? fetchMetadata(data.states) : []))
-    .then(states =>
-      states.map(({ data }) =>
-        ref
-          .child(data.icao24)
-          .once("value")
-          .then(
-            snapshot =>
-              (!snapshot.exists() ||
-                (snapshot.val() &&
-                  moment(snapshot.val().timestamp).isAfter(
-                    moment().subtract(1, "hours")
-                  ))) &&
-              Promise.all([
-                ref.child(data.icao24).set({ timestamp: data.timestamp }),
-                T.post("statuses/update", {
-                  status: `Look up! A ${data.manufacturerName} ${data.model} is currently flying overhead.`
-                })
-              ])
-          )
-          .catch(error => console.error(error))
-      )
-    )
-    .catch(error => console.error(error.toJSON()));
+const isUpdated = snap =>
+  !snap.exists() ||
+  (snap.val() &&
+    moment(snap.val().timestamp).isAfter(moment().subtract(1, "hours")));
+
+setInterval(async () => {
+  const {
+    data: { states, time }
+  } = await fetchStates();
+
+  await Promise.all(
+    (states || []).map(async ({ 0: icao24, 9: velocity, 13: geo_altitude }) => {
+      const snap = await ref.child(icao24).once("value");
+
+      if (isUpdated(snap)) {
+        const {
+          data: { manufacturerName, model }
+        } = await fetchMetadata(icao24);
+
+        await Promise.all([
+          ref.child(icao24).set({ timestamp: time }),
+          T.post("statuses/update", {
+            status: `Look up! A ${manufacturerName} ${model} is currently flying overhead.`
+          })
+        ]);
+      }
+    })
+  );
 }, 5000);
