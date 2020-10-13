@@ -65,37 +65,37 @@ const msToMph = ms => Math.round(ms * 2.237);
 const mToFt = m => Math.round(m * 3.281);
 
 setInterval(async () => {
-  const {
-    data: { states, time }
-  } = await fetchStates();
+  try {
+    const { states, time } = await fetchStates();
 
-  await Promise.all(
-    (states || []).map(async ({ 0: icao24, 7: baro_altitude, 9: velocity }) => {
-      try {
-        const snap = await ref.child(icao24).once("value");
+    await Promise.all(
+      (states || []).map(
+        async ({ 0: icao24, 7: baro_altitude, 9: velocity }) => {
+          const snap = await ref.child(icao24).once("value");
 
-        if (isNewState(snap)) {
-          const {
-            data: { manufacturerName, model, operator }
-          } = await fetchMetadata(icao24);
+          if (isNewState(snap)) {
+            const { manufacturerName, model, operator } = await fetchMetadata(
+              icao24
+            );
 
-          await Promise.all([
-            ref.child(icao24).set({ timestamp: time }),
-            T.post("statuses/update", {
-              status: `Look up! ${
-                manufacturerName && model
-                  ? `A ${manufacturerName} ${model} `
-                  : `An aircraft `
-              }${operator &&
-                `operated by ${operator} `}is currently flying ${baro_altitude &&
-                `${mToFt(baro_altitude)} ft `}overhead${velocity &&
-                ` at ${msToMph(velocity)} mph`}.`
-            })
-          ]);
+            await Promise.all([
+              ref.child(icao24).set({ timestamp: time }),
+              T.post("statuses/update", {
+                status: `Look up! ${
+                  manufacturerName && model
+                    ? `A ${manufacturerName} ${model} `
+                    : `An aircraft `
+                }${operator &&
+                  `operated by ${operator} `}is currently flying ${baro_altitude &&
+                  `${mToFt(baro_altitude)} ft `}overhead${velocity &&
+                  ` at ${msToMph(velocity)} mph`}.`
+              })
+            ]);
+          }
         }
-      } catch (error) {
-        console.error(error.toJSON());
-      }
-    })
-  );
+      )
+    );
+  } catch (error) {
+    console.error(error.message);
+  }
 }, 5000);
