@@ -56,10 +56,14 @@ const fetchStates = () =>
     }
   });
 
-const isUpdated = snap =>
+const knToMph = kn => Math.round(kn * 1.151);
+
+const isNewState = snap =>
   !snap.exists() ||
   (snap.val() &&
     moment(snap.val().timestamp).isAfter(moment().subtract(1, "hours")));
+
+const mToFt = m => Math.round(m * 3.281);
 
 setInterval(async () => {
   const {
@@ -67,11 +71,11 @@ setInterval(async () => {
   } = await fetchStates();
 
   await Promise.all(
-    (states || []).map(async ({ 0: icao24, 9: velocity, 13: geo_altitude }) => {
+    (states || []).map(async ({ 0: icao24, 7: baro_altitude, 9: velocity }) => {
       try {
         const snap = await ref.child(icao24).once("value");
 
-        if (isUpdated(snap)) {
+        if (isNewState(snap)) {
           const {
             data: { manufacturerName, model }
           } = await fetchMetadata(icao24);
@@ -79,7 +83,9 @@ setInterval(async () => {
           await Promise.all([
             ref.child(icao24).set({ timestamp: time }),
             T.post("statuses/update", {
-              status: `Look up! A ${manufacturerName} ${model} is currently flying ${geo_altitude} overhead at ${velocity}.`
+              status: `Look up! A ${manufacturerName} ${model} is currently flying ${mToFt(
+                baro_altitude
+              )} ft overhead at ${velocity} kn (${knToMph(velocity)} mph).`
             })
           ]);
         }
