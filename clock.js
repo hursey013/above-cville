@@ -56,7 +56,7 @@ const fetchStates = () =>
     }
   });
 
-const knToMph = kn => Math.round(kn * 1.151);
+const msToMph = ms => Math.round(ms * 2.237);
 
 const isNewState = snap =>
   !snap.exists() ||
@@ -85,7 +85,7 @@ setInterval(async () => {
             T.post("statuses/update", {
               status: `Look up! A ${manufacturerName} ${model} is currently flying ${mToFt(
                 baro_altitude
-              )} ft overhead at ${velocity} kn (${knToMph(velocity)} mph).`
+              )} ft overhead at ${msToMph(velocity)} mph.`
             })
           ]);
         }
