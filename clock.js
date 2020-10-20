@@ -1,5 +1,7 @@
 "use strict";
 
+require("dotenv").config();
+
 const convert = require("convert-units");
 const moment = require("moment");
 
@@ -38,68 +40,69 @@ const T = new Twit({
 // Init Axios
 const axios = require("axios").default;
 const instance = axios.create({
-  baseURL: "https://opensky-network.org/api/"
+  baseURL: "https://adsbexchange.com/api/"
 });
 
-const fetchMetadata = id => instance.get(`/metadata/aircraft/icao/${id}`);
+const fetchImage = (icao, reg) => {
+  axios
+    .get(
+      `https://www.airport-data.com/api/ac_thumb.json?m=${icao}&r=${reg}&n=1`
+    )
+    .then(({ data }) =>
+      axios.get(data.data[0].image.replace("thumbnails/", ""))
+    );
+};
 
 const fetchStates = () =>
-  instance.get("/states/all", {
-    auth: {
-      username: process.env.USERNAME,
-      password: process.env.PASSWORD
-    },
-    params: {
-      lomin: -78.523665,
-      lamin: 38.009616,
-      lomax: -78.446311,
-      lamax: 38.070591
-    }
+  instance.get("/aircraft/json/lat/38.03/lon/-78.478889/dist/2.5/", {
+    headers: { "api-auth": process.env.ADSBX_KEY, "Accept-Encoding": "gzip" }
   });
+
+const numberWithCommas = n =>
+  n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 const isNewState = snap =>
   !snap.exists() ||
-  (snap.val() &&
-    moment(snap.val().timestamp).isAfter(moment().subtract(1, "hours")));
+  moment(
+    snap.val() &&
+      snap.val().timestamps[
+        Object.keys(snap.val().timestamps)[
+          Object.keys(snap.val().timestamps).length - 1
+        ]
+      ]
+  ).isBefore(moment().subtract(1, "hours"));
 
 setInterval(async () => {
   try {
-    const { states, time } = await fetchStates();
+    const {
+      data: { ac: states, ctime: time }
+    } = await fetchStates();
 
     await Promise.all(
-      (states || []).map(
-        async ({ 0: icao24, 7: baro_altitude, 9: velocity }) => {
-          const snap = await ref.child(icao24).once("value");
+      (states || []).map(async ({ alt, call, icao, spd, type }) => {
+        const snap = await ref.child(icao).once("value");
 
-          if (isNewState(snap)) {
-            const { manufacturerName, model, operator } = await fetchMetadata(
-              icao24
-            );
-
-            await Promise.all([
-              ref.child(icao24).set({ timestamp: time }),
-              T.post("statuses/update", {
-                status: `Look up! ${
-                  manufacturerName && model
-                    ? `A ${manufacturerName} ${model} `
-                    : `An aircraft `
-                }${operator &&
-                  `operated by ${operator} `}is currently flying ${baro_altitude &&
-                  `${Math.round(
-                    convert(baro_altitude)
-                      .from("m")
-                      .to("ft")
-                  )} ft `}overhead${velocity &&
-                  ` at ${Math.round(
-                    convert(velocity)
-                      .from("m/s")
-                      .to("m/h")
-                  )} mph`}.`
-              })
-            ]);
-          }
+        if (isNewState(snap)) {
+          await Promise.all([
+            ref.child(`${icao}/timestamps`).push(time),
+            T.post("statuses/update", {
+              status: `Look up! ${type ? `A ${type} ` : `An aircraft `}${
+                call ? `(${call}) ` : " "
+              }is currently flying ${
+                alt ? `${numberWithCommas(alt)}ft ` : " "
+              }overhead${
+                spd
+                  ? ` at ${Math.round(
+                      convert(spd)
+                        .from("knot")
+                        .to("m/h")
+                    )}mph`
+                  : ""
+              } https://globe.adsbexchange.com/?icao=${icao}`
+            })
+          ]);
         }
-      )
+      })
     );
   } catch (error) {
     console.error(error.message);
