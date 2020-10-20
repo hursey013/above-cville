@@ -2,6 +2,7 @@
 
 require("dotenv").config();
 
+const Buffer = require("safe-buffer").Buffer;
 const convert = require("convert-units");
 const moment = require("moment");
 
@@ -9,17 +10,9 @@ const moment = require("moment");
 const admin = require("firebase-admin");
 admin.initializeApp({
   credential: admin.credential.cert({
-    type: process.env.FIREBASE_TYPE,
     project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
     private_key: process.env.FIREBASE_PRIVATE_KEY,
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url:
-      process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
+    client_email: process.env.FIREBASE_CLIENT_EMAIL
   }),
   databaseURL: process.env.DB_URL
 });
@@ -39,27 +32,58 @@ const T = new Twit({
 
 // Init Axios
 const axios = require("axios").default;
-const instance = axios.create({
-  baseURL: "https://adsbexchange.com/api/"
-});
 
-const fetchImage = (icao, reg) => {
+const addTimestamp = (icao, time) => ref.child(`${icao}/timestamps`).push(time);
+
+const createStatus = (snap, alt, call, icao, reg, spd, type) =>
+  `${type ? `A ${type} ` : `An aircraft `}(${call || reg || icao}) ${
+    snap.val()
+      ? `, previously seen ${(
+          Object.keys(snap.val().timestamps).length + 1
+        ).toString()} times, `
+      : ""
+  }is currently flying ${alt ? `${numberWithCommas(alt)} ft ` : " "}overhead${
+    spd
+      ? ` at ${Math.round(
+          convert(spd)
+            .from("knot")
+            .to("m/h")
+        )} mph`
+      : ""
+  } https://globe.adsbexchange.com/?icao=${icao}`;
+
+const fetchImage = (icao, reg) =>
   axios
     .get(
-      `https://www.airport-data.com/api/ac_thumb.json?m=${icao}&r=${reg}&n=1`
+      `https://www.airport-data.com/api/ac_thumb.json?m=${icao}&r=${reg}&n=100`
     )
-    .then(({ data }) =>
-      axios.get(data.data[0].image.replace("thumbnails/", ""))
+    .then(
+      res =>
+        res.data.data &&
+        axios
+          .get(
+            res.data.data[
+              Math.floor(Math.random() * res.data.data.length)
+            ].image.replace("/thumbnails", ""),
+            {
+              responseType: "arraybuffer"
+            }
+          )
+          .then(res => Buffer.from(res.data, "binary").toString("base64"))
     );
-};
 
 const fetchStates = () =>
-  instance.get("/aircraft/json/lat/38.03/lon/-78.478889/dist/2.5/", {
-    headers: { "api-auth": process.env.ADSBX_KEY, "Accept-Encoding": "gzip" }
-  });
-
-const numberWithCommas = n =>
-  n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  axios
+    .get(
+      "https://adsbexchange.com/api/aircraft/json/lat/38.03/lon/-78.478889/dist/2.5/",
+      {
+        headers: {
+          "api-auth": process.env.ADSBX_KEY,
+          "Accept-Encoding": "gzip"
+        }
+      }
+    )
+    .then(res => res.data);
 
 const isNewState = snap =>
   !snap.exists() ||
@@ -72,34 +96,42 @@ const isNewState = snap =>
       ]
   ).isBefore(moment().subtract(1, "hours"));
 
+const numberWithCommas = n =>
+  n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+const postTweet = async (call, icao, reg, status) => {
+  const image = await fetchImage(icao, reg);
+
+  return image
+    ? T.post("media/upload", { media_data: image }).then(
+        ({ data: { media_id_string } }) =>
+          T.post("media/metadata/create", {
+            media_id: media_id_string,
+            alt_text: { text: call || reg || icao }
+          }).then(res =>
+            T.post("statuses/update", {
+              status,
+              media_ids: [media_id_string]
+            })
+          )
+      )
+    : T.post("statuses/update", { status });
+};
+
 setInterval(async () => {
   try {
-    const {
-      data: { ac: states, ctime: time }
-    } = await fetchStates();
+    const { ac, ctime } = await fetchStates();
 
     await Promise.all(
-      (states || []).map(async ({ alt, call, icao, spd, type }) => {
+      (ac || []).map(async ({ alt, call, icao, reg, spd, type }) => {
         const snap = await ref.child(icao).once("value");
 
         if (isNewState(snap)) {
+          const status = createStatus(snap, alt, call, icao, reg, spd, type);
+
           await Promise.all([
-            ref.child(`${icao}/timestamps`).push(time),
-            T.post("statuses/update", {
-              status: `Look up! ${type ? `A ${type} ` : `An aircraft `}${
-                call ? `(${call}) ` : " "
-              }is currently flying ${
-                alt ? `${numberWithCommas(alt)}ft ` : " "
-              }overhead${
-                spd
-                  ? ` at ${Math.round(
-                      convert(spd)
-                        .from("knot")
-                        .to("m/h")
-                    )}mph`
-                  : ""
-              } https://globe.adsbexchange.com/?icao=${icao}`
-            })
+            addTimestamp(icao, ctime),
+            postTweet(call, icao, reg, status)
           ]);
         }
       })

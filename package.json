@@ -23,6 +23,7 @@
     "dotenv": "^8.2.0",
     "firebase-admin": "^9.2.0",
     "moment": "^2.29.1",
+    "safe-buffer": "^5.2.1",
     "twit": "^2.2.11"
   }
 }
