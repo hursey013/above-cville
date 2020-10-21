@@ -5,6 +5,7 @@ require("dotenv").config();
 const axios = require("axios").default;
 const convert = require("convert-units");
 const admin = require("firebase-admin");
+const a = require("indefinite");
 const moment = require("moment");
 const Buffer = require("safe-buffer").Buffer;
 const Twit = require("twit");
@@ -39,8 +40,8 @@ const createStatus = (snap, alt, call, icao, reg, spd, type) => {
   const count =
     snap.val() && Object.keys(snap.val().timestamps).length.toString();
 
-  return `${(types[icao] && `A ${types[icao].d} `) ||
-    (type && `A ${type} `) ||
+  return `${(types[icao] && `${a(types[icao].d, { capitalize: true })} `) ||
+    (type && `${a(type, { capitalize: true })} `) ||
     `An aircraft `}(${call || reg || icao})${
     count
       ? `, seen ${count === "1" ? "one time" : `${count} times`} before, `
