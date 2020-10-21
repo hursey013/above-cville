@@ -3,6 +3,7 @@
 require("dotenv").config();
 
 const axios = require("axios").default;
+const Compass = require("cardinal-direction");
 const convert = require("convert-units");
 const admin = require("firebase-admin");
 const a = require("indefinite");
@@ -47,7 +48,7 @@ const actionPhrases = [
 
 const addTimestamp = (icao, time) => ref.child(`${icao}/timestamps`).push(time);
 
-const createStatus = (snap, { alt, call, icao, reg, spd, type }) => {
+const createStatus = (snap, { alt, call, icao, reg, spd, trak, type }) => {
   const count =
     snap.val() && Object.keys(snap.val().timestamps).length.toString();
 
@@ -59,7 +60,14 @@ const createStatus = (snap, { alt, call, icao, reg, spd, type }) => {
     count
       ? `, seen ${count === "1" ? "one time" : `${count} times`} before,`
       : ""
-  } is currently flying ${alt ? `${alt.toLocaleString()} ft ` : ""}overhead ${
+  } is currently flying ${alt ? `${alt.toLocaleString()} ft ` : ""}overhead${
+    trak
+      ? `, heading ${Compass.cardinalFromDegree(
+          trak,
+          Compass.CardinalSubset.Ordinal
+        )} `
+      : " "
+  }${
     spd
       ? `at ${Math.round(
           convert(spd)
@@ -76,14 +84,13 @@ const fetchImage = (icao = "", reg = "") =>
       `${process.env.AIRPORT_DATA_URL}/ac_thumb.json?m=${icao}&r=${reg}&n=100`
     )
     .then(
-      ({ data: { data } }) =>
-        data &&
+      res =>
+        res.data.data &&
         axios
           .get(
-            data[Math.floor(Math.random() * data.length)].image.replace(
-              "/thumbnails",
-              ""
-            ),
+            res.data.data[
+              Math.floor(Math.random() * res.data.data.length)
+            ].image.replace("/thumbnails", ""),
             {
               responseType: "arraybuffer"
             }
