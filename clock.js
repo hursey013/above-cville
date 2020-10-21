@@ -46,36 +46,16 @@ const actionPhrases = [
   "Up above!"
 ];
 
-const addTimestamp = (icao, time) => ref.child(`${icao}/timestamps`).push(time);
+const addArticle = string => a(string, { capitalize: true });
 
-const createStatus = (snap, { alt, call, icao, reg, spd, trak, type }) => {
-  const count =
-    snap.val() && Object.keys(snap.val().timestamps).length.toString();
-
-  return `${
-    actionPhrases[Math.floor(Math.random() * actionPhrases.length)]
-  } ${(types[icao] && `${a(types[icao].d, { capitalize: true })} `) ||
-    (type && `${a(type, { capitalize: true })} `) ||
-    `An aircraft `}(${call || reg || icao})${
-    count
-      ? `, seen ${count === "1" ? "one time" : `${count} times`} before,`
-      : ""
-  } is currently flying ${alt ? `${alt.toLocaleString()} ft ` : ""}overhead${
-    trak
-      ? `, heading ${Compass.cardinalFromDegree(
-          trak,
-          Compass.CardinalSubset.Ordinal
-        )} `
-      : " "
-  }${
-    spd
-      ? `at ${Math.round(
-          convert(spd)
-            .from("knot")
-            .to("m/h")
-        )} mph `
-      : ""
-  }https://globe.adsbexchange.com/?icao=${icao}`;
+const createStatus = (snap, state) => {
+  return `${randomItem(actionPhrases)} ${formatType(state)} (${formatIdentifier(
+    state
+  )})${formatCount(snap)} is currently flying ${formatAltitude(
+    state
+  )}overhead${formatDirection(state)}${formatSpeed(
+    state
+  )}https://globe.adsbexchange.com/?icao=${state.icao}`;
 };
 
 const fetchImage = (icao = "", reg = "") =>
@@ -84,17 +64,12 @@ const fetchImage = (icao = "", reg = "") =>
       `${process.env.AIRPORT_DATA_URL}/ac_thumb.json?m=${icao}&r=${reg}&n=100`
     )
     .then(
-      res =>
-        res.data.data &&
+      ({ data: { data } }) =>
+        data &&
         axios
-          .get(
-            res.data.data[
-              Math.floor(Math.random() * res.data.data.length)
-            ].image.replace("/thumbnails", ""),
-            {
-              responseType: "arraybuffer"
-            }
-          )
+          .get(randomItem(data).image.replace("/thumbnails", ""), {
+            responseType: "arraybuffer"
+          })
           .then(({ data }) => Buffer.from(data, "binary").toString("base64"))
     );
 
@@ -111,6 +86,40 @@ const fetchStates = () =>
     )
     .then(({ data }) => data);
 
+const formatAltitude = ({ alt }) => (alt ? `${numberWithCommas(alt)} ft ` : "");
+
+const formatCount = snap => {
+  const count = snap.val() && Object.keys(snap.val().timestamps).length;
+
+  return count
+    ? `, seen ${count === 1 ? "one time" : `${count} times`} before,`
+    : "";
+};
+
+const formatDirection = ({ trak }) =>
+  trak
+    ? `, heading ${Compass.cardinalFromDegree(
+        trak,
+        Compass.CardinalSubset.Ordinal
+      )} `
+    : " ";
+
+const formatIdentifier = ({ call, reg, icao }) => call || reg || icao;
+
+const formatSpeed = ({ spd }) =>
+  spd
+    ? `at ${Math.round(
+        convert(spd)
+          .from("knot")
+          .to("m/h")
+      )} mph `
+    : "";
+
+const formatType = ({ call, reg, icao }) =>
+  (types[icao] && addArticle(types[icao].d)) ||
+  (type && addArticle(state.type)) ||
+  "An aircraft";
+
 const isNewState = snap => {
   const timestamps = snap.val() && snap.val().timestamps;
 
@@ -123,15 +132,20 @@ const isNewState = snap => {
   );
 };
 
-const postTweet = async ({ call, icao, reg }, status) => {
-  const image = await fetchImage(icao, reg);
+const numberWithCommas = n =>
+  n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+const postTweet = async (state, status) => {
+  const image = await fetchImage(state.icao, state.reg);
 
   return image
     ? T.post("media/upload", { media_data: image }).then(
         ({ data: { media_id_string } }) =>
           T.post("media/metadata/create", {
             media_id: media_id_string,
-            alt_text: { text: call || reg || icao }
+            alt_text: {
+              text: `${formatType(state)} (${formatIdentifier(state)})`
+            }
           }).then(res =>
             T.post("statuses/update", {
               status,
@@ -141,6 +155,11 @@ const postTweet = async ({ call, icao, reg }, status) => {
       )
     : T.post("statuses/update", { status });
 };
+
+const randomItem = array => array[Math.floor(Math.random() * array.length)];
+
+const saveTimestamp = (icao, time) =>
+  ref.child(`${icao}/timestamps`).push(time);
 
 setInterval(async () => {
   try {
@@ -154,7 +173,7 @@ setInterval(async () => {
           const status = createStatus(snap, state);
 
           return await Promise.all([
-            addTimestamp(state.icao, time),
+            saveTimestamp(state.icao, time),
             postTweet(state, status)
           ]);
         }
