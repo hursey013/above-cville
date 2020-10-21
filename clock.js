@@ -34,19 +34,28 @@ const T = new Twit({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
+const actionPhrases = [
+  "Can you see it?",
+  "Look up!",
+  "There it goes!",
+  "Up above!"
+];
+
 const addTimestamp = (icao, time) => ref.child(`${icao}/timestamps`).push(time);
 
 const createStatus = (snap, alt, call, icao, reg, spd, type) => {
   const count =
     snap.val() && Object.keys(snap.val().timestamps).length.toString();
 
-  return `${(types[icao] && `${a(types[icao].d, { capitalize: true })} `) ||
+  return `${
+    actionPhrases[Math.floor(Math.random() * actionPhrases.length)]
+  } ${(types[icao] && `${a(types[icao].d, { capitalize: true })} `) ||
     (type && `${a(type, { capitalize: true })} `) ||
     `An aircraft `}(${call || reg || icao})${
     count
-      ? `, seen ${count === "1" ? "one time" : `${count} times`} before, `
+      ? `, seen ${count === "1" ? "one time" : `${count} times`} before,`
       : ""
-  }is currently flying ${alt ? `${numberWithCommas(alt)} ft ` : ""}overhead ${
+  } is currently flying ${alt ? `${numberWithCommas(alt)} ft ` : ""}overhead ${
     spd
       ? `at ${Math.round(
           convert(spd)
