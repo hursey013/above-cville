@@ -21,6 +21,8 @@
     "axios": "^0.20.0",
     "convert-units": "^2.3.4",
     "dotenv": "^8.2.0",
+    "eslint": "^7.11.0",
+    "eslint-plugin-promise": "^4.2.1",
     "firebase-admin": "^9.2.0",
     "indefinite": "^2.4.1",
     "moment": "^2.29.1",
