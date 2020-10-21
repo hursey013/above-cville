@@ -2,12 +2,16 @@
 
 require("dotenv").config();
 
-const Buffer = require("safe-buffer").Buffer;
+const axios = require("axios").default;
 const convert = require("convert-units");
+const admin = require("firebase-admin");
 const moment = require("moment");
+const Buffer = require("safe-buffer").Buffer;
+const Twit = require("twit");
+
+const types = require("./storage/aircrafts.json");
 
 // Init Firebase
-const admin = require("firebase-admin");
 admin.initializeApp({
   credential: admin.credential.cert({
     project_id: process.env.FIREBASE_PROJECT_ID,
@@ -22,7 +26,6 @@ const db = admin.database();
 const ref = db.ref("states");
 
 // Init Twit
-const Twit = require("twit");
 const T = new Twit({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
   consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
@@ -30,27 +33,28 @@ const T = new Twit({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
-// Init Axios
-const axios = require("axios").default;
-
 const addTimestamp = (icao, time) => ref.child(`${icao}/timestamps`).push(time);
 
-const createStatus = (snap, alt, call, icao, reg, spd, type) =>
-  `${type ? `A ${type} ` : `An aircraft `}(${call || reg || icao}) ${
-    snap.val()
-      ? `, previously seen ${(
-          Object.keys(snap.val().timestamps).length + 1
-        ).toString()} times, `
+const createStatus = (snap, alt, call, icao, reg, spd, type) => {
+  const count =
+    snap.val() && Object.keys(snap.val().timestamps).length.toString();
+
+  return `${(types[icao] && `A ${types[icao].d} `) ||
+    (type && `A ${type} `) ||
+    `An aircraft `}(${call || reg || icao})${
+    count
+      ? `, seen ${count === "1" ? "one time" : `${count} times`} before, `
       : ""
-  }is currently flying ${alt ? `${numberWithCommas(alt)} ft ` : " "}overhead${
+  }is currently flying ${alt ? `${numberWithCommas(alt)} ft ` : ""}overhead ${
     spd
-      ? ` at ${Math.round(
+      ? `at ${Math.round(
           convert(spd)
             .from("knot")
             .to("m/h")
-        )} mph`
+        )} mph `
       : ""
-  } https://globe.adsbexchange.com/?icao=${icao}`;
+  }https://globe.adsbexchange.com/?icao=${icao}`;
+};
 
 const fetchImage = (icao, reg) =>
   axios
