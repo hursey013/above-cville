@@ -115,9 +115,10 @@ const formatSpeed = ({ spd }) =>
       )} mph `
     : "";
 
-const formatType = ({ call, reg, icao }) =>
-  (types[icao] && addArticle(types[icao].d)) ||
-  (type && addArticle(state.type)) ||
+const formatType = ({ call, icao, reg, type }) =>
+  (types[icao] && types[icao].d && addArticle(types[icao].d)) ||
+  (types[icao] && types[icao].t && addArticle(types[icao].t)) ||
+  (type && addArticle(type)) ||
   "An aircraft";
 
 const isNewState = snap => {
