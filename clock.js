@@ -92,7 +92,7 @@ const formatCount = snap => {
   const count = snap.val() && Object.keys(snap.val().timestamps).length;
 
   return count
-    ? `, seen ${count === 1 ? "one time" : `${count} times`} before,`
+    ? `, seen ${count === 1 ? "once" : `${count} times`} before,`
     : "";
 };
 
@@ -107,9 +107,9 @@ const formatDirection = ({ trak }) =>
 const formatIdentifier = ({ call, reg, icao }) => call || reg || icao;
 
 const formatSpeed = ({ spd }) =>
-  spd
+  spd && Number(spd) !== 0
     ? `at ${Math.round(
-        convert(spd)
+        convert(Number(spd))
           .from("knot")
           .to("m/h")
       )} mph `
@@ -129,7 +129,7 @@ const isNewState = snap => {
     moment(
       timestamps &&
         timestamps[Object.keys(timestamps)[Object.keys(timestamps).length - 1]]
-    ).isBefore(moment().subtract(process.env.COOLDOWN_HOURS, "hours"))
+    ).isBefore(moment().subtract(process.env.COOLDOWN_MINUTES, "minutes"))
   );
 };
 
