@@ -167,7 +167,7 @@ setInterval(async () => {
     const { ac: states, ctime: time } = await fetchStates();
 
     await Promise.all(
-      (states || []).map(async state => {
+      (states.filter(state => state.gnd !== "1") || []).map(async state => {
         const snap = await ref.child(state.icao).once("value");
 
         if (isNewState(snap)) {
