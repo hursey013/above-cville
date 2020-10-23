@@ -8,19 +8,23 @@ const types = require("./storage/aircrafts.json");
 
 const addArticle = string => a(string, { capitalize: true });
 
-module.exports.createStatus = (snap, state) => {
+module.exports.createStatus = (
+  snap,
+  { alt, call, icao, reg, spd, trak, type }
+) => {
   return `${module.exports.randomItem(
     config.actionPhrases
-  )} ${module.exports.formatType(state)} (${module.exports.formatIdentifier(
-    state
-  )})${formatCount(snap)} is currently flying ${formatAltitude(
-    state
-  )}overhead${formatDirection(state)}${formatSpeed(
-    state
-  )}https://globe.adsbexchange.com/?icao=${state.icao}`;
+  )} ${module.exports.formatType(
+    icao,
+    type
+  )} (${module.exports.formatIdentifier(call, icao, reg)})${formatCount(
+    snap
+  )} is currently flying ${formatAltitude(alt)}overhead${formatDirection(
+    trak
+  )}${formatSpeed(spd)}📡https://globe.adsbexchange.com/?icao=${state.icao}`;
 };
 
-const formatAltitude = ({ alt }) => (alt ? `${numberWithCommas(alt)} ft ` : "");
+const formatAltitude = alt => (alt ? `${numberWithCommas(alt)} ft ` : "");
 
 const formatCount = snap => {
   const count = snap.val() && Object.keys(snap.val().timestamps).length;
@@ -30,7 +34,7 @@ const formatCount = snap => {
     : "";
 };
 
-const formatDirection = ({ trak }) =>
+const formatDirection = trak =>
   trak
     ? `, heading ${Compass.cardinalFromDegree(
         trak,
@@ -40,7 +44,7 @@ const formatDirection = ({ trak }) =>
 
 module.exports.formatIdentifier = ({ call, icao, reg }) => call || reg || icao;
 
-const formatSpeed = ({ spd }) =>
+const formatSpeed = spd =>
   spd && Number(spd) !== 0
     ? `at ${Math.round(
         convert(Number(spd))
@@ -49,7 +53,7 @@ const formatSpeed = ({ spd }) =>
       )} mph `
     : "";
 
-module.exports.formatType = ({ call, icao, reg, type }) =>
+module.exports.formatType = ({ icao, type }) =>
   (types[icao] && types[icao].d && addArticle(types[icao].d)) ||
   (types[icao] && types[icao].t && addArticle(types[icao].t)) ||
   (type && addArticle(type)) ||

@@ -40,11 +40,9 @@ const fetchImage = (icao, reg) =>
         const { image, link } = utils.randomItem(data);
 
         return axios
-          .get(image, {
-            responseType: "arraybuffer"
-          })
+          .get(image, { responseType: "arraybuffer" })
           .then(({ data }) => ({
-            image: Buffer.from(data, "binary").toString("base64"),
+            b64content: Buffer.from(data, "binary").toString("base64"),
             link
           }));
       }
@@ -56,34 +54,29 @@ const fetchStates = () => {
 
   return axios
     .get(`${adsbxUrl}/lat/${adsbxLat}/lon/${adsbxLon}/dist/${adsbxRadius}/`, {
-      headers: {
-        "api-auth": process.env.ADSBX_KEY,
-        "Accept-Encoding": "gzip"
-      }
+      headers: { "api-auth": process.env.ADSBX_KEY, "Accept-Encoding": "gzip" }
     })
     .then(({ data }) => data);
 };
 
 const postTweet = async ({ call, icao, reg, type }, status) => {
   const imageObj = await fetchImage(icao, reg);
-  const { image, link } = imageObj;
+  const { b64content, link } = media;
 
   return image
-    ? T.post("media/upload", { media_data: image }).then(
+    ? T.post("media/upload", { media_data: b64content }).then(
         ({ data: { media_id_string } }) =>
           T.post("media/metadata/create", {
             media_id: media_id_string,
             alt_text: {
               text: `${utils.formatType({
-                call,
                 icao,
-                reg,
                 type
               })} (${utils.formatIdentifier({ call, icao, reg })})`
             }
           }).then(res =>
             T.post("statuses/update", {
-              status: `${status} ${link}`,
+              status: `${status} 📷${link}`,
               media_ids: [media_id_string]
             })
           )
