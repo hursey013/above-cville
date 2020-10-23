@@ -35,15 +35,21 @@ const T = new Twit({
 const fetchImage = (icao, reg) =>
   axios
     .get(`${config.airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
-    .then(
-      ({ data: { data } }) =>
-        data &&
-        axios
-          .get(utils.randomItem(data).image.replace("/thumbnails", ""), {
+    .then(({ data: { data } }) => {
+      if (data) {
+        const { image, link } = utils.randomItem(data);
+
+        return axios
+          .get(image, {
             responseType: "arraybuffer"
           })
-          .then(({ data }) => Buffer.from(data, "binary").toString("base64"))
-    );
+          .then(({ data }) => ({
+            image: Buffer.from(data, "binary").toString("base64"),
+            link
+          }));
+      }
+      return false;
+    });
 
 const fetchStates = () => {
   const { adsbxUrl, adsbxLat, adsbxLon, adsbxRadius } = config;
@@ -59,7 +65,8 @@ const fetchStates = () => {
 };
 
 const postTweet = async ({ call, icao, reg, type }, status) => {
-  const image = await fetchImage(icao, reg);
+  const imageObj = await fetchImage(icao, reg);
+  const { image, link } = imageObj;
 
   return image
     ? T.post("media/upload", { media_data: image }).then(
@@ -76,7 +83,7 @@ const postTweet = async ({ call, icao, reg, type }, status) => {
             }
           }).then(res =>
             T.post("statuses/update", {
-              status,
+              status: `${status} ${link}`,
               media_ids: [media_id_string]
             })
           )
