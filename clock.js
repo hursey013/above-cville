@@ -60,10 +60,10 @@ const fetchStates = () => {
 };
 
 const postTweet = async ({ call, icao, reg, type }, status) => {
-  const imageObj = await fetchImage(icao, reg);
+  const media = await fetchImage(icao, reg);
   const { b64content, link } = media;
 
-  return image
+  return b64content
     ? T.post("media/upload", { media_data: b64content }).then(
         ({ data: { media_id_string } }) =>
           T.post("media/metadata/create", {

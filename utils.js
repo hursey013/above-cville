@@ -21,7 +21,7 @@ module.exports.createStatus = (
     snap
   )} is currently flying ${formatAltitude(alt)}overhead${formatDirection(
     trak
-  )}${formatSpeed(spd)}📡https://globe.adsbexchange.com/?icao=${state.icao}`;
+  )}${formatSpeed(spd)}📡https://globe.adsbexchange.com/?icao=${icao}`;
 };
 
 const formatAltitude = alt => (alt ? `${numberWithCommas(alt)} ft ` : "");
@@ -42,7 +42,7 @@ const formatDirection = trak =>
       )} `
     : " ";
 
-module.exports.formatIdentifier = ({ call, icao, reg }) => call || reg || icao;
+module.exports.formatIdentifier = (call, icao, reg) => call || reg || icao;
 
 const formatSpeed = spd =>
   spd && Number(spd) !== 0
@@ -53,7 +53,7 @@ const formatSpeed = spd =>
       )} mph `
     : "";
 
-module.exports.formatType = ({ icao, type }) =>
+module.exports.formatType = (icao, type) =>
   (types[icao] && types[icao].d && addArticle(types[icao].d)) ||
   (types[icao] && types[icao].t && addArticle(types[icao].t)) ||
   (type && addArticle(type)) ||
