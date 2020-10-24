@@ -24,6 +24,9 @@ admin.initializeApp({
 const db = admin.database();
 const ref = db.ref("states");
 
+// Storage
+const storage = admin.storage();
+
 // Twit
 const T = new Twit({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
@@ -32,22 +35,40 @@ const T = new Twit({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
 
-const fetchImage = (icao, reg) =>
+const downloadImage = url =>
   axios
-    .get(`${config.airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
-    .then(({ data: { data } }) => {
-      if (data) {
-        const { image, link } = utils.randomItem(data);
+    .get(url, { responseType: "arraybuffer" })
+    .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-        return axios
-          .get(image, { responseType: "arraybuffer" })
-          .then(({ data }) => ({
-            b64content: Buffer.from(data, "binary").toString("base64"),
+const fetchImage = async (icao, reg, hasImages) => {
+  if (hasImages) {
+    const { image, link } = utils.randomItem(hasImages);
+    const imageRef = await storage.refFromURL(image).getDownloadURL();
+    const b64content = await downloadImage(imageRef);
+
+    console.log(`Using local image: ${imageRef}`);
+
+    return {
+      b64content,
+      link
+    };
+  } else {
+    return axios
+      .get(`${config.airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
+      .then(async ({ data: { data } }) => {
+        if (data) {
+          const { image, link } = utils.randomItem(data);
+          const b64content = await downloadImage(image);
+
+          return {
+            b64content,
             link
-          }));
-      }
-      return false;
-    });
+          };
+        }
+        return false;
+      });
+  }
+};
 
 const fetchStates = () => {
   const { adsbxUrl, adsbxLat, adsbxLon, adsbxRadius } = config;
@@ -59,8 +80,8 @@ const fetchStates = () => {
     .then(({ data }) => data);
 };
 
-const postTweet = async ({ call, icao, reg, type }, status) => {
-  const media = await fetchImage(icao, reg);
+const postTweet = async ({ call, icao, reg, type }, status, hasImages) => {
+  const media = await fetchImage(icao, reg, hasImages);
   const { b64content, link } = media;
 
   return b64content
@@ -99,11 +120,15 @@ setInterval(async () => {
         const snap = await ref.child(icao).once("value");
 
         if (utils.isNewState(snap, config.cooldownMinutes)) {
-          const status = utils.createStatus(snap, state);
+          const hasImages = snap.val() && snap.val().images;
 
           return await Promise.all([
             saveTimestamp(icao, time),
-            postTweet({ call, icao, reg, type }, status)
+            postTweet(
+              { call, icao, reg, type },
+              utils.createStatus(snap, state),
+              hasImages
+            )
           ]);
         }
 
