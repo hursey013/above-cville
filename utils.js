@@ -4,24 +4,28 @@ const a = require("indefinite");
 const moment = require("moment");
 
 const config = require("./config.js");
+const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
 const addArticle = string => a(string, { capitalize: true });
 
 module.exports.createStatus = (
   snap,
-  { alt, call, icao, reg, spd, trak, type }
+  { alt, call, icao, reg, spd, trak, type },
+  link
 ) => {
   return `${module.exports.randomItem(
     config.actionPhrases
   )} ${module.exports.formatType(
     icao,
     type
-  )} (${module.exports.formatIdentifier(call, icao, reg)})${formatCount(
-    snap
-  )} is currently flying ${formatAltitude(alt)}overhead${formatDirection(
-    trak
-  )}${formatSpeed(spd)}📡https://globe.adsbexchange.com/?icao=${icao}`;
+  )} (${module.exports.formatIdentifier(call, icao, reg)})${formatOperator(
+    call
+  )}${formatCount(snap)} is currently flying ${formatAltitude(
+    alt
+  )}overhead${formatDirection(trak)}${formatSpeed(
+    spd
+  )}📡https://globe.adsbexchange.com/?icao=${icao}${link ? ` 📷${link}` : ""}`;
 };
 
 const formatAltitude = alt => (alt ? `${numberWithCommas(alt)} ft ` : "");
@@ -44,6 +48,17 @@ const formatDirection = trak =>
 
 module.exports.formatIdentifier = (call, icao, reg) => call || reg || icao;
 
+const formatOperator = call => {
+  if (call) {
+    const code = call.slice(0, 3);
+    console.log(code);
+    return operators[code]
+      ? ` operated by ${sanitizeString(operators[code].n)}`
+      : "";
+  }
+  return "";
+};
+
 const formatSpeed = spd =>
   spd && Number(spd) !== 0
     ? `at ${Math.round(
@@ -54,7 +69,7 @@ const formatSpeed = spd =>
     : "";
 
 module.exports.formatType = (icao, type) =>
-  (types[icao] && types[icao].d && addArticle(types[icao].d)) ||
+  (types[icao] && types[icao].d && addArticle(sanitizeString(types[icao].d))) ||
   (types[icao] && types[icao].t && addArticle(types[icao].t)) ||
   (type && addArticle(type)) ||
   "An aircraft";
@@ -76,3 +91,12 @@ const numberWithCommas = n =>
 
 module.exports.randomItem = array =>
   array[Math.floor(Math.random() * array.length)];
+
+const sanitizeString = string =>
+  string
+    .replace("--", "-")
+    .split(" ")
+    .map(w =>
+      !/\d|[.-]/.test(w) ? w[0].toUpperCase() + w.substr(1).toLowerCase() : w
+    )
+    .join(" ");

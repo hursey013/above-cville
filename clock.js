@@ -80,9 +80,11 @@ const fetchStates = () => {
     .then(({ data }) => data);
 };
 
-const postTweet = async ({ call, icao, reg, type }, status, hasImages) => {
+const postTweet = async (snap, state, hasImages) => {
+  const { call, icao, reg, type } = state;
   const media = await fetchImage(icao, reg, hasImages);
   const { b64content, link } = media;
+  const status = utils.createStatus(snap, state, link);
 
   return b64content
     ? T.post("media/upload", { media_data: b64content }).then(
@@ -97,7 +99,7 @@ const postTweet = async ({ call, icao, reg, type }, status, hasImages) => {
             }
           }).then(res =>
             T.post("statuses/update", {
-              status: `${status} 📷${link}`,
+              status,
               media_ids: [media_id_string]
             })
           )
@@ -116,7 +118,7 @@ setInterval(async () => {
 
     await Promise.all(
       filteredStates.map(async state => {
-        const { call, icao, reg, type } = state;
+        const { icao } = state;
         const snap = await ref.child(icao).once("value");
 
         if (utils.isNewState(snap, config.cooldownMinutes)) {
@@ -124,11 +126,7 @@ setInterval(async () => {
 
           return await Promise.all([
             saveTimestamp(icao, time),
-            postTweet(
-              { call, icao, reg, type },
-              utils.createStatus(snap, state),
-              hasImages
-            )
+            postTweet(snap, state, hasImages)
           ]);
         }
 
