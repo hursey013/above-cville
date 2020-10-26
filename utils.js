@@ -1,5 +1,6 @@
 const Compass = require("cardinal-direction");
 const convert = require("convert-units");
+const fs = require("fs");
 const a = require("indefinite");
 const moment = require("moment");
 
@@ -10,37 +11,35 @@ const types = require("./storage/aircrafts.json");
 const addArticle = string => {
   for (const article of Object.keys(config.articles)) {
     if (
-      config.articles[article].some(
-        a => string.toLowerCase() === a.toLowerCase()
+      config.articles[article].some(a =>
+        string.toLowerCase().includes(a.toLowerCase())
       )
     ) {
-      return `${article.toUpperCase()} ${string}`;
+      return `${article} ${string}`;
     }
   }
 
   return a(string, { capitalize: true });
 };
 
-module.exports.createStatus = (
+const createStatus = (
   snap,
   { alt, call, icao, mil, reg, spd, trak, type },
   link
 ) => {
-  return `${module.exports.randomItem(
-    config.actionPhrases
-  )} ${module.exports.formatType(
+  return `${randomItem(config.actionPhrases)}${formatType(
     icao,
     type
-  )} (${module.exports.formatIdentifier(call, icao, reg)})${formatOperator(
-    call
-  )}${formatCount(snap)} is currently flying ${formatAltitude(
-    alt
-  )}overhead${formatDirection(trak)}${formatSpeed(spd)}${formatHashTag(
-    mil
-  )}📡https://globe.adsbexchange.com/?icao=${icao}${link ? ` 📷${link}` : ""}`;
+  )}${formatIdentifier(call, icao, reg)}${formatOperator(call)}${formatCount(
+    snap
+  )} is currently flying${formatAltitude(alt)} overhead${formatDirection(
+    trak
+  )}${formatSpeed(spd)}${formatHashTag(mil)}${
+    icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""
+  }${link ? ` 📷${link}` : ""}`;
 };
 
-const formatAltitude = alt => (alt ? `${numberWithCommas(alt)} ft ` : "");
+const formatAltitude = alt => (alt ? ` ${numberWithCommas(alt)} ft` : "");
 
 const formatCount = snap => {
   const count = snap.val() && Object.keys(snap.val().timestamps).length;
@@ -52,18 +51,19 @@ const formatCount = snap => {
 
 const formatDirection = trak =>
   trak
-    ? `, heading ${Compass.cardinalFromDegree(
+    ? ` and heading ${Compass.cardinalFromDegree(
         trak,
         Compass.CardinalSubset.Ordinal
-      )} `
-    : " ";
+      )}`
+    : "";
 
-const formatHashTag = mil => (mil === "1" ? `#military ` : " ");
+const formatHashTag = mil => (mil === "1" ? ` #military` : "");
 
-module.exports.formatIdentifier = (call, icao, reg) => call || reg || icao;
+const formatIdentifier = (call, icao, reg) =>
+  call || icao || reg ? ` (${call || reg || icao})` : "";
 
 const formatOperator = call => {
-  if (call) {
+  if (call && operators) {
     const code = call.slice(0, 3);
     return operators[code]
       ? ` operated by ${sanitizeString(operators[code].n)}`
@@ -74,20 +74,23 @@ const formatOperator = call => {
 
 const formatSpeed = spd =>
   spd && Number(spd) !== 0
-    ? `at ${Math.round(
+    ? ` at ${Math.round(
         convert(Number(spd))
           .from("knot")
           .to("m/h")
-      )} mph `
-    : " ";
+      )} mph`
+    : "";
 
-module.exports.formatType = (icao, type) =>
-  (types[icao] && types[icao].d && addArticle(sanitizeString(types[icao].d))) ||
-  (types[icao] && types[icao].t && addArticle(types[icao].t)) ||
-  (type && addArticle(type)) ||
-  "An aircraft";
+const formatType = (icao, type) =>
+  (types &&
+    ((types[icao] &&
+      types[icao].d &&
+      ` ${addArticle(sanitizeString(types[icao].d))}`) ||
+      (types[icao] && types[icao].t && ` ${addArticle(types[icao].t)}`) ||
+      (type && ` ${addArticle(type)}`))) ||
+  " An aircraft";
 
-module.exports.isNewState = (snap, cooldown) => {
+const isNewState = (snap, cooldown) => {
   const timestamps = snap.val() && snap.val().timestamps;
 
   return (
@@ -102,16 +105,39 @@ module.exports.isNewState = (snap, cooldown) => {
 const numberWithCommas = n =>
   n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-module.exports.randomItem = array =>
-  array[Math.floor(Math.random() * array.length)];
+const randomItem = array => array[Math.floor(Math.random() * array.length)];
 
 const sanitizeString = string =>
   string
     .split(" ")
-    .map(w =>
-      !/\d|[.-]/.test(w) &&
-      !config.abbreviations.some(a => w.toLowerCase() === a.toLowerCase())
+    .map(w => {
+      if (config.abbreviations.some(a => w.toLowerCase() === a.toLowerCase())) {
+        return w.toUpperCase();
+      }
+
+      if (["of", "the"].some(s => w.toLowerCase() === s.toLowerCase())) {
+        return w.toLowerCase();
+      }
+
+      return !/\d|[.-]/.test(w)
         ? w[0].toUpperCase() + w.substr(1).toLowerCase()
-        : w
-    )
+        : w;
+    })
     .join(" ");
+
+module.exports = {
+  addArticle,
+  createStatus,
+  formatAltitude,
+  formatCount,
+  formatDirection,
+  formatHashTag,
+  formatIdentifier,
+  formatOperator,
+  formatSpeed,
+  formatType,
+  isNewState,
+  numberWithCommas,
+  randomItem,
+  sanitizeString
+};
