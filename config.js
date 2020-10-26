@@ -6,5 +6,9 @@ module.exports = {
   adsbxLat: 38.0375,
   adsbxLon: -78.4863,
   adsbxRadius: 2.5,
-  airportDataUrl: "https://www.airport-data.com/api"
+  airportDataUrl: "https://www.airport-data.com/api",
+  articles: {
+    a: ["Eurocopter"],
+    an: []
+  }
 };

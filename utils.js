@@ -7,7 +7,12 @@ const config = require("./config.js");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
-const addArticle = string => a(string, { capitalize: true });
+const addArticle = string =>
+  (articles.a.some(a => string.toLowerCase().includes(a.toLowerCase())) &&
+    `A ${string}`) ||
+  (articles.an.some(an => string.toLowerCase().includes(an.toLowerCase())) &&
+    `An ${string}`) ||
+  a(string, { capitalize: true });
 
 module.exports.createStatus = (
   snap,
@@ -51,7 +56,6 @@ module.exports.formatIdentifier = (call, icao, reg) => call || reg || icao;
 const formatOperator = call => {
   if (call) {
     const code = call.slice(0, 3);
-    console.log(code);
     return operators[code]
       ? ` operated by ${sanitizeString(operators[code].n)}`
       : "";
@@ -94,7 +98,6 @@ module.exports.randomItem = array =>
 
 const sanitizeString = string =>
   string
-    .replace("--", "-")
     .split(" ")
     .map(w =>
       !/\d|[.-]/.test(w) ? w[0].toUpperCase() + w.substr(1).toLowerCase() : w
