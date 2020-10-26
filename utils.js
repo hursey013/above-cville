@@ -8,15 +8,19 @@ const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
 const addArticle = string =>
-  (articles.a.some(a => string.toLowerCase().includes(a.toLowerCase())) &&
+  (config.articles.a.some(a =>
+    string.toLowerCase().includes(a.toLowerCase())
+  ) &&
     `A ${string}`) ||
-  (articles.an.some(an => string.toLowerCase().includes(an.toLowerCase())) &&
+  (config.articles.an.some(an =>
+    string.toLowerCase().includes(an.toLowerCase())
+  ) &&
     `An ${string}`) ||
   a(string, { capitalize: true });
 
 module.exports.createStatus = (
   snap,
-  { alt, call, icao, reg, spd, trak, type },
+  { alt, call, icao, mil, reg, spd, trak, type },
   link
 ) => {
   return `${module.exports.randomItem(
@@ -28,8 +32,8 @@ module.exports.createStatus = (
     call
   )}${formatCount(snap)} is currently flying ${formatAltitude(
     alt
-  )}overhead${formatDirection(trak)}${formatSpeed(
-    spd
+  )}overhead${formatDirection(trak)}${formatSpeed(spd)}${formatHashTag(
+    mil
   )}📡https://globe.adsbexchange.com/?icao=${icao}${link ? ` 📷${link}` : ""}`;
 };
 
@@ -51,6 +55,8 @@ const formatDirection = trak =>
       )} `
     : " ";
 
+const formatHashTag = mil => (mil === "1" ? `#miltary ` : " ");
+
 module.exports.formatIdentifier = (call, icao, reg) => call || reg || icao;
 
 const formatOperator = call => {
@@ -70,7 +76,7 @@ const formatSpeed = spd =>
           .from("knot")
           .to("m/h")
       )} mph `
-    : "";
+    : " ";
 
 module.exports.formatType = (icao, type) =>
   (types[icao] && types[icao].d && addArticle(sanitizeString(types[icao].d))) ||
