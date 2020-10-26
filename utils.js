@@ -7,16 +7,19 @@ const config = require("./config.js");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
-const addArticle = string =>
-  (config.articles.a.some(a =>
-    string.toLowerCase().includes(a.toLowerCase())
-  ) &&
-    `A ${string}`) ||
-  (config.articles.an.some(an =>
-    string.toLowerCase().includes(an.toLowerCase())
-  ) &&
-    `An ${string}`) ||
-  a(string, { capitalize: true });
+const addArticle = string => {
+  for (const article of Object.keys(config.articles)) {
+    if (
+      config.articles[article].some(
+        a => string.toLowerCase() === a.toLowerCase()
+      )
+    ) {
+      return `${article.toUpperCase()} ${string}`;
+    }
+  }
+
+  return a(string, { capitalize: true });
+};
 
 module.exports.createStatus = (
   snap,
