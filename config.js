@@ -7,6 +7,7 @@ module.exports = {
   adsbxLon: -78.4863,
   adsbxRadius: 2.5,
   airportDataUrl: "https://www.airport-data.com/api",
+  abbreviations: ["PSA"],
   articles: {
     a: ["Eurocopter"],
     an: []

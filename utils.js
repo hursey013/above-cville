@@ -106,6 +106,9 @@ const sanitizeString = string =>
   string
     .split(" ")
     .map(w =>
-      !/\d|[.-]/.test(w) ? w[0].toUpperCase() + w.substr(1).toLowerCase() : w
+      !/\d|[.-]/.test(w) ||
+      !config.abbreviations.some(a => w.toLowerCase() === a.toLowerCase())
+        ? w[0].toUpperCase() + w.substr(1).toLowerCase()
+        : w
     )
     .join(" ");
