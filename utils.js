@@ -55,7 +55,7 @@ const formatDirection = trak =>
       )} `
     : " ";
 
-const formatHashTag = mil => (mil === "1" ? `#miltary ` : " ");
+const formatHashTag = mil => (mil === "1" ? `#military ` : " ");
 
 module.exports.formatIdentifier = (call, icao, reg) => call || reg || icao;
 
@@ -106,7 +106,7 @@ const sanitizeString = string =>
   string
     .split(" ")
     .map(w =>
-      !/\d|[.-]/.test(w) ||
+      !/\d|[.-]/.test(w) &&
       !config.abbreviations.some(a => w.toLowerCase() === a.toLowerCase())
         ? w[0].toUpperCase() + w.substr(1).toLowerCase()
         : w

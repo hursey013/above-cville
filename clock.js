@@ -40,35 +40,37 @@ const downloadImage = url =>
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-const fetchImage = async (icao, reg, hasImages) => {
-  if (hasImages) {
-    const { image, link } = utils.randomItem(hasImages);
-    const imageRef = await storage.refFromURL(image).getDownloadURL();
-    const b64content = await downloadImage(imageRef);
+const fetchImage = (icao, reg, hasImages) =>
+  hasImages ? fetchLocalImage(hasImages) : fetchRemoteImage(icao, reg);
 
-    console.log(`Using local image: ${imageRef}`);
+const fetchLocalImage = async hasImages => {
+  const { image, link } = utils.randomItem(hasImages);
+  const imageRef = await storage.refFromURL(image).getDownloadURL();
+  const b64content = await downloadImage(imageRef);
 
-    return {
-      b64content,
-      link
-    };
-  } else {
-    return axios
-      .get(`${config.airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
-      .then(async ({ data: { data } }) => {
-        if (data) {
-          const { image, link } = utils.randomItem(data);
-          const b64content = await downloadImage(image);
+  console.log(`Using local image: ${imageRef}`);
 
-          return {
-            b64content,
-            link
-          };
-        }
-        return false;
-      });
-  }
+  return {
+    b64content,
+    link
+  };
 };
+
+const fetchRemoteImage = async (icao, reg) =>
+  axios
+    .get(`${config.airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
+    .then(async ({ data: { data } }) => {
+      if (data) {
+        const { image, link } = utils.randomItem(data);
+        const b64content = await downloadImage(image);
+
+        return {
+          b64content,
+          link
+        };
+      }
+      return false;
+    });
 
 const fetchStates = () => {
   const { adsbxUrl, adsbxLat, adsbxLon, adsbxRadius } = config;
