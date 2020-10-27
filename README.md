@@ -59,7 +59,7 @@ There are a number of variables which can be customized by modifying `config.js`
 
 ### Download databases
 
-`above-cville` relies on two static JSON files for aircraft type (`storage/aircrafts.json`) and operators (`storage/operators.json`) data. These files are regularly updated and can be downloaded from https://github.com/Mictronics/readsb-protobuf/tree/dev/webapp/src/db.
+`above-cville` relies on two static JSON files for aircraft types (`storage/aircrafts.json`) and operators (`storage/operators.json`) data. These files are regularly updated and can be downloaded from https://github.com/Mictronics/readsb-protobuf/tree/dev/webapp/src/db.
 
 ## Usage
 
@@ -67,6 +67,12 @@ To start the bot, run the following in the project directory:
 
 ```
 npm start
+```
+
+To run the included unit tests:
+
+```
+npm test
 ```
 
 ## Inspiration

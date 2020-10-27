@@ -4,7 +4,7 @@ const fs = require("fs");
 const a = require("indefinite");
 const moment = require("moment");
 
-const config = require("./config.js");
+const config = require("./config");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 

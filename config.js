@@ -1,15 +1,32 @@
+require("dotenv").config();
+
 module.exports = {
   actionPhrases: ["Can you see it?", "Look up!", "There it goes!", "Up above!"],
   refreshSeconds: 5,
   cooldownMinutes: 5,
-  adsbxUrl: "https://adsbexchange.com/api/aircraft/json",
-  adsbxLat: 38.0375,
-  adsbxLon: -78.4863,
-  adsbxRadius: 2.5,
   airportDataUrl: "https://www.airport-data.com/api",
   abbreviations: ["III", "PSA"],
   articles: {
     A: ["Eurocopter"],
     An: []
+  },
+  adsbx: {
+    url: "https://adsbexchange.com/api/aircraft/json",
+    lat: 38.0375,
+    lon: -78.4863,
+    radius: 2.5,
+    key: process.env.ADSBX_KEY
+  },
+  dbUrl: process.env.DB_URL,
+  firebase: {
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY,
+    client_email: process.env.FIREBASE_CLIENT_EMAIL
+  },
+  twitter: {
+    consumer_key: process.env.TWITTER_CONSUMER_KEY,
+    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+    access_token: process.env.TWITTER_ACCESS_TOKEN,
+    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
   }
 };

@@ -1,4 +1,4 @@
-const utils = require("./utils.js");
+const utils = require("./utils");
 const moment = require("moment");
 
 describe("utils", () => {

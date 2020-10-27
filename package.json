@@ -5,15 +5,15 @@
   "main": "clock.js",
   "scripts": {
     "start": "node clock.js",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "npm run test -- --watch"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hursey013/above-cville.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Brian Hurst",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/hursey013/above-cville/issues"
   },
@@ -27,6 +27,7 @@
     "indefinite": "^2.4.1",
     "moment": "^2.29.1",
     "safe-buffer": "^5.2.1",
+    "set-interval-async": "1.0.33",
     "twit": "^2.2.11"
   },
   "devDependencies": {
