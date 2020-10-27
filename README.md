@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Twitter bot which uses the [ADS-B Exchange](https://www.adsbexchange.com/) API to spot aircraft within a 2.5nm radius of the City of Charlottesville, VA ([38.03, -78.478889](https://www.google.com/maps/place/38%C2%B001'48.0%22N+78%C2%B028'44.0%22W/@38.03,-78.481083,17z/data=!3m1!4b1!4m5!3m4!1s0x0:0x0!8m2!3d38.03!4d-78.478889)). Timestamps for each spotting are persisted to a Firebase Realtime Database.
+Twitter bot which uses the [ADS-B Exchange](https://www.adsbexchange.com/) API to spot aircraft within a 2.5nm radius of the City of Charlottesville, VA ([38.0375, -78.4863](https://goo.gl/maps/sySAUH9KeKCYCrtG9)). Timestamps for each spotting are persisted to a Firebase Realtime Database.
 
 ## Initial setup
 
@@ -59,7 +59,7 @@ There are a number of variables which can be customized by modifying `config.js`
 
 ### Download databases
 
-`above-cville` relies on two static JSON files for aircraft types (`storage/aircrafts.json`) and operators (`storage/operators.json`) data. These files are regularly updated and can be downloaded from https://github.com/Mictronics/readsb-protobuf/tree/dev/webapp/src/db.
+`above-cville` relies on two static JSON files for aircraft types (`storage/aircrafts.json`) and operators (`storage/operators.json`) data. These files are regularly updated and can be downloaded from https://github.com/Mictronics/readsb-protobuf/tree/dev/webapp/src/db manually or through a cron job.
 
 ## Usage
 
