@@ -164,8 +164,24 @@ describe("utils", () => {
 
   describe("formatHashTag function", () => {
     it("properly formats string", () => {
-      expect(utils.formatHashTag("")).toEqual("");
-      expect(utils.formatHashTag("1")).toEqual(" #military");
+      expect(utils.formatHashTag("", { val: () => {} })).toEqual("");
+      expect(
+        utils.formatHashTag("1", {
+          val: () => {
+            [1603572682275];
+          }
+        })
+      ).toEqual(" #military");
+      expect(
+        utils.formatHashTag("", {
+          val: () => ({ timestamps: Array.from(Array(20).keys()) })
+        })
+      ).toEqual(" #frequentflyer");
+      expect(
+        utils.formatHashTag("1", {
+          val: () => ({ timestamps: Array.from(Array(20).keys()) })
+        })
+      ).toEqual(" #military #frequentflyer");
     });
   });
 

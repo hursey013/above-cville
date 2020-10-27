@@ -35,7 +35,7 @@ const createStatus = (
     snap
   )} is currently flying${formatAltitude(alt)} overhead${formatDirection(
     trak
-  )}${formatSpeed(spd)}${formatHashTag(mil)}${
+  )}${formatSpeed(spd)}${formatHashTag(mil, snap)}${
     icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""
   }${link ? ` 📷${link}` : ""}`;
 };
@@ -60,7 +60,15 @@ const formatDirection = trak =>
       )}`
     : "";
 
-const formatHashTag = mil => (mil === "1" ? ` #military` : "");
+const formatHashTag = (mil, snap) => {
+  const count = snap.val() && Object.keys(snap.val().timestamps).length;
+
+  let hashtags = "";
+  hashtags += mil === "1" ? ` #military` : "";
+  hashtags += count && count >= 20 ? ` #frequentflyer` : "";
+
+  return hashtags;
+};
 
 const formatIdentifier = (call, icao, reg) =>
   call || icao || reg ? ` (${call || reg || icao})` : "";
