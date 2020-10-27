@@ -51,11 +51,13 @@ There are a number of variables which can be customized by modifying `config.js`
 - `actionPhrases` - short phrases to add to the beginning of the tweet
 - `refreshSeconds` - how often to call the ADS-B endpoint
 - `cooldownMinutes` - amount of time that should pass before spotting the same aircraft
-- `adsbxUrl` - URL for ADS-B endpoint
-- `adsbxLat` - latitude value used for geolocation
-- `adsbxLon` - longitude value used for geolocation
-- `adsbxRadius` - radius for search in nautical miles
-- `airportDataUrl` - URL for thumbnail endpoint
+- `abbreviations` - abbreviations that should be kept uppercase
+- `articles` - exceptions where a plane type should be an `An` instead of an `A` and vice versa
+- `airport.dataUrl` - URL for thumbnail endpoint
+- `adsbx.url` - URL for ADS-B endpoint
+- `adsbx.lat` - latitude value used for geolocation
+- `adsbx.lon` - longitude value used for geolocation
+- `adsbx.radius` - radius for search in nautical miles
 
 ### Download databases
 

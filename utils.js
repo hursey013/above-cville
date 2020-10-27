@@ -4,14 +4,15 @@ const fs = require("fs");
 const a = require("indefinite");
 const moment = require("moment");
 
-const config = require("./config");
+const { abbreviations, actionPhrases, articles } = require("./config");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
 const addArticle = string => {
-  for (const article of Object.keys(config.articles)) {
+  // See if string matches any exceptions defined in the config
+  for (const article of Object.keys(articles)) {
     if (
-      config.articles[article].some(a =>
+      articles[article].some(a =>
         string.toLowerCase().includes(a.toLowerCase())
       )
     ) {
@@ -27,7 +28,7 @@ const createStatus = (
   { alt, call, icao, mil, reg, spd, trak, type },
   link
 ) => {
-  return `${randomItem(config.actionPhrases)}${formatType(
+  return `${randomItem(actionPhrases)}${formatType(
     icao,
     type
   )}${formatIdentifier(call, icao, reg)}${formatOperator(call)}${formatCount(
@@ -45,7 +46,9 @@ const formatCount = snap => {
   const count = snap.val() && Object.keys(snap.val().timestamps).length;
 
   return count
-    ? `, seen ${count === 1 ? "once" : `${count} times`} before,`
+    ? `, seen ${
+        count === 1 ? "once" : `${numberWithCommas(count)} times`
+      } before,`
     : "";
 };
 
@@ -64,7 +67,9 @@ const formatIdentifier = (call, icao, reg) =>
 
 const formatOperator = call => {
   if (call && operators) {
+    // Use the first three letters of callsign as key
     const code = call.slice(0, 3);
+
     return operators[code]
       ? ` operated by ${sanitizeString(operators[code].n)}`
       : "";
@@ -111,14 +116,17 @@ const sanitizeString = string =>
   string
     .split(" ")
     .map(w => {
-      if (config.abbreviations.some(a => w.toLowerCase() === a.toLowerCase())) {
+      // Check config for abbreviations that we want capitalized
+      if (abbreviations.some(a => w.toLowerCase() === a.toLowerCase())) {
         return w.toUpperCase();
       }
 
+      // Don't sentence case these words
       if (["of", "the"].some(s => w.toLowerCase() === s.toLowerCase())) {
         return w.toLowerCase();
       }
 
+      // Don't sentence case words with numbers or symbols, otherwise go ahead
       return !/\d|[.-]/.test(w)
         ? w[0].toUpperCase() + w.substr(1).toLowerCase()
         : w;
