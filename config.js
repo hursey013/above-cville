@@ -4,7 +4,11 @@ module.exports = {
   actionPhrases: ["Can you see it?", "Look up!", "There it goes!", "Up above!"],
   refreshSeconds: 5,
   cooldownMinutes: 5,
-  airportDataUrl: "https://www.airport-data.com/api",
+  photoApi: {
+    username: process.env.PHOTO_API_USERNAME,
+    password: process.env.PHOTO_API_PASSWORD,
+    url: "https://fa-photo-api.web.app"
+  },
   abbreviations: ["III", "PSA"],
   articles: {
     A: ["Eurocopter"],

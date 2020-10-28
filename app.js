@@ -7,10 +7,10 @@ const Twit = require("twit");
 
 const {
   adsbx: { url, lat, lon, radius, key },
-  airportDataUrl,
   cooldownMinutes,
   dbUrl,
   firebase,
+  photoApi,
   twitter
 } = require("./config");
 const {
@@ -36,38 +36,36 @@ const downloadImage = url =>
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-// See if local images exist, otherwise fetch remote images and download
-const fetchImage = async (icao, reg, snap) => {
-  const customImages = snap.val() && snap.val().images;
-  const urls = customImages
-    ? await fetchLocalImageUrls(customImages)
-    : await fetchRemoteImageUrls(icao, reg);
+const fetchImage = async reg => {
+  const url = await fetchPhotoApiImageUrl(reg);
 
-  if (urls) {
-    const { image, link } = urls;
-    const b64content = await downloadImage(image);
+  if (url) {
+    const b64content = await downloadImage(url);
 
-    return {
-      b64content,
-      link
-    };
+    return b64content;
   }
+
   return false;
 };
 
-// Get reference to local image from Firebase Storage
-const fetchLocalImageUrls = async customImages => {
-  const { image, link } = randomItem(customImages);
-  const imageUrl = await storage.refFromURL(image).getDownloadURL();
+// Get image url from photo API
+const fetchPhotoApiImageUrl = reg => {
+  const { url, username, password } = photoApi;
 
-  return { image: imageUrl, link };
+  return axios({
+    method: "get",
+    url,
+    auth: {
+      username,
+      password
+    },
+    params: {
+      reg
+    }
+  }).then(({ data: { data } }) =>
+    data && data.length ? randomItem(data) : false
+  );
 };
-
-// Get image and credit url from remote API
-const fetchRemoteImageUrls = async (icao, reg) =>
-  axios
-    .get(`${airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
-    .then(async ({ data: { data } }) => (data ? randomItem(data) : false));
 
 // Main function to retrieve ADS-B data from ADSBx
 const fetchStates = () =>
@@ -80,13 +78,12 @@ const fetchStates = () =>
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state) => {
   const { call, icao, reg, type } = state;
-  const media = await fetchImage(icao, reg, snap);
-  const { b64content: media_data, link } = media;
-  const status = createStatus(snap, state, link);
+  const media = await fetchImage(reg);
+  const status = createStatus(snap, state);
 
   return media
     ? // Send media tweet
-      T.post("media/upload", { media_data }).then(
+      T.post("media/upload", { media_data: media }).then(
         ({ data: { media_id_string } }) =>
           T.post("media/metadata/create", {
             media_id: media_id_string,

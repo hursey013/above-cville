@@ -39,9 +39,7 @@ const createStatus = (
   )} overhead${formatDirection(trak)}${formatSpeed(spd)}${formatHashTag(
     mil,
     snap
-  )}${icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""}${
-    link ? ` 📷${link}` : ""
-  }`;
+  )}${icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""}`;
 };
 
 const formatAltitude = alt => (alt ? ` ${numberWithCommas(alt)} ft` : "");
