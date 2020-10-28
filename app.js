@@ -37,9 +37,10 @@ const downloadImage = url =>
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
 // See if local images exist, otherwise fetch remote images and download
-const fetchImage = async (icao, reg, hasImages) => {
-  const urls = hasImages
-    ? await fetchLocalImageUrls(hasImages)
+const fetchImage = async (icao, reg, snap) => {
+  const customImages = snap.val() && snap.val().images;
+  const urls = customImages
+    ? await fetchLocalImageUrls(customImages)
     : await fetchRemoteImageUrls(icao, reg);
 
   if (urls) {
@@ -55,8 +56,8 @@ const fetchImage = async (icao, reg, hasImages) => {
 };
 
 // Get reference to local image from Firebase Storage
-const fetchLocalImageUrls = async hasImages => {
-  const { image, link } = randomItem(hasImages);
+const fetchLocalImageUrls = async customImages => {
+  const { image, link } = randomItem(customImages);
   const imageUrl = await storage.refFromURL(image).getDownloadURL();
 
   return { image: imageUrl, link };
@@ -66,14 +67,7 @@ const fetchLocalImageUrls = async hasImages => {
 const fetchRemoteImageUrls = async (icao, reg) =>
   axios
     .get(`${airportDataUrl}/ac_thumb.json?m=${icao}&r=${reg}&n=100`)
-    .then(async ({ data: { data } }) => {
-      if (data) {
-        const { image, link } = randomItem(data);
-
-        return { image, link };
-      }
-      return false;
-    });
+    .then(async ({ data: { data } }) => (data ? randomItem(data) : false));
 
 // Main function to retrieve ADS-B data from ADSBx
 const fetchStates = () =>
@@ -84,37 +78,33 @@ const fetchStates = () =>
     .then(({ data }) => data);
 
 // Send a media tweet if there is a photo, otherwise normal tweet
-const postTweet = async (snap, state, hasImages) => {
+const postTweet = async (snap, state) => {
   const { call, icao, reg, type } = state;
-  const media = await fetchImage(icao, reg, hasImages);
+  const media = await fetchImage(icao, reg, snap);
+  const { b64content: media_data, link } = media;
+  const status = createStatus(snap, state, link);
 
-  if (media) {
-    const { b64content: media_data, link } = media;
-    const status = createStatus(snap, state, link);
-
-    // Send media tweet
-    return T.post("media/upload", { media_data }).then(
-      ({ data: { media_id_string } }) =>
-        T.post("media/metadata/create", {
-          media_id: media_id_string,
-          alt_text: {
-            text: `${formatType({
-              icao,
-              type
-            })} (${formatIdentifier({ call, icao, reg })})`
-          }
-        }).then(res =>
-          T.post("statuses/update", {
-            status,
-            media_ids: [media_id_string]
-          })
-        )
-    );
-  }
-  const status = createStatus(snap, state);
-
-  // Send tweet without media
-  return T.post("statuses/update", { status });
+  return media
+    ? // Send media tweet
+      T.post("media/upload", { media_data }).then(
+        ({ data: { media_id_string } }) =>
+          T.post("media/metadata/create", {
+            media_id: media_id_string,
+            alt_text: {
+              text: `${formatType({
+                icao,
+                type
+              })} (${formatIdentifier({ call, icao, reg })})`
+            }
+          }).then(res =>
+            T.post("statuses/update", {
+              status,
+              media_ids: [media_id_string]
+            })
+          )
+      )
+    : // Send tweet without media
+      T.post("statuses/update", { status });
 };
 
 // Record timestamp of spotted aircraft to database
@@ -134,13 +124,11 @@ const app = async () => {
         const { icao } = state;
         const snap = await ref.child(icao).once("value");
 
-        // Check if this is a new aircraft, or if it's past the cooldown time
+        // Check if this is a new aircraft or if it's past the cooldown time
         if (isNewState(snap, cooldownMinutes)) {
-          const hasImages = snap.val() && snap.val().images;
-
           return await Promise.all([
             saveTimestamp(icao, time),
-            postTweet(snap, state, hasImages)
+            postTweet(snap, state)
           ]);
         }
 

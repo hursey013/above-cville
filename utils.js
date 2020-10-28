@@ -31,13 +31,17 @@ const createStatus = (
   return `${randomItem(actionPhrases)}${formatType(
     icao,
     type
-  )}${formatIdentifier(call, icao, reg)}${formatOperator(call)}${formatCount(
+  )}${formatIdentifier(call, icao, reg)}${formatOperator(
+    call,
     snap
-  )} is currently flying${formatAltitude(alt)} overhead${formatDirection(
-    trak
-  )}${formatSpeed(spd)}${formatHashTag(mil, snap)}${
-    icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""
-  }${link ? ` 📷${link}` : ""}`;
+  )}${formatCount(snap)} is currently flying${formatAltitude(
+    alt
+  )} overhead${formatDirection(trak)}${formatSpeed(spd)}${formatHashTag(
+    mil,
+    snap
+  )}${icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""}${
+    link ? ` 📷${link}` : ""
+  }`;
 };
 
 const formatAltitude = alt => (alt ? ` ${numberWithCommas(alt)} ft` : "");
@@ -73,16 +77,22 @@ const formatHashTag = (mil, snap) => {
 const formatIdentifier = (call, icao, reg) =>
   call || icao || reg ? ` (${call || reg || icao})` : "";
 
-const formatOperator = call => {
-  if (call && operators) {
+const formatOperator = (call, snap) => {
+  const desc = snap.val() && snap.val().description;
+  let value = "";
+
+  if (desc) {
+    value = desc;
+  } else if (call) {
     // Use the first three letters of callsign as key
     const code = call.slice(0, 3);
 
-    return operators[code]
-      ? ` operated by ${sanitizeString(operators[code].n)}`
-      : "";
+    if (operators[code]) {
+      value = operators[code].n;
+    }
   }
-  return "";
+
+  return value ? ` operated by ${sanitizeString(value)}` : "";
 };
 
 const formatSpeed = spd =>
@@ -95,12 +105,11 @@ const formatSpeed = spd =>
     : "";
 
 const formatType = (icao, type) =>
-  (types &&
-    ((types[icao] &&
-      types[icao].d &&
-      ` ${addArticle(sanitizeString(types[icao].d))}`) ||
-      (types[icao] && types[icao].t && ` ${addArticle(types[icao].t)}`) ||
-      (type && ` ${addArticle(type)}`))) ||
+  (types[icao] &&
+    types[icao].d &&
+    ` ${addArticle(sanitizeString(types[icao].d))}`) ||
+  (types[icao] && types[icao].t && ` ${addArticle(types[icao].t)}`) ||
+  (type && ` ${addArticle(type)}`) ||
   " An aircraft";
 
 const isNewState = (snap, cooldown) => {

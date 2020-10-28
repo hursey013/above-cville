@@ -201,13 +201,25 @@ describe("utils", () => {
   describe("formatOperator function", () => {
     describe("properly formats string", () => {
       it("with missing value", () => {
-        expect(utils.formatOperator("")).toEqual("");
+        expect(utils.formatOperator("", { val: () => ({}) })).toEqual("");
+      });
+
+      it("with custom operator", () => {
+        jest.mock("./storage/operators.json", () => ({
+          SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
+        }));
+        const utils = require("./utils.js");
+        expect(
+          utils.formatOperator("SWA123", {
+            val: () => ({ description: "Foobar Airlines" })
+          })
+        ).toEqual(" operated by Foobar Airlines");
       });
 
       it("with no db matches", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.formatOperator("SWA123")).toEqual("");
+        expect(utils.formatOperator("SWA123", { val: () => ({}) })).toEqual("");
       });
 
       it("with db match", () => {
@@ -215,7 +227,7 @@ describe("utils", () => {
           SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
         }));
         const utils = require("./utils.js");
-        expect(utils.formatOperator("SWA123")).toEqual(
+        expect(utils.formatOperator("SWA123", { val: () => ({}) })).toEqual(
           " operated by Southwest Airlines"
         );
       });
@@ -310,6 +322,17 @@ describe("utils", () => {
           cooldown
         )
       ).toEqual(false);
+    });
+  });
+
+  describe("numberWithCommas function", () => {
+    it("does not add commas when not needed", () => {
+      expect(utils.numberWithCommas("100")).toEqual("100");
+    });
+
+    it("adds commas when appropriate", () => {
+      expect(utils.numberWithCommas("1000")).toEqual("1,000");
+      expect(utils.numberWithCommas("1000000")).toEqual("1,000,000");
     });
   });
 
