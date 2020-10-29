@@ -25,14 +25,14 @@ const addArticle = string => {
 
 const createStatus = (
   snap,
-  { alt, call, icao, mil, reg, spd, trak, type },
+  { alt, call, icao, mil, opicao, reg, spd, trak, type },
   link
 ) => {
   return `${randomItem(actionPhrases)}${formatType(
     icao,
     type
   )}${formatIdentifier(call, icao, reg)}${formatOperator(
-    call,
+    opicao,
     snap
   )}${formatCount(snap)} is currently flying${formatAltitude(
     alt
@@ -75,18 +75,15 @@ const formatHashTag = (mil, snap) => {
 const formatIdentifier = (call, icao, reg) =>
   call || icao || reg ? ` (${call || reg || icao})` : "";
 
-const formatOperator = (call, snap) => {
+const formatOperator = (opicao, snap) => {
   const desc = snap.val() && snap.val().description;
   let value = "";
 
   if (desc) {
     value = desc;
-  } else if (call) {
-    // Use the first three letters of callsign as key
-    const code = call.slice(0, 3);
-
-    if (operators[code]) {
-      value = operators[code].n;
+  } else if (opicao) {
+    if (operators[opicao]) {
+      value = operators[opicao].n;
     }
   }
 

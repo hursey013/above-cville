@@ -36,6 +36,7 @@ describe("utils", () => {
       trak: "220.6",
       call: "SWA123",
       gnd: "0",
+      opicao: "SWA",
       mil: "1"
     };
 
@@ -77,7 +78,7 @@ describe("utils", () => {
         expect(
           utils.createStatus(snap, { ...state, call: "", reg: "", icao: "" })
         ).toEqual(
-          "Can you see it? A G200, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military"
+          "Can you see it? A G200 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military"
         );
       });
 
@@ -202,7 +203,7 @@ describe("utils", () => {
         }));
         const utils = require("./utils.js");
         expect(
-          utils.formatOperator("SWA123", {
+          utils.formatOperator("SWA", {
             val: () => ({ description: "Foobar Airlines" })
           })
         ).toEqual(" operated by Foobar Airlines");
@@ -211,7 +212,7 @@ describe("utils", () => {
       it("with no db matches", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.formatOperator("SWA123", { val: () => ({}) })).toEqual("");
+        expect(utils.formatOperator("SWA", { val: () => ({}) })).toEqual("");
       });
 
       it("with db match", () => {
@@ -219,7 +220,7 @@ describe("utils", () => {
           SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
         }));
         const utils = require("./utils.js");
-        expect(utils.formatOperator("SWA123", { val: () => ({}) })).toEqual(
+        expect(utils.formatOperator("SWA", { val: () => ({}) })).toEqual(
           " operated by Southwest Airlines"
         );
       });
