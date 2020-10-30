@@ -26,8 +26,8 @@ admin.initializeApp({
   databaseURL: dbUrl
 });
 const db = admin.database();
-const ref = db.ref("states");
-const storage = admin.storage();
+const statesRef = db.ref("states");
+const opsRef = db.ref("operators");
 const T = new Twit(twitter);
 
 // Download and convert image to base64
@@ -76,10 +76,10 @@ const fetchStates = () =>
     .then(({ data }) => data);
 
 // Send a media tweet if there is a photo, otherwise normal tweet
-const postTweet = async (snap, state) => {
+const postTweet = async (snap, state, ops) => {
   const { call, icao, reg, type } = state;
   const media = await fetchImage(reg);
-  const status = createStatus(snap, state);
+  const status = createStatus(snap, state, ops);
 
   return media
     ? // Send media tweet
@@ -106,7 +106,7 @@ const postTweet = async (snap, state) => {
 
 // Record timestamp of spotted aircraft to database
 const saveTimestamp = (icao, time) =>
-  ref.child(`${icao}/timestamps`).push(time);
+  statesRef.child(`${icao}/timestamps`).push(time);
 
 const app = async () => {
   try {
@@ -119,13 +119,14 @@ const app = async () => {
     return await Promise.all(
       filteredStates.map(async state => {
         const { icao } = state;
-        const snap = await ref.child(icao).once("value");
+        const snap = await statesRef.child(icao).once("value");
+        const ops = await opsRef.once("value");
 
         // Check if this is a new aircraft or if it's past the cooldown time
         if (isNewState(snap, cooldownMinutes)) {
           return await Promise.all([
             saveTimestamp(icao, time),
-            postTweet(snap, state)
+            postTweet(snap, state, ops)
           ]);
         }
 

@@ -39,6 +39,7 @@ describe("utils", () => {
       opicao: "SWA",
       mil: "1"
     };
+    let ops = { val: () => ({ CVILLE: "Cville Airlines" }) };
 
     describe("properly formats status with ", () => {
       beforeEach(() => {
@@ -54,21 +55,21 @@ describe("utils", () => {
 
       it("all values empty", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus({ val: jest.fn() }, {})).toEqual(
-          "Can you see it? An aircraft is currently flying overhead"
-        );
+        expect(
+          utils.createStatus({ val: jest.fn() }, {}, { val: jest.fn() })
+        ).toEqual("Can you see it? An aircraft is currently flying overhead");
       });
 
       it("all values present", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, state)).toEqual(
+        expect(utils.createStatus(snap, state, ops)).toEqual(
           "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing type value", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, { ...state, type: "" })).toEqual(
+        expect(utils.createStatus(snap, { ...state, type: "" }, ops)).toEqual(
           "Can you see it? An aircraft (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
@@ -76,7 +77,11 @@ describe("utils", () => {
       it("missing identifiers values", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, call: "", reg: "", icao: "" })
+          utils.createStatus(
+            snap,
+            { ...state, call: "", reg: "", icao: "" },
+            ops
+          )
         ).toEqual(
           "Can you see it? A G200 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military"
         );
@@ -85,42 +90,42 @@ describe("utils", () => {
       it("missing operator value", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, state)).toEqual(
+        expect(utils.createStatus(snap, state, ops)).toEqual(
           "Can you see it? A G200 (SWA123), seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing count value", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus({ val: () => {} }, state)).toEqual(
+        expect(utils.createStatus({ val: () => {} }, state, ops)).toEqual(
           "Can you see it? A G200 (SWA123) operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing altitude value", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, { ...state, alt: "" })).toEqual(
+        expect(utils.createStatus(snap, { ...state, alt: "" }, ops)).toEqual(
           "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing direction value value", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, { ...state, trak: "" })).toEqual(
+        expect(utils.createStatus(snap, { ...state, trak: "" }, ops)).toEqual(
           "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing speed value", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, { ...state, spd: "" })).toEqual(
+        expect(utils.createStatus(snap, { ...state, spd: "" }, ops)).toEqual(
           "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing hashtags values", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, { ...state, mil: "0" })).toEqual(
+        expect(utils.createStatus(snap, { ...state, mil: "0" }, ops)).toEqual(
           "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
@@ -194,7 +199,9 @@ describe("utils", () => {
   describe("formatOperator function", () => {
     describe("properly formats string", () => {
       it("with missing value", () => {
-        expect(utils.formatOperator("", { val: () => ({}) })).toEqual("");
+        expect(
+          utils.formatOperator("", { val: () => ({}) }, { val: () => ({}) })
+        ).toEqual("");
       });
 
       it("with custom operator", () => {
@@ -203,16 +210,22 @@ describe("utils", () => {
         }));
         const utils = require("./utils.js");
         expect(
-          utils.formatOperator("SWA", {
-            val: () => ({ description: "Foobar Airlines" })
-          })
+          utils.formatOperator(
+            "SWA",
+            {
+              val: () => ({ description: "Foobar Airlines" })
+            },
+            { val: () => ({ SWA: "Cville Airlines" }) }
+          )
         ).toEqual(" operated by Foobar Airlines");
       });
 
       it("with no db matches", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.formatOperator("SWA", { val: () => ({}) })).toEqual("");
+        expect(
+          utils.formatOperator("SWA", { val: () => ({}) }, { val: () => ({}) })
+        ).toEqual("");
       });
 
       it("with db match", () => {
@@ -220,9 +233,23 @@ describe("utils", () => {
           SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
         }));
         const utils = require("./utils.js");
-        expect(utils.formatOperator("SWA", { val: () => ({}) })).toEqual(
-          " operated by Southwest Airlines"
-        );
+        expect(
+          utils.formatOperator("SWA", { val: () => ({}) }, { val: () => ({}) })
+        ).toEqual(" operated by Southwest Airlines");
+      });
+
+      it("with operator override", () => {
+        jest.mock("./storage/operators.json", () => ({
+          SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
+        }));
+        const utils = require("./utils.js");
+        expect(
+          utils.formatOperator(
+            "SWA",
+            { val: () => ({}) },
+            { val: () => ({ SWA: "Cville Airlines" }) }
+          )
+        ).toEqual(" operated by Cville Airlines");
       });
     });
   });
