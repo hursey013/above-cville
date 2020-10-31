@@ -68,7 +68,7 @@ const formatHashTag = (mil, snap) => {
 
   let hashtags = "";
   hashtags += mil === "1" ? ` #military` : "";
-  hashtags += count && count >= 20 ? ` #frequentflyer` : "";
+  hashtags += count && count >= 100 ? ` #frequentflyer` : "";
 
   return hashtags;
 };
