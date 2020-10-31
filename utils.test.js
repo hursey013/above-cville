@@ -172,12 +172,12 @@ describe("utils", () => {
       ).toEqual(" #military");
       expect(
         utils.formatHashTag("", {
-          val: () => ({ timestamps: Array.from(Array(20).keys()) })
+          val: () => ({ timestamps: Array.from(Array(100).keys()) })
         })
       ).toEqual(" #frequentflyer");
       expect(
         utils.formatHashTag("1", {
-          val: () => ({ timestamps: Array.from(Array(20).keys()) })
+          val: () => ({ timestamps: Array.from(Array(100).keys()) })
         })
       ).toEqual(" #military #frequentflyer");
     });
