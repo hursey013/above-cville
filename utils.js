@@ -129,6 +129,7 @@ const randomItem = array => array[Math.floor(Math.random() * array.length)];
 
 const sanitizeString = string =>
   string
+    .replace("''", "'")
     .split(" ")
     .map(w => {
       // Check config for abbreviations that we want capitalized

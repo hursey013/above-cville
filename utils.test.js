@@ -357,6 +357,10 @@ describe("utils", () => {
   });
 
   describe("sanitizeString function", () => {
+    it("removes double single quotes", () => {
+      expect(utils.sanitizeString("Van''s RV-7")).toEqual("Van's RV-7");
+    });
+
     it("sentence cases string", () => {
       expect(utils.sanitizeString("an airplane")).toEqual("An Airplane");
     });
