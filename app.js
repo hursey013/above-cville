@@ -8,6 +8,7 @@ const Twit = require("twit");
 const {
   adsbx: { url, lat, lon, radius, key },
   cooldownMinutes,
+  minimumAlt,
   dbUrl,
   firebase,
   photoApi,
@@ -16,6 +17,7 @@ const {
 const {
   createStatus,
   isNewState,
+  filterStates,
   formatIdentifier,
   formatType,
   randomItem
@@ -112,12 +114,8 @@ const app = async () => {
   try {
     const { ac: states, ctime: time } = await fetchStates();
 
-    // Filter out aircraft that are on currently on the ground
-    const filteredStates =
-      (states && states.filter(({ gnd }) => gnd !== "1")) || [];
-
     return await Promise.all(
-      filteredStates.map(async state => {
+      filterStates(states).map(async state => {
         const { icao } = state;
         const snap = await statesRef.child(icao).once("value");
         const ops = await opsRef.once("value");

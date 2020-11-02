@@ -132,6 +132,40 @@ describe("utils", () => {
     });
   });
 
+  describe("filterStates function", () => {
+    beforeEach(() => {
+      jest.mock("./config.js", () => ({
+        minimumAlt: 25000,
+        abbreviations: [],
+        articles: {}
+      }));
+    });
+
+    describe("removes", () => {
+      it("aircraft on the ground", () => {
+        const utils = require("./utils.js");
+        expect(utils.filterStates([{ gnd: "1" }]).length).toEqual(0);
+      });
+
+      it("aircraft above minimum altitude", () => {
+        const utils = require("./utils.js");
+        expect(utils.filterStates([{ alt: "30000" }]).length).toEqual(0);
+      });
+    });
+
+    describe("does not remove", () => {
+      it("aircraft that are not on the ground", () => {
+        const utils = require("./utils.js");
+        expect(utils.filterStates([{ gnd: "0" }]).length).toEqual(1);
+      });
+
+      it("aircraft that are above minimum altitude", () => {
+        const utils = require("./utils.js");
+        expect(utils.filterStates([{ alt: "23000" }]).length).toEqual(1);
+      });
+    });
+  });
+
   describe("formatAltitude function", () => {
     it("properly formats string", () => {
       expect(utils.formatAltitude("")).toEqual("");

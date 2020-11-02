@@ -4,7 +4,12 @@ const fs = require("fs");
 const a = require("indefinite");
 const moment = require("moment");
 
-const { abbreviations, actionPhrases, articles } = require("./config");
+const {
+  abbreviations,
+  actionPhrases,
+  articles,
+  minimumAlt
+} = require("./config");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
@@ -42,6 +47,15 @@ const createStatus = (
     snap
   )}${icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""}`;
 };
+
+const filterStates = states =>
+  (states &&
+    states.filter(({ alt, gnd }) => {
+      if (minimumAlt && Number(alt) > minimumAlt) return false;
+
+      return gnd !== "1";
+    })) ||
+  [];
 
 const formatAltitude = alt => (alt ? ` ${numberWithCommas(alt)} ft` : "");
 
@@ -152,6 +166,7 @@ const sanitizeString = string =>
 module.exports = {
   addArticle,
   createStatus,
+  filterStates,
   formatAltitude,
   formatCount,
   formatDirection,

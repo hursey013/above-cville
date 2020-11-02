@@ -4,6 +4,7 @@ module.exports = {
   actionPhrases: ["Can you see it?", "Look up!", "There it goes!", "Up above!"],
   refreshSeconds: 5,
   cooldownMinutes: 5,
+  minimumAlt: 25000,
   photoApi: {
     username: process.env.PHOTO_API_USERNAME,
     password: process.env.PHOTO_API_PASSWORD,
