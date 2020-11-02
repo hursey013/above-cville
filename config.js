@@ -21,7 +21,8 @@ module.exports = {
       const count = snap.val() && Object.keys(snap.val().timestamps).length;
 
       return count && count >= 100 && "frequentflyer";
-    }
+    },
+    ({ icao }, snap) => icao === "A63714" && "pegasus"
   ],
   adsbx: {
     url: "https://adsbexchange.com/api/aircraft/json",
