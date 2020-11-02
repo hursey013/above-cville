@@ -203,45 +203,20 @@ describe("utils", () => {
         articles: {},
         hashtags: [
           ({ mil }, snap) => mil === "1" && "military",
-          (state, snap) => {
-            const count =
-              snap.val() && Object.keys(snap.val().timestamps).length;
-
-            return count && count >= 100 && "frequentflyer";
-          }
+          ({ alt }, snap) => Number(alt) >= 30000 && "intheclouds"
         ]
       }));
     });
 
     it("properly formats string", () => {
       const utils = require("./utils.js");
-      expect(utils.formatHashTag("", { val: () => {} })).toEqual("");
+      expect(utils.formatHashTag({}, { val: () => {} })).toEqual("");
+      expect(utils.formatHashTag({ mil: "1" }, jest.fn())).toEqual(
+        " #military"
+      );
       expect(
-        utils.formatHashTag(
-          { mil: "1" },
-          {
-            val: () => {
-              [1603572682275];
-            }
-          }
-        )
-      ).toEqual(" #military");
-      expect(
-        utils.formatHashTag(
-          { mil: "" },
-          {
-            val: () => ({ timestamps: Array.from(Array(100).keys()) })
-          }
-        )
-      ).toEqual(" #frequentflyer");
-      expect(
-        utils.formatHashTag(
-          { mil: "1" },
-          {
-            val: () => ({ timestamps: Array.from(Array(100).keys()) })
-          }
-        )
-      ).toEqual(" #military #frequentflyer");
+        utils.formatHashTag({ mil: "1", alt: "40000" }, jest.fn())
+      ).toEqual(" #military #intheclouds");
     });
   });
 
