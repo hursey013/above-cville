@@ -8,7 +8,8 @@ const {
   abbreviations,
   actionPhrases,
   articles,
-  minimumAlt
+  minimumAlt,
+  hashtags
 } = require("./config");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
@@ -28,11 +29,9 @@ const addArticle = string => {
   return a(string, { capitalize: true });
 };
 
-const createStatus = (
-  snap,
-  { alt, call, icao, mil, opicao, reg, spd, trak, type },
-  ops
-) => {
+const createStatus = (snap, state, ops) => {
+  const { alt, call, icao, mil, opicao, reg, spd, trak, type } = state;
+
   return `${randomItem(actionPhrases)}${formatType(
     icao,
     type
@@ -43,7 +42,7 @@ const createStatus = (
   )}${formatCount(snap)} is currently flying${formatAltitude(
     alt
   )} overhead${formatDirection(trak)}${formatSpeed(spd)}${formatHashTag(
-    mil,
+    state,
     snap
   )}${icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""}`;
 };
@@ -77,14 +76,18 @@ const formatDirection = trak =>
       )}`
     : "";
 
-const formatHashTag = (mil, snap) => {
-  const count = snap.val() && Object.keys(snap.val().timestamps).length;
+const formatHashTag = (state, snap) => {
+  let string = "";
 
-  let hashtags = "";
-  hashtags += mil === "1" ? ` #military` : "";
-  hashtags += count && count >= 100 ? ` #frequentflyer` : "";
+  hashtags.forEach(hashtag => {
+    const value = hashtag(state, snap);
 
-  return hashtags;
+    if (value) {
+      string += ` #${value}`;
+    }
+  });
+
+  return string;
 };
 
 const formatIdentifier = (call, icao, reg) =>

@@ -46,7 +46,8 @@ describe("utils", () => {
         jest.mock("./config.js", () => ({
           abbreviations: [],
           actionPhrases: ["Can you see it?"],
-          articles: {}
+          articles: {},
+          hashtags: [({ mil }, snap) => mil === "1" && "military"]
         }));
         jest.mock("./storage/operators.json", () => ({
           SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
@@ -195,24 +196,51 @@ describe("utils", () => {
   });
 
   describe("formatHashTag function", () => {
+    beforeEach(() => {
+      jest.mock("./config.js", () => ({
+        abbreviations: [],
+        actionPhrases: [],
+        articles: {},
+        hashtags: [
+          ({ mil }, snap) => mil === "1" && "military",
+          (state, snap) => {
+            const count =
+              snap.val() && Object.keys(snap.val().timestamps).length;
+
+            return count && count >= 100 && "frequentflyer";
+          }
+        ]
+      }));
+    });
+
     it("properly formats string", () => {
+      const utils = require("./utils.js");
       expect(utils.formatHashTag("", { val: () => {} })).toEqual("");
       expect(
-        utils.formatHashTag("1", {
-          val: () => {
-            [1603572682275];
+        utils.formatHashTag(
+          { mil: "1" },
+          {
+            val: () => {
+              [1603572682275];
+            }
           }
-        })
+        )
       ).toEqual(" #military");
       expect(
-        utils.formatHashTag("", {
-          val: () => ({ timestamps: Array.from(Array(100).keys()) })
-        })
+        utils.formatHashTag(
+          { mil: "" },
+          {
+            val: () => ({ timestamps: Array.from(Array(100).keys()) })
+          }
+        )
       ).toEqual(" #frequentflyer");
       expect(
-        utils.formatHashTag("1", {
-          val: () => ({ timestamps: Array.from(Array(100).keys()) })
-        })
+        utils.formatHashTag(
+          { mil: "1" },
+          {
+            val: () => ({ timestamps: Array.from(Array(100).keys()) })
+          }
+        )
       ).toEqual(" #military #frequentflyer");
     });
   });

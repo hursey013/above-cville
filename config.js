@@ -15,6 +15,14 @@ module.exports = {
     A: ["Eurocopter"],
     An: []
   },
+  hashtags: [
+    ({ mil }, snap) => mil === "1" && "military",
+    (state, snap) => {
+      const count = snap.val() && Object.keys(snap.val().timestamps).length;
+
+      return count && count >= 100 && "frequentflyer";
+    }
+  ],
   adsbx: {
     url: "https://adsbexchange.com/api/aircraft/json",
     lat: 38.0375,
