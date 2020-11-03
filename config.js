@@ -22,7 +22,7 @@ module.exports = {
 
       return count && count >= 100 && "frequentflyer";
     },
-    ({ icao }, snap) => icao === "A63714" && "pegasus"
+    ({ call, reg }, snap) => (reg || call).replace("-", "")
   ],
   adsbx: {
     url: "https://adsbexchange.com/api/aircraft/json",
