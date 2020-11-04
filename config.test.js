@@ -16,29 +16,5 @@ describe("config", () => {
         )
       ).toEqual("frequentflyer");
     });
-
-    it("adds registration hashtag", () => {
-      expect(
-        hashtags[2](
-          {
-            call: "",
-            reg: ""
-          },
-          jest.fn()
-        )
-      ).toEqual("");
-
-      expect(
-        hashtags[2](
-          {
-            call: "ABC-123",
-            reg: ""
-          },
-          jest.fn()
-        )
-      ).toEqual("ABC123");
-    });
   });
 });
-
-// 89-26190

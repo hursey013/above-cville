@@ -91,7 +91,11 @@ const formatHashTag = (state, snap) => {
 };
 
 const formatIdentifier = (call, icao, reg) =>
-  call || icao || reg ? ` (${call || reg || icao})` : "";
+  reg && isNaN(reg.replace("-", ""))
+    ? ` #${reg}`
+    : call || icao
+    ? ` #${call || icao}`
+    : "";
 
 const formatOperator = (opicao, snap, ops) => {
   const desc = snap.val() && snap.val().description;

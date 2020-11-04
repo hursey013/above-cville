@@ -21,8 +21,7 @@ module.exports = {
       const count = snap.val() && Object.keys(snap.val().timestamps).length;
 
       return count && count >= 100 && "frequentflyer";
-    },
-    ({ call, reg }, snap) => (reg || call).replace("-", "")
+    }
   ],
   adsbx: {
     url: "https://adsbexchange.com/api/aircraft/json",

@@ -64,14 +64,14 @@ describe("utils", () => {
       it("all values present", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, state, ops)).toEqual(
-          "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing type value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, type: "" }, ops)).toEqual(
-          "Can you see it? An aircraft (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? An aircraft #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
@@ -92,42 +92,42 @@ describe("utils", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, state, ops)).toEqual(
-          "Can you see it? A G200 (SWA123), seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing count value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus({ val: () => {} }, state, ops)).toEqual(
-          "Can you see it? A G200 (SWA123) operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing altitude value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, alt: "" }, ops)).toEqual(
-          "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing direction value value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, trak: "" }, ops)).toEqual(
-          "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing speed value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, spd: "" }, ops)).toEqual(
-          "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW #military 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW #military 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
       it("missing hashtags values", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, mil: "0" }, ops)).toEqual(
-          "Can you see it? A G200 (SWA123) operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
     });
@@ -222,14 +222,16 @@ describe("utils", () => {
 
   describe("formatIdentifier function", () => {
     it("properly formats string", () => {
-      expect(utils.formatIdentifier("")).toEqual("");
+      expect(utils.formatIdentifier("", "A12345", "")).toEqual(" #A12345");
       expect(utils.formatIdentifier("SWA123", "A12345", "N12345")).toEqual(
-        " (SWA123)"
+        " #N12345"
+      );
+      expect(utils.formatIdentifier("TEST123", "A12345", "98-0001")).toEqual(
+        " #TEST123"
       );
       expect(utils.formatIdentifier("", "A12345", "N12345")).toEqual(
-        " (N12345)"
+        " #N12345"
       );
-      expect(utils.formatIdentifier("", "A12345", "")).toEqual(" (A12345)");
     });
   });
 
