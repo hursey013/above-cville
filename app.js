@@ -122,6 +122,8 @@ const app = async () => {
 
         // Check if this is a new aircraft or if it's past the cooldown time
         if (isNewState(snap, cooldownMinutes)) {
+          console.info(JSON.stringify(state, null, 2));
+
           return await Promise.all([
             saveTimestamp(icao, time),
             postTweet(snap, state, ops)
