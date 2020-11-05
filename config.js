@@ -10,7 +10,7 @@ module.exports = {
     password: process.env.PHOTO_API_PASSWORD,
     url: "https://fa-photo-api.web.app"
   },
-  abbreviations: ["III", "LLC", "PHI", "PSA"],
+  abbreviations: ["IAI", "III", "LLC", "PHI", "PSA"],
   articles: {
     A: ["Eurocopter"],
     An: []

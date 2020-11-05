@@ -136,9 +136,9 @@ const isNewState = (snap, cooldown) => {
 
   return (
     !snap.exists() ||
+    !timestamps ||
     moment(
-      timestamps &&
-        timestamps[Object.keys(timestamps)[Object.keys(timestamps).length - 1]]
+      timestamps[Object.keys(timestamps)[Object.keys(timestamps).length - 1]]
     ).isBefore(moment().subtract(cooldown, "minutes"))
   );
 };

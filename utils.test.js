@@ -342,6 +342,18 @@ describe("utils", () => {
       ).toEqual(true);
     });
 
+    it("is false if timestamp array is missing", () => {
+      expect(
+        utils.isNewState(
+          {
+            exists: () => true,
+            val: () => ({ description: "@abovecville" })
+          },
+          cooldown
+        )
+      ).toEqual(true);
+    });
+
     it("is false if last timestamp is less than cooldown", () => {
       expect(
         utils.isNewState(
