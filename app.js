@@ -3,6 +3,7 @@
 const axios = require("axios").default;
 const admin = require("firebase-admin");
 const Buffer = require("safe-buffer").Buffer;
+const { serializeError } = require("serialize-error");
 const Twit = require("twit");
 
 const {
@@ -80,15 +81,15 @@ const fetchStates = () =>
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state, ops) => {
   const { call, icao, reg, type } = state;
-  const media = await fetchImage(call, reg);
   const status = createStatus(snap, state, ops);
+  const media = await fetchImage(call, reg);
 
   return media
     ? // Send media tweet
-      T.post("media/upload", { media_data: media }).then(
-        ({ data: { media_id_string } }) =>
+      T.post("media/upload", { media_data: media })
+        .then(({ data }) =>
           T.post("media/metadata/create", {
-            media_id: media_id_string,
+            media_id: data.media_id_string,
             alt_text: {
               text: `${formatType({
                 icao,
@@ -98,10 +99,18 @@ const postTweet = async (snap, state, ops) => {
           }).then(res =>
             T.post("statuses/update", {
               status,
-              media_ids: [media_id_string]
+              media_ids: [data.media_id_string]
             })
           )
-      )
+        )
+        .catch(error => {
+          console.warn(
+            "Media upload failed",
+            JSON.stringify(serializeError(error))
+          );
+          // Atempt to send tweet without media on error
+          return T.post("statuses/update", { status });
+        })
     : // Send tweet without media
       T.post("statuses/update", { status });
 };
@@ -122,7 +131,7 @@ const app = async () => {
 
         // Check if this is a new aircraft or if it's past the cooldown time
         if (isNewState(snap, cooldownMinutes)) {
-          console.info(JSON.stringify(state, null, 2));
+          console.info(JSON.stringify(state));
 
           return await Promise.all([
             saveTimestamp(icao, time),
@@ -134,7 +143,7 @@ const app = async () => {
       })
     );
   } catch (error) {
-    return console.error(`Error: ${error.message}`);
+    return console.error(JSON.stringify(serializeError(error)));
   }
 };
 
