@@ -16,6 +16,11 @@ module.exports = {
     An: []
   },
   hashtags: [
+    ({ interested }, snap) => {
+      const interesting = snap.val() && snap.val().interesting;
+
+      return interesting !== false && interested === "1" && "interesting";
+    },
     ({ mil }, snap) => mil === "1" && "military",
     (state, snap) => {
       const count = snap.val() && Object.keys(snap.val().timestamps).length;
