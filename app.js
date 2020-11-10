@@ -39,8 +39,12 @@ const downloadImage = url =>
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-const fetchImage = async (call, reg) => {
-  const url = await fetchPhotoApiImageUrl(reg || call);
+const fetchImage = async (call, reg, snap) => {
+  // Check for photos in DB before calling API
+  const local = snap.val() && snap.val().photos && snap.val().photos.length;
+  const url = local
+    ? randomItem(local)
+    : await fetchPhotoApiImageUrl(reg || call);
 
   if (url) {
     const b64content = await downloadImage(url);
@@ -82,7 +86,7 @@ const fetchStates = () =>
 const postTweet = async (snap, state, ops) => {
   const { call, icao, reg, type } = state;
   const status = createStatus(snap, state, ops);
-  const media = await fetchImage(call, reg);
+  const media = await fetchImage(call, reg, snap);
 
   return media
     ? // Send media tweet
