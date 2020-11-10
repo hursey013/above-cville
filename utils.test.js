@@ -420,6 +420,7 @@ describe("utils", () => {
       expect(utils.sanitizeString("300ABC")).toEqual("300ABC");
       expect(utils.sanitizeString("ABC-DEF")).toEqual("ABC-DEF");
       expect(utils.sanitizeString("ABC.DEF")).toEqual("ABC.DEF");
+      expect(utils.sanitizeString("@FlyCville")).toEqual("@FlyCville");
     });
 
     it("allows exceptions", () => {
