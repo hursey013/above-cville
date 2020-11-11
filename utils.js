@@ -8,7 +8,7 @@ const {
   abbreviations,
   actionPhrases,
   articles,
-  minimumAlt,
+  maximumAlt,
   hashtags
 } = require("./config");
 const operators = require("./storage/operators.json");
@@ -55,7 +55,7 @@ const fillTemplate = (templateString, templateVariables) =>
 const filterStates = states =>
   (states &&
     states.filter(({ alt, gnd }) => {
-      if (minimumAlt && Number(alt) > minimumAlt) return false;
+      if (maximumAlt && Number(alt) > maximumAlt) return false;
 
       return gnd !== "1";
     })) ||

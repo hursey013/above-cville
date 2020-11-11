@@ -136,7 +136,7 @@ describe("utils", () => {
   describe("filterStates function", () => {
     beforeEach(() => {
       jest.mock("./config.js", () => ({
-        minimumAlt: 25000,
+        maximumAlt: 25000,
         abbreviations: [],
         articles: {}
       }));
@@ -148,9 +148,9 @@ describe("utils", () => {
         expect(utils.filterStates([{ gnd: "1" }]).length).toEqual(0);
       });
 
-      it("aircraft above minimum altitude", () => {
+      it("aircraft above maximum altitude", () => {
         const utils = require("./utils.js");
-        expect(utils.filterStates([{ alt: "30000" }]).length).toEqual(0);
+        expect(utils.filterStates([{ alt: "35000" }]).length).toEqual(0);
       });
     });
 
@@ -160,7 +160,7 @@ describe("utils", () => {
         expect(utils.filterStates([{ gnd: "0" }]).length).toEqual(1);
       });
 
-      it("aircraft that are above minimum altitude", () => {
+      it("aircraft that are below maximum altitude", () => {
         const utils = require("./utils.js");
         expect(utils.filterStates([{ alt: "23000" }]).length).toEqual(1);
       });

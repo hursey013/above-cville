@@ -9,7 +9,7 @@ const Twit = require("twit");
 const {
   adsbx: { url, lat, lon, radius, key },
   cooldownMinutes,
-  minimumAlt,
+  maximumAlt,
   dbUrl,
   firebase,
   photoApi,

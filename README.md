@@ -51,7 +51,7 @@ There are a number of variables which can be customized by modifying `config.js`
 - `actionPhrases` - short phrases to add to the beginning of the tweet
 - `refreshSeconds` - how often to call the ADS-B endpoint
 - `cooldownMinutes` - amount of time that should pass before spotting the same aircraft
-- `minimumAlt` - filter out aircraft above this altitude
+- `maximumAlt` - filter out aircraft above this altitude
 - `abbreviations` - abbreviations that should be kept uppercase
 - `articles` - exceptions where a plane type should be an `An` instead of an `A` and vice versa
 - `airport.dataUrl` - URL for thumbnail endpoint
