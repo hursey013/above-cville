@@ -169,14 +169,14 @@ describe("utils", () => {
 
   describe("formatAltitude function", () => {
     it("properly formats string", () => {
-      expect(utils.formatAltitude("")).toEqual("");
+      expect(utils.formatAltitude("")).toEqual(false);
       expect(utils.formatAltitude("28000")).toEqual(" 28,000 ft");
     });
   });
 
   describe("formatCount function", () => {
     it("properly formats string", () => {
-      expect(utils.formatCount({ val: () => {} })).toEqual("");
+      expect(utils.formatCount({ val: () => {} })).toEqual(false);
       expect(
         utils.formatCount({ val: () => ({ timestamps: [1603572682275] }) })
       ).toEqual(", seen once before,");
@@ -190,7 +190,7 @@ describe("utils", () => {
 
   describe("formatDirection function", () => {
     it("properly formats string", () => {
-      expect(utils.formatDirection("")).toEqual("");
+      expect(utils.formatDirection("")).toEqual(false);
       expect(utils.formatDirection("220.6")).toEqual(" and heading SW");
     });
   });
@@ -240,7 +240,7 @@ describe("utils", () => {
       it("with missing value", () => {
         expect(
           utils.formatOperator("", { val: () => ({}) }, { val: () => ({}) })
-        ).toEqual("");
+        ).toEqual(false);
       });
 
       it("with custom operator", () => {
@@ -264,7 +264,7 @@ describe("utils", () => {
         const utils = require("./utils.js");
         expect(
           utils.formatOperator("SWA", { val: () => ({}) }, { val: () => ({}) })
-        ).toEqual("");
+        ).toEqual(false);
       });
 
       it("with db match", () => {
@@ -295,8 +295,9 @@ describe("utils", () => {
 
   describe("formatSpeed function", () => {
     it("properly formats string", () => {
-      expect(utils.formatSpeed("")).toEqual("");
-      expect(utils.formatSpeed("0")).toEqual("");
+      expect(utils.formatSpeed()).toEqual(false);
+      expect(utils.formatSpeed("")).toEqual(false);
+      expect(utils.formatSpeed("0")).toEqual(false);
       expect(utils.formatSpeed("1000")).toEqual(" at 1151 mph");
     });
   });

@@ -32,20 +32,25 @@ const addArticle = string => {
 const createStatus = (snap, state, ops) => {
   const { alt, call, icao, mil, opicao, reg, spd, trak, type } = state;
 
-  return `${randomItem(actionPhrases)}${formatType(
-    icao,
-    type
-  )}${formatIdentifier(call, icao, reg)}${formatOperator(
-    opicao,
-    snap,
-    ops
-  )}${formatCount(snap)} is currently flying${formatAltitude(
-    alt
-  )} overhead${formatDirection(trak)}${formatSpeed(spd)}${formatHashTag(
-    state,
-    snap
-  )}${icao ? ` 📡https://globe.adsbexchange.com/?icao=${icao}` : ""}`;
+  return fillTemplate(
+    "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${link}",
+    {
+      action: randomItem(actionPhrases),
+      type: formatType(icao, type),
+      id: formatIdentifier(call, icao, reg),
+      operator: formatOperator(opicao, snap, ops),
+      count: formatCount(snap),
+      altitude: formatAltitude(alt),
+      direction: formatDirection(trak),
+      speed: formatSpeed(spd),
+      hashtag: formatHashTag(state, snap),
+      link: Boolean(icao) && ` 📡https://globe.adsbexchange.com/?icao=${icao}`
+    }
+  );
 };
+
+const fillTemplate = (templateString, templateVariables) =>
+  templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
 
 const filterStates = states =>
   (states &&
@@ -56,25 +61,25 @@ const filterStates = states =>
     })) ||
   [];
 
-const formatAltitude = alt => (alt ? ` ${numberWithCommas(alt)} ft` : "");
+const formatAltitude = alt => Boolean(alt) && ` ${numberWithCommas(alt)} ft`;
 
 const formatCount = snap => {
   const count = snap.val() && Object.keys(snap.val().timestamps).length;
 
-  return count
-    ? `, seen ${
-        count === 1 ? "once" : `${numberWithCommas(count)} times`
-      } before,`
-    : "";
+  return (
+    Boolean(count) &&
+    `, seen ${
+      count === 1 ? "once" : `${numberWithCommas(count)} times`
+    } before,`
+  );
 };
 
 const formatDirection = trak =>
-  trak
-    ? ` and heading ${Compass.cardinalFromDegree(
-        trak,
-        Compass.CardinalSubset.Ordinal
-      )}`
-    : "";
+  Boolean(trak) &&
+  ` and heading ${Compass.cardinalFromDegree(
+    trak,
+    Compass.CardinalSubset.Ordinal
+  )}`;
 
 const formatHashTag = (state, snap) => {
   let string = "";
@@ -93,9 +98,7 @@ const formatHashTag = (state, snap) => {
 const formatIdentifier = (call, icao, reg) =>
   reg && isNaN(reg.replace("-", ""))
     ? ` #${reg}`
-    : call || icao
-    ? ` #${call || icao}`
-    : "";
+    : Boolean(call || icao) && ` #${call || icao}`;
 
 const formatOperator = (opicao, snap, ops) => {
   const desc = snap.val() && snap.val().description;
@@ -111,17 +114,17 @@ const formatOperator = (opicao, snap, ops) => {
     }
   }
 
-  return value ? ` operated by ${sanitizeString(value)}` : "";
+  return Boolean(value) && ` operated by ${sanitizeString(value)}`;
 };
 
 const formatSpeed = spd =>
-  spd && Number(spd) !== 0
-    ? ` at ${Math.round(
-        convert(Number(spd))
-          .from("knot")
-          .to("m/h")
-      )} mph`
-    : "";
+  Boolean(spd) &&
+  Number(spd) !== 0 &&
+  ` at ${Math.round(
+    convert(Number(spd))
+      .from("knot")
+      .to("m/h")
+  )} mph`;
 
 const formatType = (icao, type) =>
   (types[icao] &&
