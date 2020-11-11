@@ -34,29 +34,28 @@ const opsRef = db.ref("operators");
 const T = new Twit(twitter);
 
 // Download and convert image to base64
-const downloadImage = url =>
+const downloadMedia = url =>
   axios
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-const fetchImage = async (call, reg, snap) => {
+const fetchMedia = async (call, reg, snap) => {
   // Check for photos in DB before calling API
-  const local = snap.val() && snap.val().photos && snap.val().photos.length;
-  const url = local
-    ? randomItem(local)
-    : await fetchPhotoApiImageUrl(reg || call);
+  const photos = snap.val() && snap.val().photos;
+  const media = photos
+    ? fetchLocalMediaUrl(photos)
+    : await fetchRemoteMediaUrl(reg || call);
 
-  if (url) {
-    const b64content = await downloadImage(url);
-
-    return b64content;
-  }
-
-  return false;
+  return media;
 };
 
+const fetchLocalMediaUrl = async photos => ({
+  photo: photos.length && (await downloadMedia(randomItem(photos))),
+  link: false
+});
+
 // Get image url from photo API
-const fetchPhotoApiImageUrl = reg => {
+const fetchRemoteMediaUrl = reg => {
   const { url, username, password } = photoApi;
 
   return axios({
@@ -67,11 +66,13 @@ const fetchPhotoApiImageUrl = reg => {
       password
     },
     params: {
-      reg
+      reg,
+      v: 1
     }
-  }).then(({ data: { data } }) =>
-    data && data.length ? randomItem(data) : false
-  );
+  }).then(async ({ data: { photos, links } }) => ({
+    photo: photos.length && (await downloadMedia(randomItem(photos))),
+    link: links.length && randomItem(links)
+  }));
 };
 
 // Main function to retrieve ADS-B data from ADSBx
@@ -85,12 +86,11 @@ const fetchStates = () =>
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state, ops) => {
   const { call, icao, reg, type } = state;
-  const status = createStatus(snap, state, ops);
-  const media = await fetchImage(call, reg, snap);
+  const media = await fetchMedia(call, reg, snap);
 
-  return media
+  return media.photo
     ? // Send media tweet
-      T.post("media/upload", { media_data: media })
+      T.post("media/upload", { media_data: media.photo })
         .then(({ data }) =>
           T.post("media/metadata/create", {
             media_id: data.media_id_string,
@@ -102,7 +102,7 @@ const postTweet = async (snap, state, ops) => {
             }
           }).then(res =>
             T.post("statuses/update", {
-              status,
+              status: createStatus(snap, state, ops),
               media_ids: [data.media_id_string]
             })
           )
@@ -113,10 +113,14 @@ const postTweet = async (snap, state, ops) => {
             JSON.stringify(serializeError(error))
           );
           // Atempt to send tweet without media on error
-          return T.post("statuses/update", { status });
+          return T.post("statuses/update", {
+            status: createStatus(snap, state, ops, media.link)
+          });
         })
     : // Send tweet without media
-      T.post("statuses/update", { status });
+      T.post("statuses/update", {
+        status: createStatus(snap, state, ops, media.link)
+      });
 };
 
 // Record timestamp of spotted aircraft to database

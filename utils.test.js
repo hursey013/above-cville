@@ -63,8 +63,15 @@ describe("utils", () => {
 
       it("all values present", () => {
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, state, ops)).toEqual(
-          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345"
+        expect(
+          utils.createStatus(
+            snap,
+            state,
+            ops,
+            "https://www.myphotos.com/photo/123456"
+          )
+        ).toEqual(
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📸https://www.myphotos.com/photo/123456 📡https://globe.adsbexchange.com/?icao=A12345"
         );
       });
 
