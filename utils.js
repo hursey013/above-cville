@@ -1,9 +1,10 @@
+"use strict";
+
 const Compass = require("cardinal-direction");
 const convert = require("convert-units");
 const fs = require("fs");
 const a = require("indefinite");
 const moment = require("moment");
-
 const {
   abbreviations,
   actionPhrases,
@@ -133,21 +134,6 @@ const formatType = (icao, type) =>
   (type && ` ${addArticle(type)}`) ||
   " An aircraft";
 
-const isInDateRange = (timestamps, limit = 0, intervalLength, intervalUnit) => {
-  const array = Object.values(timestamps);
-
-  return (
-    array.length >= limit &&
-    array
-      .slice(-limit)
-      .every(timestamp =>
-        moment(timestamp).isAfter(
-          moment().subtract(intervalLength, intervalUnit)
-        )
-      )
-  );
-};
-
 const isNewState = (snap, cooldown) => {
   const timestamps = snap.val() && snap.val().timestamps;
 
@@ -199,7 +185,6 @@ module.exports = {
   formatOperator,
   formatSpeed,
   formatType,
-  isInDateRange,
   isNewState,
   numberWithCommas,
   randomItem,

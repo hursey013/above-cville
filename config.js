@@ -1,5 +1,22 @@
+"use strict";
+
 require("dotenv").config();
-const { isInDateRange } = require("./utils");
+const moment = require("moment");
+
+const isInDateRange = (timestamps, limit = 0, intervalLength, intervalUnit) => {
+  const array = Object.values(timestamps);
+
+  return (
+    array.length >= limit &&
+    array
+      .slice(-limit)
+      .every(timestamp =>
+        moment(timestamp).isAfter(
+          moment().subtract(intervalLength, intervalUnit)
+        )
+      )
+  );
+};
 
 module.exports = {
   actionPhrases: ["Can you see it?", "Look up!", "There it goes!", "Up above!"],
