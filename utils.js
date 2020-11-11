@@ -118,8 +118,7 @@ const formatOperator = (opicao, snap, ops) => {
 };
 
 const formatSpeed = spd =>
-  Boolean(spd) &&
-  Number(spd) !== 0 &&
+  Boolean(spd && Number(spd) !== 0) &&
   ` at ${Math.round(
     convert(Number(spd))
       .from("knot")
@@ -133,6 +132,21 @@ const formatType = (icao, type) =>
   (types[icao] && types[icao].t && ` ${addArticle(types[icao].t)}`) ||
   (type && ` ${addArticle(type)}`) ||
   " An aircraft";
+
+const isInDateRange = (timestamps, limit = 0, intervalLength, intervalUnit) => {
+  const array = Object.values(timestamps);
+
+  return (
+    array.length >= limit &&
+    array
+      .slice(-limit)
+      .every(timestamp =>
+        moment(timestamp).isAfter(
+          moment().subtract(intervalLength, intervalUnit)
+        )
+      )
+  );
+};
 
 const isNewState = (snap, cooldown) => {
   const timestamps = snap.val() && snap.val().timestamps;
@@ -185,6 +199,7 @@ module.exports = {
   formatOperator,
   formatSpeed,
   formatType,
+  isInDateRange,
   isNewState,
   numberWithCommas,
   randomItem,

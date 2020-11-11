@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { isInDateRange } = require("./utils");
 
 module.exports = {
   actionPhrases: ["Can you see it?", "Look up!", "There it goes!", "Up above!"],
@@ -16,17 +17,19 @@ module.exports = {
     An: []
   },
   hashtags: [
-    ({ interested }, snap) => {
-      const interesting = snap.val() && snap.val().interesting;
-
-      return interesting !== false && interested === "1" && "interesting";
-    },
+    ({ interested }, snap) =>
+      Boolean(
+        snap.val() && snap.val().interesting !== false && interested === "1"
+      ) && "interesting",
     ({ mil }, snap) => mil === "1" && "military",
-    (state, snap) => {
-      const count = snap.val() && Object.keys(snap.val().timestamps).length;
-
-      return count && count >= 100 && "frequentflyer";
-    }
+    (state, snap) =>
+      Boolean(
+        snap.val() && isInDateRange(snap.val().timestamps, 3, 24, "hours")
+      ) && "busyday",
+    (state, snap) =>
+      Boolean(
+        snap.val() && isInDateRange(snap.val().timestamps, 30, 90, "days")
+      ) && "frequentflyer"
   ],
   adsbx: {
     url: "https://adsbexchange.com/api/aircraft/json",

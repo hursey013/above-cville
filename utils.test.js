@@ -360,7 +360,13 @@ describe("utils", () => {
         utils.isNewState(
           {
             exists: () => true,
-            val: () => ({ timestamps: [moment().subtract(2, "minutes")] })
+            val: () => ({
+              timestamps: {
+                0: moment()
+                  .subtract(2, "minutes")
+                  .valueOf()
+              }
+            })
           },
           cooldown
         )
@@ -372,7 +378,13 @@ describe("utils", () => {
         utils.isNewState(
           {
             exists: () => true,
-            val: () => ({ timestamps: [moment().subtract(10, "minutes")] })
+            val: () => ({
+              timestamps: {
+                0: moment()
+                  .subtract(10, "minutes")
+                  .valueOf()
+              }
+            })
           },
           cooldown
         )
