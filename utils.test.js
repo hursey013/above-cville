@@ -230,6 +230,9 @@ describe("utils", () => {
   describe("formatIdentifier function", () => {
     it("properly formats string", () => {
       expect(utils.formatIdentifier("", "A12345", "")).toEqual(" #A12345");
+      expect(utils.formatIdentifier("ABC123", "A12345", "ABC-123")).toEqual(
+        " #ABC123"
+      );
       expect(utils.formatIdentifier("SWA123", "A12345", "N12345")).toEqual(
         " #N12345"
       );

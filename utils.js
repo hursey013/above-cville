@@ -98,7 +98,7 @@ const formatHashTag = (state, snap) => {
 };
 
 const formatIdentifier = (call, icao, reg) =>
-  reg && isNaN(reg.replace("-", ""))
+  reg && !reg.includes("-")
     ? ` #${reg}`
     : Boolean(call || icao) && ` #${call || icao}`;
 
