@@ -1,22 +1,6 @@
 "use strict";
 
 require("dotenv").config();
-const moment = require("moment");
-
-const isInDateRange = (timestamps, limit = 0, intervalLength, intervalUnit) => {
-  const array = Object.values(timestamps);
-
-  return (
-    array.length >= limit &&
-    array
-      .slice(-limit)
-      .every(timestamp =>
-        moment(timestamp).isAfter(
-          moment().subtract(intervalLength, intervalUnit)
-        )
-      )
-  );
-};
 
 module.exports = {
   actionPhrases: ["Can you see it?", "Look up!", "There it goes!", "Up above!"],
@@ -33,21 +17,6 @@ module.exports = {
     A: ["Eurocopter"],
     An: []
   },
-  hashtags: [
-    ({ interested }, snap) =>
-      Boolean(
-        snap.val() && snap.val().interesting !== false && interested === "1"
-      ) && "interesting",
-    ({ mil }, snap) => mil === "1" && "military",
-    (state, snap) =>
-      Boolean(
-        snap.val() && isInDateRange(snap.val().timestamps, 3, 24, "hours")
-      ) && "busyday",
-    (state, snap) =>
-      Boolean(
-        snap.val() && isInDateRange(snap.val().timestamps, 30, 90, "days")
-      ) && "frequentflyer"
-  ],
   adsbx: {
     url: "https://adsbexchange.com/api/aircraft/json",
     lat: 38.0375,

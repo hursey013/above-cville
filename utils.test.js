@@ -203,27 +203,14 @@ describe("utils", () => {
   });
 
   describe("formatHashTag function", () => {
-    beforeEach(() => {
-      jest.mock("./config.js", () => ({
-        abbreviations: [],
-        actionPhrases: [],
-        articles: {},
-        hashtags: [
-          ({ mil }, snap) => mil === "1" && "military",
-          ({ alt }, snap) => Number(alt) >= 30000 && "intheclouds"
-        ]
-      }));
-    });
-
     it("properly formats string", () => {
-      const utils = require("./utils.js");
       expect(utils.formatHashTag({}, { val: () => {} })).toEqual("");
-      expect(utils.formatHashTag({ mil: "1" }, jest.fn())).toEqual(
+      expect(utils.formatHashTag({ mil: "1" }, { val: () => {} })).toEqual(
         " #military"
       );
       expect(
-        utils.formatHashTag({ mil: "1", alt: "40000" }, jest.fn())
-      ).toEqual(" #military #intheclouds");
+        utils.formatHashTag({ interested: "1", mil: "1" }, { val: () => {} })
+      ).toEqual(" #interesting #military");
     });
   });
 

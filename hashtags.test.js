@@ -1,13 +1,13 @@
 const moment = require("moment");
 
-const { hashtags } = require("./config");
+const hashtags = require("./hashtags");
 
 describe("config", () => {
   describe("hashtags functions", () => {
     describe("interesting hashtag", () => {
       it("added when override is not set", () => {
         expect(
-          hashtags[0](
+          hashtags.interesting(
             { interested: "1" },
             {
               val: () => ({})
@@ -18,7 +18,7 @@ describe("config", () => {
 
       it("not added when override is set", () => {
         expect(
-          hashtags[0](
+          hashtags.interesting(
             { interested: "1" },
             {
               val: () => ({ interesting: false })
@@ -29,17 +29,17 @@ describe("config", () => {
     });
 
     it("adds military hashtag", () => {
-      expect(hashtags[1]({}, jest.fn())).toEqual(false);
-      expect(hashtags[1]({ mil: "1" }, jest.fn())).toEqual("military");
+      expect(hashtags.military({}, jest.fn())).toEqual(false);
+      expect(hashtags.military({ mil: "1" }, jest.fn())).toEqual("military");
     });
 
     it("adds busyday hashtag", () => {
-      expect(hashtags[2]({}, { exists: () => false, val: () => {} })).toEqual(
-        false
-      );
+      expect(
+        hashtags.busyday({}, { exists: () => false, val: () => {} })
+      ).toEqual(false);
 
       expect(
-        hashtags[2](
+        hashtags.busyday(
           {},
           {
             val: () => ({
@@ -54,7 +54,7 @@ describe("config", () => {
       ).toEqual(false);
 
       expect(
-        hashtags[2](
+        hashtags.busyday(
           {},
           {
             val: () => ({
@@ -75,7 +75,7 @@ describe("config", () => {
       ).toEqual("busyday");
 
       expect(
-        hashtags[2](
+        hashtags.busyday(
           {},
           {
             val: () => ({

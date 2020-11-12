@@ -9,9 +9,9 @@ const {
   abbreviations,
   actionPhrases,
   articles,
-  maximumAlt,
-  hashtags
+  maximumAlt
 } = require("./config");
+const hashtags = require("./hashtags");
 const operators = require("./storage/operators.json");
 const types = require("./storage/aircrafts.json");
 
@@ -86,8 +86,8 @@ const formatDirection = trak =>
 const formatHashTag = (state, snap) => {
   let string = "";
 
-  hashtags.forEach(hashtag => {
-    const value = hashtag(state, snap);
+  Object.keys(hashtags).forEach(hashtag => {
+    const value = hashtags[hashtag](state, snap);
 
     if (value) {
       string += ` #${value}`;
