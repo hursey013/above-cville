@@ -69,7 +69,7 @@ const fetchRemoteMediaUrl = reg => {
       reg,
       v: 1
     }
-  }).then(async ({ data: { photos, links } }) => ({
+  }).then(async ({ data: { photos = [], links = [] } }) => ({
     photo: photos.length && (await downloadMedia(randomItem(photos))),
     link: links.length && randomItem(links)
   }));
