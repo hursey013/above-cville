@@ -103,9 +103,12 @@ const formatIdentifier = (call, icao, reg) =>
     : Boolean(call || icao) && ` #${call || icao}`;
 
 const formatOperator = (opicao, snap, ops) => {
+  const desc = snap.val() && snap.val().description;
   let value = "";
 
-  if (opicao) {
+  if (desc) {
+    value = desc;
+  } else if (opicao) {
     if (ops.val() && ops.val()[opicao]) {
       value = ops.val()[opicao];
     } else if (operators[opicao]) {

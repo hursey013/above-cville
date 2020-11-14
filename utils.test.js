@@ -240,6 +240,22 @@ describe("utils", () => {
         ).toEqual(false);
       });
 
+      it("with custom operator", () => {
+        jest.mock("./storage/operators.json", () => ({
+          SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
+        }));
+        const utils = require("./utils.js");
+        expect(
+          utils.formatOperator(
+            "SWA",
+            {
+              val: () => ({ description: "Foobar Airlines" })
+            },
+            { val: () => ({ SWA: "Cville Airlines" }) }
+          )
+        ).toEqual(" operated by Foobar Airlines");
+      });
+
       it("with no db matches", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
