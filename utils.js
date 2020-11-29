@@ -168,7 +168,7 @@ const sanitizeString = string =>
       }
 
       // Don't sentence case words with numbers or symbols, otherwise go ahead
-      return !/\d|[@.\-/]/.test(w)
+      return !/\d|[#@.\-/]/.test(w)
         ? w[0].toUpperCase() + w.substr(1).toLowerCase()
         : w;
     })
