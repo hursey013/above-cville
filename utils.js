@@ -8,6 +8,7 @@ const moment = require("moment");
 const {
   abbreviations,
   actionPhrases,
+  adsbx,
   articles,
   maximumAlt
 } = require("./config");
@@ -46,7 +47,11 @@ const createStatus = (snap, state, ops, media) => {
       speed: formatSpeed(spd),
       hashtag: formatHashTag(state, snap),
       media: Boolean(media) && ` 📸${media}`,
-      link: Boolean(icao) && ` 📡https://globe.adsbexchange.com/?icao=${icao}`
+      link:
+        Boolean(icao) &&
+        ` 📡https://globe.adsbexchange.com/?icao=${icao}&lat=${adsbx.lat}&lon=${
+          adsbx.lon
+        }&zoom=12.0&showTrace=${moment().format("YYYY-MM-DD")}`
     }
   );
 };
