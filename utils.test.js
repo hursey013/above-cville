@@ -156,24 +156,58 @@ describe("utils", () => {
     describe("removes", () => {
       it("aircraft on the ground", () => {
         const utils = require("./utils.js");
-        expect(utils.filterStates([{ gnd: "1" }]).length).toEqual(0);
+        expect(
+          utils.filterStates([{ gnd: "1" }], {
+            val: () => []
+          }).length
+        ).toEqual(0);
       });
 
       it("aircraft above maximum altitude", () => {
         const utils = require("./utils.js");
-        expect(utils.filterStates([{ alt: "35000" }]).length).toEqual(0);
+        expect(
+          utils.filterStates([{ alt: "35000" }], {
+            val: () => []
+          }).length
+        ).toEqual(0);
+      });
+
+      it("operator in the ignored array from database", () => {
+        const utils = require("./utils.js");
+        expect(
+          utils.filterStates([{ opicao: "PDT" }], {
+            val: () => ["PDT"]
+          }).length
+        ).toEqual(0);
       });
     });
 
     describe("does not remove", () => {
       it("aircraft that are not on the ground", () => {
         const utils = require("./utils.js");
-        expect(utils.filterStates([{ gnd: "0" }]).length).toEqual(1);
+        expect(
+          utils.filterStates([{ gnd: "0" }], {
+            val: () => []
+          }).length
+        ).toEqual(1);
       });
 
       it("aircraft that are below maximum altitude", () => {
         const utils = require("./utils.js");
-        expect(utils.filterStates([{ alt: "23000" }]).length).toEqual(1);
+        expect(
+          utils.filterStates([{ alt: "23000" }], {
+            val: () => []
+          }).length
+        ).toEqual(1);
+      });
+
+      it("operator not in the ignored array from database", () => {
+        const utils = require("./utils.js");
+        expect(
+          utils.filterStates([{ opicao: "PDT" }], {
+            val: () => ["FOO"]
+          }).length
+        ).toEqual(1);
       });
     });
   });

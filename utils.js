@@ -59,14 +59,22 @@ const createStatus = (snap, state, ops, media) => {
 const fillTemplate = (templateString, templateVariables) =>
   templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
 
-const filterStates = states =>
-  (states &&
-    states.filter(({ alt, gnd }) => {
-      if (maximumAlt && Number(alt) > maximumAlt) return false;
+const filterStates = (states, ignored) => {
+  return (
+    (states &&
+      states.filter(({ alt, gnd, opicao }) => {
+        if (maximumAlt && Number(alt) > maximumAlt) return false;
+        if (
+          ignored.val() &&
+          ignored.val().some(i => i.toLowerCase() === opicao.toLowerCase())
+        )
+          return false;
 
-      return gnd !== "1";
-    })) ||
-  [];
+        return gnd !== "1";
+      })) ||
+    []
+  );
+};
 
 const formatAltitude = alt => Boolean(alt) && ` ${numberWithCommas(alt)} ft`;
 

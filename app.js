@@ -31,6 +31,8 @@ admin.initializeApp({
 const db = admin.database();
 const statesRef = db.ref("states");
 const opsRef = db.ref("operators");
+const ignoredRef = db.ref("ignored");
+
 const T = new Twit(twitter);
 
 // Download and convert image to base64
@@ -130,9 +132,10 @@ const saveTimestamp = (icao, time) =>
 const app = async () => {
   try {
     const { ac: states, ctime: time } = await fetchStates();
+    const ignored = await ignoredRef.child("operators").once("value");
 
     return await Promise.all(
-      filterStates(states).map(async state => {
+      filterStates(states, ignored).map(async state => {
         const { icao } = state;
         const snap = await statesRef.child(icao).once("value");
         const ops = await opsRef.once("value");
