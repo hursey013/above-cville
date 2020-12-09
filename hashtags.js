@@ -30,5 +30,6 @@ module.exports = {
   frequentflyer: (state, snap) =>
     Boolean(snap.val()) &&
     isInDateRange(snap.val().timestamps, 30, 90, "days") &&
-    "frequentflyer"
+    "frequentflyer",
+  heyfriend: ({ icao }) => icao === "A0E429" && "heyfriend"
 };
