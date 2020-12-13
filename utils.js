@@ -35,7 +35,7 @@ const createStatus = (snap, state, ops, media) => {
   const { alt, call, icao, mil, opicao, reg, spd, trak, type } = state;
 
   return fillTemplate(
-    "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${media}${link}",
+    "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${break}${media}${link}",
     {
       action: randomItem(actionPhrases),
       type: formatType(icao, type),
@@ -46,12 +46,13 @@ const createStatus = (snap, state, ops, media) => {
       direction: formatDirection(trak),
       speed: formatSpeed(spd),
       hashtag: formatHashTag(state, snap),
-      media: Boolean(media) && ` 📸${media}`,
+      break: (Boolean(media) || Boolean(icao)) && "\n",
+      media: Boolean(media) && `\n📸 ${media}`,
       link:
         Boolean(icao) &&
-        ` 📡https://globe.adsbexchange.com/?icao=${icao}&lat=${adsbx.lat}&lon=${
-          adsbx.lon
-        }&zoom=12.0&showTrace=${moment().format("YYYY-MM-DD")}`
+        `\n📡 https://globe.adsbexchange.com/?icao=${icao}&lat=${
+          adsbx.lat
+        }&lon=${adsbx.lon}&zoom=12.0&showTrace=${moment().format("YYYY-MM-DD")}`
     }
   );
 };
