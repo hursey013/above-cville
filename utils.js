@@ -39,8 +39,8 @@ const createStatus = (snap, state, ops, media) => {
     {
       action: randomItem(actionPhrases),
       type: formatType(icao, type),
-      id: formatIdentifier(call, icao, reg),
-      operator: formatOperator(opicao, snap, ops),
+      id: formatIdentifier(call, icao, reg, mil),
+      operator: formatOperator(call, opicao, reg, snap, ops, mil),
       count: formatCount(snap),
       altitude: formatAltitude(alt),
       direction: formatDirection(trak),
@@ -110,12 +110,12 @@ const formatHashTag = (state, snap) => {
   return string;
 };
 
-const formatIdentifier = (call, icao, reg) =>
-  reg && !reg.includes("-")
+const formatIdentifier = (call, icao, reg, mil) =>
+  reg && !isMilitary(reg, mil)
     ? ` #${reg}`
     : Boolean(call || icao) && ` #${call || icao}`;
 
-const formatOperator = (opicao, snap, ops) => {
+const formatOperator = (call, opicao, reg, snap, ops, mil) => {
   const desc = snap.val() && snap.val().description;
   let value = "";
 
@@ -126,6 +126,12 @@ const formatOperator = (opicao, snap, ops) => {
       value = ops.val()[opicao];
     } else if (operators[opicao]) {
       value = operators[opicao].n;
+    }
+  } else if (call && !isMilitary(reg, mil)) {
+    const code = call.slice(0, 3);
+
+    if (operators[code]) {
+      value = operators[code].n;
     }
   }
 
@@ -147,6 +153,9 @@ const formatType = (icao, type) =>
   (types[icao] && types[icao].t && ` ${addArticle(types[icao].t)}`) ||
   (type && ` ${addArticle(type)}`) ||
   " An aircraft";
+
+const isMilitary = (reg, mil) =>
+  reg.includes("-") || !isNaN(reg) || mil === "1";
 
 const isNewState = (snap, cooldown) => {
   const timestamps = snap.val() && snap.val().timestamps;
@@ -199,6 +208,7 @@ module.exports = {
   formatOperator,
   formatSpeed,
   formatType,
+  isMilitary,
   isNewState,
   numberWithCommas,
   randomItem,

@@ -37,7 +37,7 @@ describe("utils", () => {
       call: "SWA123",
       gnd: "0",
       opicao: "SWA",
-      mil: "1"
+      mil: "0"
     };
     let ops = { val: () => ({ CVILLE: "Cville Airlines" }) };
 
@@ -75,14 +75,14 @@ describe("utils", () => {
             "https://www.myphotos.com/photo/123456"
           )
         ).toEqual(
-          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📸https://www.myphotos.com/photo/123456 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph 📸https://www.myphotos.com/photo/123456 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
       it("missing type value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, type: "" }, ops)).toEqual(
-          "Can you see it? An aircraft #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? An aircraft #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
@@ -95,7 +95,7 @@ describe("utils", () => {
             ops
           )
         ).toEqual(
-          "Can you see it? A G200 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military"
+          "Can you see it? A G200 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph"
         );
       });
 
@@ -103,35 +103,35 @@ describe("utils", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, state, ops)).toEqual(
-          "Can you see it? A G200 #N12345, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? A G200 #N12345, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
       it("missing count value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus({ val: () => {} }, state, ops)).toEqual(
-          "Can you see it? A G200 #N12345 operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
       it("missing altitude value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, alt: "" }, ops)).toEqual(
-          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying overhead and heading SW at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying overhead and heading SW at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
       it("missing direction value value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, trak: "" }, ops)).toEqual(
-          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead at 497 mph #military 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead at 497 mph 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
       it("missing speed value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus(snap, { ...state, spd: "" }, ops)).toEqual(
-          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW #military 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
+          "Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW 📡https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24"
         );
       });
 
@@ -269,12 +269,18 @@ describe("utils", () => {
       );
     });
   });
-
   describe("formatOperator function", () => {
     describe("properly formats string", () => {
       it("with missing value", () => {
         expect(
-          utils.formatOperator("", { val: () => ({}) }, { val: () => ({}) })
+          utils.formatOperator(
+            "",
+            "",
+            "",
+            { val: () => ({}) },
+            { val: () => ({}) },
+            ""
+          )
         ).toEqual(false);
       });
 
@@ -285,11 +291,12 @@ describe("utils", () => {
         const utils = require("./utils.js");
         expect(
           utils.formatOperator(
+            "",
             "SWA",
-            {
-              val: () => ({ description: "Foobar Airlines" })
-            },
-            { val: () => ({ SWA: "Cville Airlines" }) }
+            "",
+            { val: () => ({ description: "Foobar Airlines" }) },
+            { val: () => ({ SWA: "Cville Airlines" }) },
+            ""
           )
         ).toEqual(" operated by Foobar Airlines");
       });
@@ -298,7 +305,14 @@ describe("utils", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
         expect(
-          utils.formatOperator("SWA", { val: () => ({}) }, { val: () => ({}) })
+          utils.formatOperator(
+            "",
+            "SWA",
+            "",
+            { val: () => ({}) },
+            { val: () => ({}) },
+            ""
+          )
         ).toEqual(false);
       });
 
@@ -308,7 +322,14 @@ describe("utils", () => {
         }));
         const utils = require("./utils.js");
         expect(
-          utils.formatOperator("SWA", { val: () => ({}) }, { val: () => ({}) })
+          utils.formatOperator(
+            "",
+            "SWA",
+            "",
+            { val: () => ({}) },
+            { val: () => ({}) },
+            ""
+          )
         ).toEqual(" operated by Southwest Airlines");
       });
 
@@ -319,11 +340,48 @@ describe("utils", () => {
         const utils = require("./utils.js");
         expect(
           utils.formatOperator(
+            "",
             "SWA",
+            "",
             { val: () => ({}) },
-            { val: () => ({ SWA: "Cville Airlines" }) }
+            { val: () => ({ SWA: "Cville Airlines" }) },
+            ""
           )
         ).toEqual(" operated by Cville Airlines");
+      });
+
+      it("derived from callsign", () => {
+        jest.mock("./storage/operators.json", () => ({
+          CVL: { n: "Cville Airlines", c: "United States", r: "CVL" }
+        }));
+        const utils = require("./utils.js");
+        expect(
+          utils.formatOperator(
+            "CVL123",
+            "",
+            "N12345",
+            { val: () => ({}) },
+            { val: () => ({}) },
+            ""
+          )
+        ).toEqual(" operated by Cville Airlines");
+      });
+
+      it("not derived from callsign if military", () => {
+        jest.mock("./storage/operators.json", () => ({
+          CVL: { n: "Cville Airlines", c: "United States", r: "CVL" }
+        }));
+        const utils = require("./utils.js");
+        expect(
+          utils.formatOperator(
+            "CVL123",
+            "",
+            "N12345",
+            { val: () => ({}) },
+            { val: () => ({}) },
+            "1"
+          )
+        ).toEqual(false);
       });
     });
   });
@@ -366,6 +424,17 @@ describe("utils", () => {
           expect(utils.formatType("A12345", "G200")).toEqual(" A Cessna 208 B");
         });
       });
+    });
+  });
+
+  describe("isMilitary function", () => {
+    it("is true if numeric registration", () => {
+      expect(utils.isMilitary("0123456", "")).toEqual(true);
+      expect(utils.isMilitary("01-23456", "")).toEqual(true);
+    });
+
+    it("is true if mil is true", () => {
+      expect(utils.isMilitary("ABC123", "1")).toEqual(true);
     });
   });
 
