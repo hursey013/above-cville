@@ -32,6 +32,7 @@ const db = admin.database();
 const statesRef = db.ref("states");
 const opsRef = db.ref("operators");
 const ignoredRef = db.ref("ignored");
+const interestingRef = db.ref("interesting");
 
 const T = new Twit(twitter);
 
@@ -86,7 +87,7 @@ const fetchStates = () =>
     .then(({ data }) => data);
 
 // Send a media tweet if there is a photo, otherwise normal tweet
-const postTweet = async (snap, state, ops) => {
+const postTweet = async (snap, state, ops, interesting) => {
   const { call, icao, reg, type } = state;
   const media = await fetchMedia(call, reg, snap);
 
@@ -104,7 +105,7 @@ const postTweet = async (snap, state, ops) => {
             }
           }).then(res =>
             T.post("statuses/update", {
-              status: createStatus(snap, state, ops),
+              status: createStatus(snap, state, ops, interesting),
               media_ids: [data.media_id_string]
             })
           )
@@ -116,12 +117,12 @@ const postTweet = async (snap, state, ops) => {
           );
           // Atempt to send tweet without media on error
           return T.post("statuses/update", {
-            status: createStatus(snap, state, ops, media.link)
+            status: createStatus(snap, state, ops, interesting, media.link)
           });
         })
     : // Send tweet without media
       T.post("statuses/update", {
-        status: createStatus(snap, state, ops, media.link)
+        status: createStatus(snap, state, ops, interesting, media.link)
       });
 };
 
@@ -139,6 +140,7 @@ const app = async () => {
         const { icao } = state;
         const snap = await statesRef.child(icao).once("value");
         const ops = await opsRef.once("value");
+        const interesting = await interestingRef.once("value");
 
         // Check if this is a new aircraft or if it's past the cooldown time
         if (isNewState(snap, cooldownMinutes)) {
@@ -146,7 +148,7 @@ const app = async () => {
 
           return await Promise.all([
             saveTimestamp(icao, time),
-            postTweet(snap, state, ops)
+            postTweet(snap, state, ops, interesting)
           ]);
         }
 

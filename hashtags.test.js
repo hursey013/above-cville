@@ -8,7 +8,10 @@ describe("config", () => {
       it("added when override is not set", () => {
         expect(
           hashtags.interesting(
-            { interested: "1" },
+            { interested: "1", icao: "ABC123" },
+            {
+              val: () => ({})
+            },
             {
               val: () => ({})
             }
@@ -19,9 +22,12 @@ describe("config", () => {
       it("not added when override is set", () => {
         expect(
           hashtags.interesting(
-            { interested: "1" },
+            { interested: "1", icao: "ABC123" },
             {
-              val: () => ({ interesting: false })
+              val: () => ({})
+            },
+            {
+              val: () => ({ ABC123: false })
             }
           )
         ).toEqual(false);
@@ -49,6 +55,9 @@ describe("config", () => {
                   .valueOf()
               }
             })
+          },
+          {
+            val: () => ({})
           }
         )
       ).toEqual(false);
@@ -70,6 +79,9 @@ describe("config", () => {
                   .valueOf()
               }
             })
+          },
+          {
+            val: () => ({})
           }
         )
       ).toEqual("busyday");
@@ -91,6 +103,9 @@ describe("config", () => {
                   .valueOf()
               }
             })
+          },
+          {
+            val: () => ({})
           }
         )
       ).toEqual(false);

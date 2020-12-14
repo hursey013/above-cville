@@ -31,7 +31,7 @@ const addArticle = string => {
   return a(string, { capitalize: true });
 };
 
-const createStatus = (snap, state, ops, media) => {
+const createStatus = (snap, state, ops, interesting, media) => {
   const { alt, call, icao, mil, opicao, reg, spd, trak, type } = state;
 
   return fillTemplate(
@@ -40,12 +40,12 @@ const createStatus = (snap, state, ops, media) => {
       action: randomItem(actionPhrases),
       type: formatType(icao, type),
       id: formatIdentifier(call, icao, reg, mil),
-      operator: formatOperator(call, opicao, reg, snap, ops, mil),
+      operator: formatOperator(call, icao, opicao, reg, ops, mil),
       count: formatCount(snap),
       altitude: formatAltitude(alt),
       direction: formatDirection(trak),
       speed: formatSpeed(spd),
-      hashtag: formatHashTag(state, snap),
+      hashtag: formatHashTag(state, snap, interesting),
       break: (Boolean(media) || Boolean(icao)) && "\n",
       media: Boolean(media) && `\n📸 ${media}`,
       link:
@@ -97,11 +97,11 @@ const formatDirection = trak =>
     Compass.CardinalSubset.Ordinal
   )}`;
 
-const formatHashTag = (state, snap) => {
+const formatHashTag = (state, snap, interesting) => {
   let string = "";
 
   Object.keys(hashtags).forEach(hashtag => {
-    const value = hashtags[hashtag](state, snap);
+    const value = hashtags[hashtag](state, snap, interesting);
 
     if (value) {
       string += ` #${value}`;
@@ -116,17 +116,18 @@ const formatIdentifier = (call, icao, reg, mil) =>
     ? ` #${reg}`
     : Boolean(call || icao) && ` #${call || icao}`;
 
-const formatOperator = (call, opicao, reg, snap, ops, mil) => {
-  const desc = snap.val() && snap.val().description;
+const formatOperator = (call, icao, opicao, reg, ops, mil) => {
   let value = "";
 
-  if (desc) {
-    value = desc;
-  } else if (opicao) {
-    if (ops.val() && ops.val()[opicao]) {
-      value = ops.val()[opicao];
+  if (opicao) {
+    if (ops.val().opicao && ops.val().opicao[opicao]) {
+      value = ops.val().opicao[opicao];
     } else if (operators[opicao]) {
       value = operators[opicao].n;
+    }
+  } else if (icao) {
+    if (ops.val().icao && ops.val().icao[icao]) {
+      value = ops.val().icao[icao];
     }
   } else if (call && !isMilitary(reg, mil)) {
     const code = call.slice(0, 3);
