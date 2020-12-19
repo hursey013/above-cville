@@ -28,6 +28,10 @@ admin.initializeApp({
   credential: admin.credential.cert(firebase),
   databaseURL: dbUrl
 });
+
+const storage = admin.storage();
+const storageRef = storage.ref();
+
 const db = admin.database();
 const statesRef = db.ref("states");
 const opsRef = db.ref("operators");
@@ -42,18 +46,19 @@ const downloadMedia = url =>
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-const fetchMedia = async (call, reg, snap) => {
-  // Check for photos in DB before calling API
-  const photos = snap.val() && snap.val().photos;
-  const media = photos
-    ? fetchLocalMediaUrl(photos)
-    : await fetchRemoteMediaUrl(reg || call);
+const fetchMedia = async (call, icao, reg, snap) => {
+  // Check for photos in storage before calling API
+  const photos = await storageRef.child(`photos/${icao}`).listAll();
+  const media =
+    photos.items.length > 0
+      ? fetchLocalMedia(photos.items)
+      : await fetchRemoteMediaUrl(reg || call);
 
   return media;
 };
 
-const fetchLocalMediaUrl = async photos => ({
-  photo: photos.length && (await downloadMedia(randomItem(photos))),
+const fetchLocalMedia = async photos => ({
+  photo: await downloadMedia(randomItem(photos).getDownloadURL()),
   link: false
 });
 
@@ -89,7 +94,7 @@ const fetchStates = () =>
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state, ops, interesting) => {
   const { call, icao, reg, type } = state;
-  const media = await fetchMedia(call, reg, snap);
+  const media = await fetchMedia(call, icao, reg, snap);
 
   return media.photo
     ? // Send media tweet
