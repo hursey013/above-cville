@@ -13,6 +13,7 @@ const {
   dbUrl,
   firebase,
   photoApi,
+  storageBucket,
   twitter
 } = require("./config");
 const {
@@ -26,13 +27,17 @@ const {
 
 admin.initializeApp({
   credential: admin.credential.cert(firebase),
-  databaseURL: dbUrl
+  databaseURL: dbUrl,
+  storageBucket
 });
+
 const db = admin.database();
 const statesRef = db.ref("states");
 const opsRef = db.ref("operators");
 const ignoredRef = db.ref("ignored");
 const interestingRef = db.ref("interesting");
+
+const bucket = admin.storage().bucket();
 
 const T = new Twit(twitter);
 
@@ -42,20 +47,31 @@ const downloadMedia = url =>
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-const fetchMedia = async (call, reg, snap) => {
-  // Check for photos in DB before calling API
-  const photos = snap.val() && snap.val().photos;
-  const media = photos
-    ? fetchLocalMediaUrl(photos)
-    : await fetchRemoteMediaUrl(reg || call);
+const fetchMedia = async (call, icao, reg) => {
+  // Check for photos in storage before calling API
+  const [files] = await bucket.getFiles({
+    delimiter: "/",
+    prefix: `photos/${icao}/`
+  });
+
+  const media =
+    files.length > 0
+      ? await fetchLocalMedia(files)
+      : await fetchRemoteMediaUrl(reg || call);
 
   return media;
 };
 
-const fetchLocalMediaUrl = async photos => ({
-  photo: photos.length && (await downloadMedia(randomItem(photos))),
-  link: false
-});
+const fetchLocalMedia = async files => {
+  const url = `https://storage.googleapis.com/${storageBucket}/${
+    randomItem(files).name
+  }`;
+
+  return {
+    photo: await downloadMedia(url),
+    link: false
+  };
+};
 
 // Get image url from photo API
 const fetchRemoteMediaUrl = reg => {
@@ -89,7 +105,7 @@ const fetchStates = () =>
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state, ops, interesting) => {
   const { call, icao, reg, type } = state;
-  const media = await fetchMedia(call, reg, snap);
+  const media = await fetchMedia(call, icao, reg, snap);
 
   return media.photo
     ? // Send media tweet

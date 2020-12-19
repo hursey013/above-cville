@@ -30,6 +30,7 @@ module.exports = {
     private_key: process.env.FIREBASE_PRIVATE_KEY,
     client_email: process.env.FIREBASE_CLIENT_EMAIL
   },
+  storageBucket: process.env.STORAGE_BUCKET,
   twitter: {
     consumer_key: process.env.TWITTER_CONSUMER_KEY,
     consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
