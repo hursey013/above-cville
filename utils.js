@@ -14,7 +14,7 @@ const {
 } = require("./config");
 const hashtags = require("./hashtags");
 const operators = require("./storage/operators.json");
-const types = require("./storage/aircrafts.json");
+const types = require("./storage/types.json");
 
 const addArticle = string => {
   // See if string matches any exceptions defined in the config
@@ -38,7 +38,7 @@ const createStatus = (snap, state, ops, interesting, media) => {
     "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${break}${media}${link}",
     {
       action: randomItem(actionPhrases),
-      type: formatType(icao, type),
+      type: formatType(type),
       id: formatIdentifier(call, icao, reg, mil),
       operator: formatOperator(call, icao, opicao, reg, ops, mil),
       count: formatCount(snap),
@@ -148,11 +148,10 @@ const formatSpeed = spd =>
       .to("m/h")
   )} mph`;
 
-const formatType = (icao, type) =>
-  (types[icao] &&
-    types[icao].d &&
-    ` ${addArticle(sanitizeString(types[icao].d))}`) ||
-  (types[icao] && types[icao].t && ` ${addArticle(types[icao].t)}`) ||
+const formatType = type =>
+  (types[type] &&
+    types[type][0] &&
+    ` ${addArticle(sanitizeString(types[type][0]))}`) ||
   (type && ` ${addArticle(type)}`) ||
   " An aircraft";
 

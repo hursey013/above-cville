@@ -420,26 +420,26 @@ describe("utils", () => {
       });
 
       it("with no db matches", () => {
-        jest.mock("./storage/aircrafts.json", () => ({}));
+        jest.mock("./storage/types.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.formatType("A12345", "G200")).toEqual(" A G200");
+        expect(utils.formatType("G200")).toEqual(" A G200");
       });
 
       describe("with db match", () => {
         it("missing description", () => {
-          jest.mock("./storage/aircrafts.json", () => ({
-            A12345: { r: "ZS-AMA", t: "C208", f: "00", d: "" }
+          jest.mock("./storage/types.json", () => ({
+            G200: ["", "L1P", "L"]
           }));
           const utils = require("./utils.js");
-          expect(utils.formatType("A12345", "G200")).toEqual(" A C208");
+          expect(utils.formatType("G200")).toEqual(" A G200");
         });
 
         it("description", () => {
-          jest.mock("./storage/aircrafts.json", () => ({
-            A12345: { r: "ZS-AMA", t: "C208", f: "00", d: "Cessna 208 B" }
+          jest.mock("./storage/types.json", () => ({
+            G200: ["AKROTECH G-200", "L1P", "L"]
           }));
           const utils = require("./utils.js");
-          expect(utils.formatType("A12345", "G200")).toEqual(" A Cessna 208 B");
+          expect(utils.formatType("G200")).toEqual(" An Akrotech G-200");
         });
       });
     });

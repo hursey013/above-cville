@@ -114,10 +114,11 @@ const postTweet = async (snap, state, ops, interesting) => {
           T.post("media/metadata/create", {
             media_id: data.media_id_string,
             alt_text: {
-              text: `${formatType({
+              text: `${formatType(type)} (${formatIdentifier({
+                call,
                 icao,
-                type
-              })} (${formatIdentifier({ call, icao, reg })})`
+                reg
+              })})`
             }
           }).then(res =>
             T.post("statuses/update", {
