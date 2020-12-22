@@ -123,7 +123,7 @@ const formatOperator = (call, icao, opicao, reg, ops, mil) => {
     if (ops.val().opicao && ops.val().opicao[opicao]) {
       value = ops.val().opicao[opicao];
     } else if (operators[opicao]) {
-      value = operators[opicao].n;
+      value = operators[opicao][0];
     }
   } else if (icao) {
     if (ops.val().icao && ops.val().icao[icao]) {
@@ -133,7 +133,7 @@ const formatOperator = (call, icao, opicao, reg, ops, mil) => {
     const code = call.slice(0, 3);
 
     if (operators[code]) {
-      value = operators[code].n;
+      value = operators[code][0];
     }
   }
 

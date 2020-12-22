@@ -54,7 +54,7 @@ describe("utils", () => {
           }
         }));
         jest.mock("./storage/operators.json", () => ({
-          SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
+          SWA: ["Southwest Airlines", "United States", "SOUTHWEST"]
         }));
         Date.now = jest.fn(() => 1603572682275);
       });
@@ -343,7 +343,7 @@ describe("utils", () => {
 
       it("with db match", () => {
         jest.mock("./storage/operators.json", () => ({
-          SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
+          SWA: ["Southwest Airlines", "United States", "SOUTHWEST"]
         }));
         const utils = require("./utils.js");
         expect(
@@ -353,7 +353,7 @@ describe("utils", () => {
 
       it("with operator override", () => {
         jest.mock("./storage/operators.json", () => ({
-          SWA: { n: "Southwest Airlines", c: "United States", r: "SOUTHWEST" }
+          SWA: ["Southwest Airlines", "United States", "SOUTHWEST"]
         }));
         const utils = require("./utils.js");
         expect(
@@ -370,7 +370,7 @@ describe("utils", () => {
 
       it("derived from callsign", () => {
         jest.mock("./storage/operators.json", () => ({
-          CVL: { n: "Cville Airlines", c: "United States", r: "CVL" }
+          CVL: ["Cville Airlines", "United States", "CVL"]
         }));
         const utils = require("./utils.js");
         expect(
@@ -387,7 +387,7 @@ describe("utils", () => {
 
       it("not derived from callsign if military", () => {
         jest.mock("./storage/operators.json", () => ({
-          CVL: { n: "Cville Airlines", c: "United States", r: "CVL" }
+          CVL: ["Cville Airlines", "United States", "CVL"]
         }));
         const utils = require("./utils.js");
         expect(
