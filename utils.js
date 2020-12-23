@@ -64,16 +64,26 @@ const fillTemplate = (templateString, templateVariables) =>
 const filterStates = (states, ignored) => {
   return (
     (states &&
-      states.filter(({ alt, gnd, opicao }) => {
-        if (maximumAlt && Number(alt) > maximumAlt) return false;
-        if (
-          ignored.val() &&
-          ignored.val().some(i => i.toLowerCase() === opicao.toLowerCase())
-        )
-          return false;
+      states.filter(
+        ({ alt, call = "", gnd, mil = "", opicao = "", reg = "" }) => {
+          if (maximumAlt && Number(alt) > maximumAlt) return false;
+          if (ignored.val() && !isMilitary(reg, mil)) {
+            const code = call.slice(0, 3).toLowerCase();
 
-        return gnd !== "1";
-      })) ||
+            if (
+              ignored
+                .val()
+                .some(
+                  i =>
+                    i.toLowerCase() === opicao.toLowerCase() ||
+                    i.toLowerCase() === code.toLowerCase()
+                )
+            )
+              return false;
+          }
+          return gnd !== "1";
+        }
+      )) ||
     []
   );
 };
@@ -169,7 +179,7 @@ const formatType = (icao, type) => {
 };
 
 const isMilitary = (reg, mil) =>
-  reg.includes("-") || !isNaN(reg) || mil === "1";
+  reg.includes("-") || (!isNaN(reg) && !isNaN(parseFloat(reg))) || mil === "1";
 
 const isNewState = (snap, cooldown) => {
   const timestamps = snap.val() && snap.val().timestamps;

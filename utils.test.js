@@ -216,6 +216,11 @@ describe("utils", () => {
             val: () => ["PDT"]
           }).length
         ).toEqual(0);
+        expect(
+          utils.filterStates([{ call: "PDT123" }], {
+            val: () => ["PDT"]
+          }).length
+        ).toEqual(0);
       });
     });
 
