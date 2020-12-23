@@ -416,22 +416,22 @@ describe("utils", () => {
   describe("formatType function", () => {
     describe("properly formats string", () => {
       it("with missing value", () => {
-        expect(utils.formatType("")).toEqual(" An aircraft");
+        expect(utils.formatType()).toEqual(" An aircraft");
       });
 
       it("with no db matches", () => {
         jest.mock("./storage/types.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.formatType("G200")).toEqual(" A G200");
+        expect(utils.formatType("ABC123", "G200")).toEqual(" A G200");
       });
 
-      describe("with db match", () => {
+      describe("with type db match", () => {
         it("missing description", () => {
           jest.mock("./storage/types.json", () => ({
             G200: ["", "L1P", "L"]
           }));
           const utils = require("./utils.js");
-          expect(utils.formatType("G200")).toEqual(" A G200");
+          expect(utils.formatType("ABC123", "G200")).toEqual(" A G200");
         });
 
         it("description", () => {
@@ -439,7 +439,22 @@ describe("utils", () => {
             G200: ["AKROTECH G-200", "L1P", "L"]
           }));
           const utils = require("./utils.js");
-          expect(utils.formatType("G200")).toEqual(" An Akrotech G-200");
+          expect(utils.formatType("ABC123", "G200")).toEqual(
+            " An Akrotech G-200"
+          );
+        });
+      });
+
+      describe("with aircraft db match", () => {
+        it("description", () => {
+          jest.mock("./storage/aircrafts.json", () => ({
+            ABC123: ["N12345", "G200", "00"]
+          }));
+          jest.mock("./storage/types.json", () => ({
+            G200: ["AKROTECH G-200", "L1P", "L"]
+          }));
+          const utils = require("./utils.js");
+          expect(utils.formatType("ABC123", "")).toEqual(" An Akrotech G-200");
         });
       });
     });

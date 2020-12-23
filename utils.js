@@ -13,6 +13,7 @@ const {
   maximumAlt
 } = require("./config");
 const hashtags = require("./hashtags");
+const aircrafts = require("./storage/aircrafts.json");
 const operators = require("./storage/operators.json");
 const types = require("./storage/types.json");
 
@@ -38,7 +39,7 @@ const createStatus = (snap, state, ops, interesting, media) => {
     "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${break}${media}${link}",
     {
       action: randomItem(actionPhrases),
-      type: formatType(type),
+      type: formatType(icao, type),
       id: formatIdentifier(call, icao, reg, mil),
       operator: formatOperator(call, icao, opicao, reg, ops, mil),
       count: formatCount(snap),
@@ -148,12 +149,24 @@ const formatSpeed = spd =>
       .to("m/h")
   )} mph`;
 
-const formatType = type =>
-  (types[type] &&
-    types[type][0] &&
-    ` ${addArticle(sanitizeString(types[type][0]))}`) ||
-  (type && ` ${addArticle(type)}`) ||
-  " An aircraft";
+const formatType = (icao, type) => {
+  let value = "";
+  const typeArray = types[type];
+
+  if (typeArray && typeArray[0]) {
+    value = typeArray[0];
+  } else if (aircrafts[icao] && aircrafts[icao][1]) {
+    const aircraftArray = aircrafts[icao];
+
+    if (types[aircraftArray[1]] && types[aircraftArray[1]][0]) {
+      value = types[aircraftArray[1]][0];
+    }
+  } else if (type) {
+    value = type;
+  }
+
+  return value ? ` ${addArticle(sanitizeString(value))}` : " An aircraft";
+};
 
 const isMilitary = (reg, mil) =>
   reg.includes("-") || !isNaN(reg) || mil === "1";
