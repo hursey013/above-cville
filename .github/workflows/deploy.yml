@@ -22,7 +22,6 @@ jobs:
       - run: npm install
       - run: |
           mkdir storage
-          echo "{}" > storage/aircrafts.json
           echo "{}" > storage/types.json
           echo "{}" > storage/operators.json
       - run: npm run build --if-present

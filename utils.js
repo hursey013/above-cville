@@ -13,7 +13,6 @@ const {
   maximumAlt
 } = require("./config");
 const hashtags = require("./hashtags");
-const aircrafts = require("./storage/aircrafts.json");
 const operators = require("./storage/operators.json");
 const types = require("./storage/types.json");
 
@@ -32,66 +31,62 @@ const addArticle = string => {
   return a(string, { capitalize: true });
 };
 
-const createStatus = (snap, state, ops, interesting, media) => {
-  const { alt, call, icao, mil, opicao, reg, spd, trak, type } = state;
+const createStatus = (snap, state, ops, media) => {
+  const { alt_baro, flight, hex, dbFlags, reg, gs, track, frame } = state;
 
   return fillTemplate(
     "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${break}${media}${link}",
     {
       action: randomItem(actionPhrases),
-      type: formatType(icao, type),
-      id: formatIdentifier(call, icao, reg, mil),
-      operator: formatOperator(call, icao, opicao, reg, ops, mil),
+      type: formatType(hex, frame),
+      id: formatIdentifier(flight, hex, reg, dbFlags),
+      operator: formatOperator(flight, hex, reg, ops, dbFlags),
       count: formatCount(snap),
-      altitude: formatAltitude(alt),
-      direction: formatDirection(trak),
-      speed: formatSpeed(spd),
-      hashtag: formatHashTag(state, snap, interesting),
-      break: (Boolean(media) || Boolean(icao)) && "\n",
-      media: Boolean(media) && `\n📸 ${media}`,
+      altitude: formatAltitude(alt_baro),
+      direction: formatDirection(track),
+      speed: formatSpeed(gs),
+      hashtag: formatHashTag(state, snap),
+      break: (media || hex) && "\n",
+      media: media && `\n📸 ${media}`,
       link:
-        Boolean(icao) &&
-        `\n📡 https://globe.adsbexchange.com/?icao=${icao}&lat=${
+        hex &&
+        `\n📡 https://globe.adsbexchange.com/?icao=${hex}&lat=${
           adsbx.lat
         }&lon=${adsbx.lon}&zoom=12.0&showTrace=${moment().format("YYYY-MM-DD")}`
     }
   );
 };
 
+const deriveOpicao = (flight, reg, dbFlags) =>
+  !isMilitary(reg, dbFlags) && flight && flight.slice(0, 3);
+
 const fillTemplate = (templateString, templateVariables) =>
   templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
 
-const filterStates = (states, ignored) => {
+const filterStates = (states = [], ignored) => {
   return (
-    (states &&
-      states.filter(
-        ({ alt, call = "", gnd, mil = "", opicao = "", reg = "" }) => {
-          if (maximumAlt && Number(alt) > maximumAlt) return false;
-          if (ignored.val() && !isMilitary(reg, mil)) {
-            const code = call.slice(0, 3).toLowerCase();
+    states.filter(({ alt_baro, flight, gs, dbFlags, reg }) => {
+      const opicao = deriveOpicao(flight, reg, dbFlags);
 
-            if (
-              ignored
-                .val()
-                .some(
-                  i =>
-                    i.toLowerCase() === opicao.toLowerCase() ||
-                    i.toLowerCase() === code.toLowerCase()
-                )
-            )
-              return false;
-          }
-          return gnd !== "1";
-        }
-      )) ||
-    []
+      if (maximumAlt && alt_baro > maximumAlt) return false;
+      if (
+        opicao &&
+        ignored &&
+        ignored.val().some(i => i.toLowerCase() === opicao.toLowerCase())
+      )
+        return false;
+
+      return true;
+    }) || []
   );
 };
 
-const formatAltitude = alt => Boolean(alt) && ` ${numberWithCommas(alt)} ft`;
+const formatAltitude = alt_baro =>
+  Boolean(alt_baro) && ` ${numberWithCommas(alt_baro)} ft`;
 
 const formatCount = snap => {
-  const count = snap.val() && Object.keys(snap.val().timestamps).length;
+  const count =
+    Boolean(snap.val()) && Object.keys(snap.val().timestamps).length;
 
   return (
     Boolean(count) &&
@@ -101,18 +96,18 @@ const formatCount = snap => {
   );
 };
 
-const formatDirection = trak =>
-  Boolean(trak) &&
+const formatDirection = track =>
+  Boolean(track) &&
   ` and heading ${Compass.cardinalFromDegree(
-    trak,
+    track,
     Compass.CardinalSubset.Ordinal
   )}`;
 
-const formatHashTag = (state, snap, interesting) => {
+const formatHashTag = (state, snap) => {
   let string = "";
 
   Object.keys(hashtags).forEach(hashtag => {
-    const value = hashtags[hashtag](state, snap, interesting);
+    const value = hashtags[hashtag](state, snap);
 
     if (value) {
       string += ` #${value}`;
@@ -122,12 +117,13 @@ const formatHashTag = (state, snap, interesting) => {
   return string;
 };
 
-const formatIdentifier = (call, icao, reg, mil) =>
-  reg && !isMilitary(reg, mil)
-    ? ` #${reg}`
-    : Boolean(call || icao) && ` #${call || icao}`;
+const formatIdentifier = (flight, hex, reg, dbFlags) =>
+  (reg && !isMilitary(reg, dbFlags) && ` #${reg}`) ||
+  (flight && ` #${flight}`) ||
+  false;
 
-const formatOperator = (call, icao, opicao, reg, ops, mil) => {
+const formatOperator = (flight, hex, reg, ops, dbFlags) => {
+  const opicao = deriveOpicao(flight, reg, dbFlags);
   let value = "";
 
   if (opicao) {
@@ -136,50 +132,38 @@ const formatOperator = (call, icao, opicao, reg, ops, mil) => {
     } else if (operators[opicao]) {
       value = operators[opicao][0];
     }
-  } else if (icao) {
-    if (ops.val().icao && ops.val().icao[icao]) {
-      value = ops.val().icao[icao];
-    }
-  } else if (call && !isMilitary(reg, mil)) {
-    const code = call.slice(0, 3);
-
-    if (operators[code]) {
-      value = operators[code][0];
+  } else if (hex) {
+    if (ops.val().icao && ops.val().icao[hex]) {
+      value = ops.val().icao[hex];
     }
   }
 
   return Boolean(value) && ` operated by ${sanitizeString(value)}`;
 };
 
-const formatSpeed = spd =>
-  Boolean(spd && Number(spd) !== 0) &&
+const formatSpeed = gs =>
+  Boolean(gs && gs !== 0) &&
   ` at ${Math.round(
-    convert(Number(spd))
+    convert(Number(gs))
       .from("knot")
       .to("m/h")
   )} mph`;
 
-const formatType = (icao, type) => {
+const formatType = (hex, frame) => {
   let value = "";
-  const typeArray = types[type];
 
-  if (typeArray && typeArray[0]) {
-    value = typeArray[0];
-  } else if (aircrafts[icao] && aircrafts[icao][1]) {
-    const aircraftArray = aircrafts[icao];
-
-    if (types[aircraftArray[1]] && types[aircraftArray[1]][0]) {
-      value = types[aircraftArray[1]][0];
-    }
-  } else if (type) {
-    value = type;
+  if (types[frame] && types[frame][0]) {
+    value = types[frame][0];
+  } else if (frame) {
+    value = frame;
   }
 
   return value ? ` ${addArticle(sanitizeString(value))}` : " An aircraft";
 };
 
-const isMilitary = (reg, mil) =>
-  reg.includes("-") || (!isNaN(reg) && !isNaN(parseFloat(reg))) || mil === "1";
+const isMilitary = (reg, dbFlags) =>
+  (reg && (reg.includes("-") || (!isNaN(reg) && !isNaN(parseFloat(reg))))) ||
+  (dbFlags && dbFlags === 1);
 
 const isNewState = (snap, cooldown) => {
   const timestamps = snap.val() && snap.val().timestamps;

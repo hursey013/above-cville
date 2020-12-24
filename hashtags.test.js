@@ -4,39 +4,16 @@ const hashtags = require("./hashtags");
 
 describe("config", () => {
   describe("hashtags functions", () => {
-    describe("interesting hashtag", () => {
-      it("added when override is not set", () => {
-        expect(
-          hashtags.interesting(
-            { interested: "1", icao: "ABC123" },
-            {
-              val: () => ({})
-            },
-            {
-              val: () => ({})
-            }
-          )
-        ).toEqual("interesting");
-      });
-
-      it("not added when override is set", () => {
-        expect(
-          hashtags.interesting(
-            { interested: "1", icao: "ABC123" },
-            {
-              val: () => ({})
-            },
-            {
-              val: () => ({ ABC123: false })
-            }
-          )
-        ).toEqual(false);
-      });
-    });
-
     it("adds military hashtag", () => {
       expect(hashtags.military({}, jest.fn())).toEqual(false);
-      expect(hashtags.military({ mil: "1" }, jest.fn())).toEqual("military");
+      expect(
+        hashtags.military(
+          { dbFlags: 1 },
+          {
+            val: () => ({})
+          }
+        )
+      ).toEqual("military");
     });
 
     it("adds busyday hashtag", () => {

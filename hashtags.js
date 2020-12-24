@@ -18,18 +18,14 @@ const isInDateRange = (timestamps, limit = 0, intervalLength, intervalUnit) => {
 };
 
 module.exports = {
-  interesting: ({ icao, interested }, snap, interesting) =>
-    !(interesting.val() && interesting.val()[icao] === false) &&
-    interested === "1" &&
-    "interesting",
-  military: ({ mil }, snap, interesting) => mil === "1" && "military",
-  busyday: (state, snap, interesting) =>
+  military: ({ dbFlags }, snap) => dbFlags === 1 && "military",
+  busyday: (state, snap) =>
     Boolean(snap.val()) &&
     isInDateRange(snap.val().timestamps, 3, 24, "hours") &&
     "busyday",
-  frequentflyer: (state, snap, interesting) =>
+  frequentflyer: (state, snap) =>
     Boolean(snap.val()) &&
     isInDateRange(snap.val().timestamps, 30, 90, "days") &&
     "frequentflyer",
-  phiden: ({ icao }, snap, interesting) => icao === "A0E429" && "phiden"
+  phiden: ({ hex }, snap) => hex === "A0E429" && "phiden"
 };

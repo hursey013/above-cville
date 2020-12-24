@@ -28,19 +28,15 @@ describe("utils", () => {
   describe("createStatus function", () => {
     let snap = { val: () => ({ timestamps: [1603572682275] }) };
     let state = {
-      icao: "A12345",
+      hex: "A12345",
       reg: "N12345",
-      type: "G200",
-      spd: "431.9",
-      alt: "28000",
-      trak: "220.6",
-      call: "SWA123",
-      gnd: "0",
-      opicao: "SWA",
-      mil: "0"
+      frame: "G200",
+      gs: 431.9,
+      alt_baro: 28000,
+      track: 220.6,
+      flight: "SWA123"
     };
     let ops = { val: () => ({ CVILLE: "Cville Airlines" }) };
-    let interesting = { val: () => ({}) };
 
     describe("properly formats status with ", () => {
       beforeEach(() => {
@@ -62,12 +58,7 @@ describe("utils", () => {
       it("all values empty", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(
-            { val: () => {} },
-            {},
-            { val: () => {} },
-            { val: () => {} }
-          )
+          utils.createStatus({ val: () => {} }, {}, { val: () => {} })
         ).toEqual("Can you see it? An aircraft is currently flying overhead");
       });
 
@@ -78,7 +69,6 @@ describe("utils", () => {
             snap,
             state,
             ops,
-            interesting,
             "https://www.myphotos.com/photo/123456"
           )
         ).toEqual(
@@ -92,7 +82,7 @@ describe("utils", () => {
       it("missing type value", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, type: "" }, ops, interesting)
+          utils.createStatus(snap, { ...state, frame: undefined }, ops)
         ).toEqual(
           `Can you see it? An aircraft #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph
 
@@ -105,19 +95,18 @@ describe("utils", () => {
         expect(
           utils.createStatus(
             snap,
-            { ...state, call: "", reg: "", icao: "" },
-            ops,
-            interesting
+            { ...state, flight: undefined, reg: undefined, hex: undefined },
+            ops
           )
         ).toEqual(
-          "Can you see it? A G200 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph"
+          "Can you see it? A G200, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph"
         );
       });
 
       it("missing operator value", () => {
         jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.createStatus(snap, state, ops, interesting)).toEqual(
+        expect(utils.createStatus(snap, state, ops)).toEqual(
           `Can you see it? A G200 #N12345, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph
 
 📡 https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24`
@@ -126,9 +115,7 @@ describe("utils", () => {
 
       it("missing count value", () => {
         const utils = require("./utils.js");
-        expect(
-          utils.createStatus({ val: () => {} }, state, ops, interesting)
-        ).toEqual(
+        expect(utils.createStatus({ val: () => {} }, state, ops)).toEqual(
           `Can you see it? A G200 #N12345 operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph
 
 📡 https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24`
@@ -138,7 +125,7 @@ describe("utils", () => {
       it("missing altitude value", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, alt: "" }, ops, interesting)
+          utils.createStatus(snap, { ...state, alt_baro: undefined }, ops)
         ).toEqual(
           `Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying overhead and heading SW at 497 mph
 
@@ -149,7 +136,7 @@ describe("utils", () => {
       it("missing direction value value", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, trak: "" }, ops, interesting)
+          utils.createStatus(snap, { ...state, track: undefined }, ops)
         ).toEqual(
           `Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead at 497 mph
 
@@ -160,7 +147,7 @@ describe("utils", () => {
       it("missing speed value", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, spd: "" }, ops, interesting)
+          utils.createStatus(snap, { ...state, gs: undefined }, ops)
         ).toEqual(
           `Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW
 
@@ -171,7 +158,7 @@ describe("utils", () => {
       it("missing hashtags values", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, mil: "0" }, ops, interesting)
+          utils.createStatus(snap, { ...state, dbFlags: undefined }, ops)
         ).toEqual(
           `Can you see it? A G200 #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph
 
@@ -191,19 +178,10 @@ describe("utils", () => {
     });
 
     describe("removes", () => {
-      it("aircraft on the ground", () => {
-        const utils = require("./utils.js");
-        expect(
-          utils.filterStates([{ gnd: "1" }], {
-            val: () => []
-          }).length
-        ).toEqual(0);
-      });
-
       it("aircraft above maximum altitude", () => {
         const utils = require("./utils.js");
         expect(
-          utils.filterStates([{ alt: "35000" }], {
+          utils.filterStates([{ alt_baro: 35000 }], {
             val: () => []
           }).length
         ).toEqual(0);
@@ -212,12 +190,7 @@ describe("utils", () => {
       it("operator in the ignored array from database", () => {
         const utils = require("./utils.js");
         expect(
-          utils.filterStates([{ opicao: "PDT" }], {
-            val: () => ["PDT"]
-          }).length
-        ).toEqual(0);
-        expect(
-          utils.filterStates([{ call: "PDT123" }], {
+          utils.filterStates([{ flight: "PDT123" }], {
             val: () => ["PDT"]
           }).length
         ).toEqual(0);
@@ -225,19 +198,10 @@ describe("utils", () => {
     });
 
     describe("does not remove", () => {
-      it("aircraft that are not on the ground", () => {
-        const utils = require("./utils.js");
-        expect(
-          utils.filterStates([{ gnd: "0" }], {
-            val: () => []
-          }).length
-        ).toEqual(1);
-      });
-
       it("aircraft that are below maximum altitude", () => {
         const utils = require("./utils.js");
         expect(
-          utils.filterStates([{ alt: "23000" }], {
+          utils.filterStates([{ alt_baro: 23000 }], {
             val: () => []
           }).length
         ).toEqual(1);
@@ -246,7 +210,7 @@ describe("utils", () => {
       it("operator not in the ignored array from database", () => {
         const utils = require("./utils.js");
         expect(
-          utils.filterStates([{ opicao: "PDT" }], {
+          utils.filterStates([{ flight: "PDT123" }], {
             val: () => ["FOO"]
           }).length
         ).toEqual(1);
@@ -256,8 +220,8 @@ describe("utils", () => {
 
   describe("formatAltitude function", () => {
     it("properly formats string", () => {
-      expect(utils.formatAltitude("")).toEqual(false);
-      expect(utils.formatAltitude("28000")).toEqual(" 28,000 ft");
+      expect(utils.formatAltitude()).toEqual(false);
+      expect(utils.formatAltitude(28000)).toEqual(" 28,000 ft");
     });
   });
 
@@ -277,8 +241,8 @@ describe("utils", () => {
 
   describe("formatDirection function", () => {
     it("properly formats string", () => {
-      expect(utils.formatDirection("")).toEqual(false);
-      expect(utils.formatDirection("220.6")).toEqual(" and heading SW");
+      expect(utils.formatDirection()).toEqual(false);
+      expect(utils.formatDirection(220.6)).toEqual(" and heading SW");
     });
   });
 
@@ -288,23 +252,19 @@ describe("utils", () => {
         utils.formatHashTag({}, { val: () => {} }, { val: () => {} })
       ).toEqual("");
       expect(
-        utils.formatHashTag({ mil: "1" }, { val: () => {} }, { val: () => {} })
-      ).toEqual(" #military");
-      expect(
         utils.formatHashTag(
-          { interested: "1", mil: "1" },
+          { dbFlags: 1 },
           { val: () => {} },
           { val: () => {} }
         )
-      ).toEqual(" #interesting #military");
+      ).toEqual(" #military");
     });
   });
 
   describe("formatIdentifier function", () => {
     it("properly formats string", () => {
-      expect(utils.formatIdentifier("", "A12345", "")).toEqual(" #A12345");
-      expect(utils.formatIdentifier("ABC123", "A12345", "ABC-123")).toEqual(
-        " #ABC123"
+      expect(utils.formatIdentifier(undefined, undefined, undefined)).toEqual(
+        false
       );
       expect(utils.formatIdentifier("SWA123", "A12345", "N12345")).toEqual(
         " #N12345"
@@ -312,38 +272,36 @@ describe("utils", () => {
       expect(utils.formatIdentifier("TEST123", "A12345", "98-0001")).toEqual(
         " #TEST123"
       );
-      expect(utils.formatIdentifier("", "A12345", "N12345")).toEqual(
+      expect(utils.formatIdentifier(undefined, "A12345", "N12345")).toEqual(
         " #N12345"
       );
     });
   });
+
   describe("formatOperator function", () => {
     describe("properly formats string", () => {
       it("with missing value", () => {
         expect(
-          utils.formatOperator("", "", "", "", { val: () => ({}) }, "")
+          utils.formatOperator(undefined, undefined, undefined, {
+            val: () => ({})
+          })
         ).toEqual(false);
+      });
+
+      it("with custom icao", () => {
+        expect(
+          utils.formatOperator(undefined, "A12345", undefined, {
+            val: () => ({ icao: { A12345: "Cville Airlines" } })
+          })
+        ).toEqual(" operated by Cville Airlines");
       });
 
       it("with custom operator", () => {
         expect(
-          utils.formatOperator(
-            "",
-            "A12345",
-            "",
-            "",
-            { val: () => ({ icao: { A12345: "Cville Airlines" } }) },
-            ""
-          )
+          utils.formatOperator("SWA123", undefined, undefined, {
+            val: () => ({ opicao: { SWA: "Cville Airlines" } })
+          })
         ).toEqual(" operated by Cville Airlines");
-      });
-
-      it("with no db matches", () => {
-        jest.mock("./storage/operators.json", () => ({}));
-        const utils = require("./utils.js");
-        expect(
-          utils.formatOperator("", "", "SWA", "", { val: () => ({}) }, "")
-        ).toEqual(false);
       });
 
       it("with db match", () => {
@@ -352,42 +310,20 @@ describe("utils", () => {
         }));
         const utils = require("./utils.js");
         expect(
-          utils.formatOperator("", "", "SWA", "", { val: () => ({}) }, "")
+          utils.formatOperator("SWA123", undefined, undefined, {
+            val: () => ({})
+          })
         ).toEqual(" operated by Southwest Airlines");
       });
 
-      it("with operator override", () => {
-        jest.mock("./storage/operators.json", () => ({
-          SWA: ["Southwest Airlines", "United States", "SOUTHWEST"]
-        }));
+      it("with no db matches", () => {
+        jest.mock("./storage/operators.json", () => ({}));
         const utils = require("./utils.js");
         expect(
-          utils.formatOperator(
-            "",
-            "",
-            "SWA",
-            "",
-            { val: () => ({ opicao: { SWA: "Cville Airlines" } }) },
-            ""
-          )
-        ).toEqual(" operated by Cville Airlines");
-      });
-
-      it("derived from callsign", () => {
-        jest.mock("./storage/operators.json", () => ({
-          CVL: ["Cville Airlines", "United States", "CVL"]
-        }));
-        const utils = require("./utils.js");
-        expect(
-          utils.formatOperator(
-            "CVL123",
-            "",
-            "",
-            "N12345",
-            { val: () => ({}) },
-            ""
-          )
-        ).toEqual(" operated by Cville Airlines");
+          utils.formatOperator("SWA123", undefined, undefined, {
+            val: () => ({})
+          })
+        ).toEqual(false);
       });
 
       it("not derived from callsign if military", () => {
@@ -398,11 +334,10 @@ describe("utils", () => {
         expect(
           utils.formatOperator(
             "CVL123",
-            "",
-            "",
+            undefined,
             "N12345",
             { val: () => ({}) },
-            "1"
+            1
           )
         ).toEqual(false);
       });
@@ -412,9 +347,8 @@ describe("utils", () => {
   describe("formatSpeed function", () => {
     it("properly formats string", () => {
       expect(utils.formatSpeed()).toEqual(false);
-      expect(utils.formatSpeed("")).toEqual(false);
-      expect(utils.formatSpeed("0")).toEqual(false);
-      expect(utils.formatSpeed("1000")).toEqual(" at 1151 mph");
+      expect(utils.formatSpeed(0)).toEqual(false);
+      expect(utils.formatSpeed(1000)).toEqual(" at 1151 mph");
     });
   });
 
@@ -449,30 +383,17 @@ describe("utils", () => {
           );
         });
       });
-
-      describe("with aircraft db match", () => {
-        it("description", () => {
-          jest.mock("./storage/aircrafts.json", () => ({
-            ABC123: ["N12345", "G200", "00"]
-          }));
-          jest.mock("./storage/types.json", () => ({
-            G200: ["AKROTECH G-200", "L1P", "L"]
-          }));
-          const utils = require("./utils.js");
-          expect(utils.formatType("ABC123", "")).toEqual(" An Akrotech G-200");
-        });
-      });
     });
   });
 
   describe("isMilitary function", () => {
     it("is true if numeric registration", () => {
-      expect(utils.isMilitary("0123456", "")).toEqual(true);
-      expect(utils.isMilitary("01-23456", "")).toEqual(true);
+      expect(utils.isMilitary("0123456", undefined)).toEqual(true);
+      expect(utils.isMilitary("01-23456", undefined)).toEqual(true);
     });
 
     it("is true if mil is true", () => {
-      expect(utils.isMilitary("ABC123", "1")).toEqual(true);
+      expect(utils.isMilitary("ABC123", 1)).toEqual(true);
     });
   });
 
@@ -553,12 +474,12 @@ describe("utils", () => {
 
   describe("numberWithCommas function", () => {
     it("does not add commas when not needed", () => {
-      expect(utils.numberWithCommas("100")).toEqual("100");
+      expect(utils.numberWithCommas(100)).toEqual("100");
     });
 
     it("adds commas when appropriate", () => {
-      expect(utils.numberWithCommas("1000")).toEqual("1,000");
-      expect(utils.numberWithCommas("1000000")).toEqual("1,000,000");
+      expect(utils.numberWithCommas(1000)).toEqual("1,000");
+      expect(utils.numberWithCommas(1000000)).toEqual("1,000,000");
     });
   });
 

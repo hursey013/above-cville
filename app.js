@@ -35,7 +35,6 @@ const db = admin.database();
 const statesRef = db.ref("states");
 const opsRef = db.ref("operators");
 const ignoredRef = db.ref("ignored");
-const interestingRef = db.ref("interesting");
 
 const bucket = admin.storage().bucket();
 
@@ -54,12 +53,9 @@ const fetchMedia = async (call, icao, reg) => {
     prefix: `photos/${icao}/`
   });
 
-  const media =
-    files.length > 0
-      ? await fetchLocalMedia(files)
-      : await fetchRemoteMediaUrl(reg || call);
-
-  return media;
+  return files.length > 0
+    ? await fetchLocalMedia(files)
+    : await fetchRemoteMediaUrl(reg || call);
 };
 
 const fetchLocalMedia = async files => {
@@ -80,14 +76,8 @@ const fetchRemoteMediaUrl = reg => {
   return axios({
     method: "get",
     url,
-    auth: {
-      username,
-      password
-    },
-    params: {
-      reg,
-      v: 1
-    }
+    auth: { username, password },
+    params: { reg }
   }).then(async ({ data: { photos = [], links = [] } }) => ({
     photo: photos.length && (await downloadMedia(randomItem(photos))),
     link: links.length && randomItem(links)
@@ -103,9 +93,9 @@ const fetchStates = () =>
     .then(({ data }) => data);
 
 // Send a media tweet if there is a photo, otherwise normal tweet
-const postTweet = async (snap, state, ops, interesting) => {
-  const { call, icao, reg, type } = state;
-  const media = await fetchMedia(call, icao, reg, snap);
+const postTweet = async (snap, state, ops) => {
+  const { flight, hex, reg, frame } = state;
+  const media = await fetchMedia(flight, hex, reg, snap);
 
   return media.photo
     ? // Send media tweet
@@ -114,15 +104,15 @@ const postTweet = async (snap, state, ops, interesting) => {
           T.post("media/metadata/create", {
             media_id: data.media_id_string,
             alt_text: {
-              text: `${formatType(type)} (${formatIdentifier({
-                call,
-                icao,
+              text: `${formatType(frame)} (${formatIdentifier({
+                flight,
+                hex,
                 reg
               })})`
             }
           }).then(res =>
             T.post("statuses/update", {
-              status: createStatus(snap, state, ops, interesting),
+              status: createStatus(snap, state, ops),
               media_ids: [data.media_id_string]
             })
           )
@@ -134,38 +124,40 @@ const postTweet = async (snap, state, ops, interesting) => {
           );
           // Atempt to send tweet without media on error
           return T.post("statuses/update", {
-            status: createStatus(snap, state, ops, interesting, media.link)
+            status: createStatus(snap, state, ops, media.link)
           });
         })
     : // Send tweet without media
       T.post("statuses/update", {
-        status: createStatus(snap, state, ops, interesting, media.link)
+        status: createStatus(snap, state, ops, media.link)
       });
 };
 
 // Record timestamp of spotted aircraft to database
-const saveTimestamp = (icao, time) =>
-  statesRef.child(`${icao}/timestamps`).push(time);
+const saveTimestamp = (hex, time) =>
+  statesRef.child(`${hex}/timestamps`).push(time);
 
 const app = async () => {
   try {
     const { ac: states, ctime: time } = await fetchStates();
+
+    if (!states) return false;
+
     const ignored = await ignoredRef.child("operators").once("value");
 
     return await Promise.all(
       filterStates(states, ignored).map(async state => {
-        const { icao } = state;
-        const snap = await statesRef.child(icao).once("value");
+        const { hex } = state;
+        const snap = await statesRef.child(hex).once("value");
         const ops = await opsRef.once("value");
-        const interesting = await interestingRef.once("value");
 
         // Check if this is a new aircraft or if it's past the cooldown time
         if (isNewState(snap, cooldownMinutes)) {
           console.info(JSON.stringify(state));
 
           return await Promise.all([
-            saveTimestamp(icao, time),
-            postTweet(snap, state, ops, interesting)
+            saveTimestamp(hex, time),
+            postTweet(snap, state, ops)
           ]);
         }
 
