@@ -38,8 +38,8 @@ const createStatus = (snap, state, ops, media) => {
     "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${break}${media}${link}",
     {
       action: randomItem(actionPhrases),
-      type: formatType(hex, frame),
-      id: formatIdentifier(flight, hex, reg, dbFlags),
+      type: formatType(frame),
+      id: formatIdentifier(flight, reg, dbFlags),
       operator: formatOperator(flight, hex, reg, ops, dbFlags),
       count: formatCount(snap),
       altitude: formatAltitude(alt_baro),
@@ -58,7 +58,7 @@ const createStatus = (snap, state, ops, media) => {
 };
 
 const deriveOpicao = (flight, reg, dbFlags) =>
-  !isMilitary(reg, dbFlags) && flight && flight.slice(0, 3);
+  !isMilitary(reg, dbFlags) && flight && flight.trim().slice(0, 3);
 
 const fillTemplate = (templateString, templateVariables) =>
   templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
@@ -85,8 +85,7 @@ const formatAltitude = alt_baro =>
   Boolean(alt_baro) && ` ${numberWithCommas(alt_baro)} ft`;
 
 const formatCount = snap => {
-  const count =
-    Boolean(snap.val()) && Object.keys(snap.val().timestamps).length;
+  const count = snap.val() && Object.keys(snap.val().timestamps).length;
 
   return (
     Boolean(count) &&
@@ -117,9 +116,9 @@ const formatHashTag = (state, snap) => {
   return string;
 };
 
-const formatIdentifier = (flight, hex, reg, dbFlags) =>
+const formatIdentifier = (flight, reg, dbFlags) =>
   (reg && !isMilitary(reg, dbFlags) && ` #${reg}`) ||
-  (flight && ` #${flight}`) ||
+  (flight && ` #${flight.trim()}`) ||
   false;
 
 const formatOperator = (flight, hex, reg, ops, dbFlags) => {
@@ -133,8 +132,8 @@ const formatOperator = (flight, hex, reg, ops, dbFlags) => {
       value = operators[opicao][0];
     }
   } else if (hex) {
-    if (ops.val().icao && ops.val().icao[hex]) {
-      value = ops.val().icao[hex];
+    if (ops.val().icao && ops.val().icao[hex.toUpperCase()]) {
+      value = ops.val().icao[hex.toUpperCase()];
     }
   }
 
@@ -149,7 +148,7 @@ const formatSpeed = gs =>
       .to("m/h")
   )} mph`;
 
-const formatType = (hex, frame) => {
+const formatType = frame => {
   let value = "";
 
   if (types[frame] && types[frame][0]) {
@@ -202,7 +201,8 @@ const sanitizeString = string =>
         ? w[0].toUpperCase() + w.substr(1).toLowerCase()
         : w;
     })
-    .join(" ");
+    .join(" ")
+    .trim();
 
 module.exports = {
   addArticle,

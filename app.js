@@ -50,12 +50,12 @@ const fetchMedia = async (call, icao, reg) => {
   // Check for photos in storage before calling API
   const [files] = await bucket.getFiles({
     delimiter: "/",
-    prefix: `photos/${icao}/`
+    prefix: `photos/${icao.toUpperCase()}/`
   });
 
   return files.length > 0
     ? await fetchLocalMedia(files)
-    : await fetchRemoteMediaUrl(reg || call);
+    : await fetchRemoteMediaUrl(reg || call.trim());
 };
 
 const fetchLocalMedia = async files => {
@@ -79,8 +79,8 @@ const fetchRemoteMediaUrl = reg => {
     auth: { username, password },
     params: { reg }
   }).then(async ({ data: { photos = [], links = [] } }) => ({
-    photo: photos.length && (await downloadMedia(randomItem(photos))),
-    link: links.length && randomItem(links)
+    photo: photos.length > 0 && (await downloadMedia(randomItem(photos))),
+    link: links.length > 0 && randomItem(links)
   }));
 };
 
@@ -94,8 +94,8 @@ const fetchStates = () =>
 
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state, ops) => {
-  const { flight, hex, reg, frame } = state;
-  const media = await fetchMedia(flight, hex, reg, snap);
+  const { dbFlags, flight, hex, reg, frame } = state;
+  const media = await fetchMedia(flight, hex, reg);
 
   return media.photo
     ? // Send media tweet
@@ -104,11 +104,11 @@ const postTweet = async (snap, state, ops) => {
           T.post("media/metadata/create", {
             media_id: data.media_id_string,
             alt_text: {
-              text: `${formatType(frame)} (${formatIdentifier({
+              text: `${formatType(frame)} (${formatIdentifier(
                 flight,
-                hex,
-                reg
-              })})`
+                reg,
+                dbFlags
+              )})`
             }
           }).then(res =>
             T.post("statuses/update", {
@@ -135,20 +135,20 @@ const postTweet = async (snap, state, ops) => {
 
 // Record timestamp of spotted aircraft to database
 const saveTimestamp = (hex, time) =>
-  statesRef.child(`${hex}/timestamps`).push(time);
+  statesRef.child(`${hex.toUpperCase()}/timestamps`).push(time);
 
 const app = async () => {
   try {
     const { ac: states, ctime: time } = await fetchStates();
 
+    // Return if no states exist
     if (!states) return false;
 
     const ignored = await ignoredRef.child("operators").once("value");
-
     return await Promise.all(
       filterStates(states, ignored).map(async state => {
         const { hex } = state;
-        const snap = await statesRef.child(hex).once("value");
+        const snap = await statesRef.child(hex.toUpperCase()).once("value");
         const ops = await opsRef.once("value");
 
         // Check if this is a new aircraft or if it's past the cooldown time

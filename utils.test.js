@@ -266,13 +266,14 @@ describe("utils", () => {
       expect(utils.formatIdentifier(undefined, undefined, undefined)).toEqual(
         false
       );
-      expect(utils.formatIdentifier("SWA123", "A12345", "N12345")).toEqual(
+      expect(utils.formatIdentifier("SWA123", "N12345", undefined)).toEqual(
         " #N12345"
       );
-      expect(utils.formatIdentifier("TEST123", "A12345", "98-0001")).toEqual(
+      expect(utils.formatIdentifier("TEST123", "98-0001", undefined)).toEqual(
         " #TEST123"
       );
-      expect(utils.formatIdentifier(undefined, "A12345", "N12345")).toEqual(
+      expect(utils.formatIdentifier("SWA123", "N12345", 1)).toEqual(" #SWA123");
+      expect(utils.formatIdentifier(undefined, "N12345", undefined)).toEqual(
         " #N12345"
       );
     });
@@ -361,7 +362,7 @@ describe("utils", () => {
       it("with no db matches", () => {
         jest.mock("./storage/types.json", () => ({}));
         const utils = require("./utils.js");
-        expect(utils.formatType("ABC123", "G200")).toEqual(" A G200");
+        expect(utils.formatType("G200")).toEqual(" A G200");
       });
 
       describe("with type db match", () => {
@@ -370,7 +371,7 @@ describe("utils", () => {
             G200: ["", "L1P", "L"]
           }));
           const utils = require("./utils.js");
-          expect(utils.formatType("ABC123", "G200")).toEqual(" A G200");
+          expect(utils.formatType("G200")).toEqual(" A G200");
         });
 
         it("description", () => {
@@ -378,9 +379,7 @@ describe("utils", () => {
             G200: ["AKROTECH G-200", "L1P", "L"]
           }));
           const utils = require("./utils.js");
-          expect(utils.formatType("ABC123", "G200")).toEqual(
-            " An Akrotech G-200"
-          );
+          expect(utils.formatType("G200")).toEqual(" An Akrotech G-200");
         });
       });
     });
