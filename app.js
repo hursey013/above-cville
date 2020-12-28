@@ -54,14 +54,16 @@ const fetchMedia = async (call, icao, reg) => {
   });
 
   return files.length > 0
-    ? await fetchLocalMedia(files)
+    ? await fetchLocalMedia(
+        files.filter(file => !file.name.endsWith("/")).map(file => file.name)
+      )
     : await fetchRemoteMediaUrl(reg || call.trim());
 };
 
 const fetchLocalMedia = async files => {
-  const url = `https://storage.googleapis.com/${storageBucket}/${
-    randomItem(files).name
-  }`;
+  const url = `https://storage.googleapis.com/${storageBucket}/${randomItem(
+    files
+  )}`;
 
   return {
     photo: await downloadMedia(url),
