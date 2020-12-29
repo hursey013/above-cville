@@ -64,25 +64,25 @@ const fillTemplate = (templateString, templateVariables) =>
   templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
 
 const filterStates = (states = [], ignored) => {
-  return (
-    states.filter(({ alt_baro, flight, gs, dbFlags, reg }) => {
-      const opicao = deriveOpicao(flight, reg, dbFlags);
+  return states.filter(({ alt_baro, flight, gs, dbFlags, reg }) => {
+    const opicao = deriveOpicao(flight, reg, dbFlags);
 
-      if (maximumAlt && alt_baro > maximumAlt) return false;
-      if (
-        opicao &&
-        ignored &&
-        ignored.val().some(i => i.toLowerCase() === opicao.toLowerCase())
-      )
-        return false;
+    if (maximumAlt && alt_baro > maximumAlt) return false;
+    if (alt_baro && alt_baro === "ground") return false;
+    if (
+      opicao &&
+      ignored &&
+      ignored.val().some(i => i.toLowerCase() === opicao.toLowerCase())
+    )
+      return false;
 
-      return true;
-    }) || []
-  );
+    return true;
+  });
 };
 
 const formatAltitude = alt_baro =>
-  Boolean(alt_baro) && ` ${numberWithCommas(alt_baro)} ft`;
+  Boolean(alt_baro && alt_baro !== "ground") &&
+  ` ${numberWithCommas(alt_baro)} ft`;
 
 const formatCount = snap => {
   const count = snap.val() && Object.keys(snap.val().timestamps).length;
@@ -125,16 +125,12 @@ const formatOperator = (flight, hex, reg, ops, dbFlags) => {
   const opicao = deriveOpicao(flight, reg, dbFlags);
   let value = "";
 
-  if (opicao) {
-    if (ops.val().opicao && ops.val().opicao[opicao]) {
-      value = ops.val().opicao[opicao];
-    } else if (operators[opicao]) {
-      value = operators[opicao][0];
-    }
-  } else if (hex) {
-    if (ops.val().icao && ops.val().icao[hex.toUpperCase()]) {
-      value = ops.val().icao[hex.toUpperCase()];
-    }
+  if (hex && ops.val().icao && ops.val().icao[hex.toUpperCase()]) {
+    value = ops.val().icao[hex.toUpperCase()];
+  } else if (opicao && ops.val().opicao && ops.val().opicao[opicao]) {
+    value = ops.val().opicao[opicao];
+  } else if (opicao && operators[opicao]) {
+    value = operators[opicao][0];
   }
 
   return Boolean(value) && ` operated by ${sanitizeString(value)}`;
