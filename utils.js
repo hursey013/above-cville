@@ -32,7 +32,7 @@ const addArticle = string => {
 };
 
 const createStatus = (snap, state, ops, media) => {
-  const { alt_baro, flight, hex, dbFlags, reg, gs, track, frame } = state;
+  const { alt_baro, flight, hex, dbFlags, r: reg, gs, track, t: frame } = state;
 
   return fillTemplate(
     "${action}${type}${id}${operator}${count} is currently flying${altitude} overhead${direction}${speed}${hashtag}${break}${media}${link}",
@@ -64,7 +64,7 @@ const fillTemplate = (templateString, templateVariables) =>
   templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
 
 const filterStates = (states = [], ignored) => {
-  return states.filter(({ alt_baro, flight, gs, dbFlags, reg }) => {
+  return states.filter(({ alt_baro, flight, dbFlags, r: reg }) => {
     const opicao = deriveOpicao(flight, reg, dbFlags);
 
     if (maximumAlt && alt_baro > maximumAlt) return false;

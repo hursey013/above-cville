@@ -18,7 +18,7 @@ module.exports = {
     An: []
   },
   adsbx: {
-    url: "https://adsbexchange.com/api/aircraft/v2/minimal",
+    url: "https://adsbexchange.com/api/aircraft/v2",
     lat: 38.0375,
     lon: -78.4863,
     radius: 2.5,

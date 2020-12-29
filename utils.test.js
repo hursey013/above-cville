@@ -29,8 +29,8 @@ describe("utils", () => {
     let snap = { val: () => ({ timestamps: [1603572682275] }) };
     let state = {
       hex: "A12345",
-      reg: "N12345",
-      frame: "G200",
+      r: "N12345",
+      t: "G200",
       gs: 431.9,
       alt_baro: 28000,
       track: 220.6,
@@ -82,7 +82,7 @@ describe("utils", () => {
       it("missing type value", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus(snap, { ...state, frame: undefined }, ops)
+          utils.createStatus(snap, { ...state, t: undefined }, ops)
         ).toEqual(
           `Can you see it? An aircraft #N12345 operated by Southwest Airlines, seen once before, is currently flying 28,000 ft overhead and heading SW at 497 mph
 
@@ -95,7 +95,7 @@ describe("utils", () => {
         expect(
           utils.createStatus(
             snap,
-            { ...state, flight: undefined, reg: undefined, hex: undefined },
+            { ...state, flight: undefined, r: undefined, hex: undefined },
             ops
           )
         ).toEqual(

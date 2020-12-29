@@ -96,7 +96,7 @@ const fetchStates = () =>
 
 // Send a media tweet if there is a photo, otherwise normal tweet
 const postTweet = async (snap, state, ops) => {
-  const { dbFlags, flight, hex, reg, frame } = state;
+  const { dbFlags, flight, hex, r: reg, t: frame } = state;
   const media = await fetchMedia(flight, hex, reg);
 
   return media.photo
