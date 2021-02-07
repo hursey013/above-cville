@@ -26,7 +26,7 @@ describe("utils", () => {
   });
 
   describe("createStatus function", () => {
-    let snap = { val: () => ({ timestamps: [1603572682275] }) };
+    let snap = { val: () => ({ timestamps: { foo: 1603572682275 } }) };
     let state = {
       hex: "A12345",
       r: "N12345",
@@ -58,8 +58,10 @@ describe("utils", () => {
       it("all values empty", () => {
         const utils = require("./utils.js");
         expect(
-          utils.createStatus({ val: () => {} }, {}, { val: () => {} })
-        ).toEqual("Can you see it? An aircraft is currently flying overhead");
+          utils.createStatus({ val: () => null }, {}, { val: () => {} })
+        ).toEqual(
+          "Can you see it? An aircraft is currently flying overhead #firstspot"
+        );
       });
 
       it("all values present", () => {
@@ -116,7 +118,7 @@ describe("utils", () => {
       it("missing count value", () => {
         const utils = require("./utils.js");
         expect(utils.createStatus({ val: () => {} }, state, ops)).toEqual(
-          `Can you see it? A G200 #N12345 operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph
+          `Can you see it? A G200 #N12345 operated by Southwest Airlines is currently flying 28,000 ft overhead and heading SW at 497 mph #firstspot
 
 📡 https://globe.adsbexchange.com/?icao=A12345&lat=38.0375&lon=-78.4863&zoom=12.0&showTrace=2020-10-24`
         );
@@ -243,21 +245,6 @@ describe("utils", () => {
     it("properly formats string", () => {
       expect(utils.formatDirection()).toEqual(false);
       expect(utils.formatDirection(220.6)).toEqual(" and heading SW");
-    });
-  });
-
-  describe("formatHashTag function", () => {
-    it("properly formats string", () => {
-      expect(
-        utils.formatHashTag({}, { val: () => {} }, { val: () => {} })
-      ).toEqual("");
-      expect(
-        utils.formatHashTag(
-          { dbFlags: 1 },
-          { val: () => {} },
-          { val: () => {} }
-        )
-      ).toEqual(" #military");
     });
   });
 

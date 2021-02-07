@@ -32,9 +32,6 @@ describe("config", () => {
                   .valueOf()
               }
             })
-          },
-          {
-            val: () => ({})
           }
         )
       ).toEqual(false);
@@ -56,9 +53,6 @@ describe("config", () => {
                   .valueOf()
               }
             })
-          },
-          {
-            val: () => ({})
           }
         )
       ).toEqual("busyday");
@@ -80,12 +74,32 @@ describe("config", () => {
                   .valueOf()
               }
             })
-          },
-          {
-            val: () => ({})
           }
         )
       ).toEqual(false);
     });
+
+    expect(
+      hashtags.firstspot(
+        {},
+        {
+          val: () => null
+        }
+      )
+    ).toEqual("firstspot");
+    expect(
+      hashtags.firstspot(
+        {},
+        {
+          val: () => ({
+            timestamps: {
+              r3242343: moment()
+                .subtract(2, "days")
+                .valueOf()
+            }
+          })
+        }
+      )
+    ).toEqual(false);
   });
 });

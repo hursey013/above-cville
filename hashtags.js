@@ -27,5 +27,6 @@ module.exports = {
     Boolean(snap.val()) &&
     isInDateRange(snap.val().timestamps, 30, 90, "days") &&
     "frequentflyer",
-  phiden: ({ hex }, snap) => hex === "A0E429" && "phiden"
+  phiden: ({ hex }, snap) => hex === "A0E429" && "phiden",
+  firstspot: (state, snap) => !snap.val() && "firstspot"
 };
