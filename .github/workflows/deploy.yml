@@ -43,5 +43,5 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           git-push-flags: "--force"
-          dokku-host: "brainhurts.me"
+          dokku-host: "161.35.2.84"
           app-name: "above-cville"

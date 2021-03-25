@@ -81,8 +81,8 @@ const fetchRemoteMediaUrl = reg => {
     auth: { username, password },
     params: { reg }
   }).then(async ({ data: { photos = [], links = [] } }) => ({
-    photo: photos.length > 0 && (await downloadMedia(randomItem(photos))),
-    link: links.length > 0 && randomItem(links)
+    photo: photos.length > 0 && (await downloadMedia(photos[0])),
+    link: links.length > 0 && links[0]
   }));
 };
 
