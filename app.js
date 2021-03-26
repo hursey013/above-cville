@@ -46,7 +46,7 @@ const downloadMedia = url =>
     .get(url, { responseType: "arraybuffer" })
     .then(({ data }) => Buffer.from(data, "binary").toString("base64"));
 
-const fetchMedia = async (call, icao, reg) => {
+const fetchMedia = async (call = "", icao, reg) => {
   // Check for photos in storage before calling API
   const [files] = await bucket.getFiles({
     delimiter: "/",
