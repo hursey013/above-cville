@@ -3,6 +3,7 @@
 const axios = require("axios").default;
 const admin = require("firebase-admin");
 const Buffer = require("safe-buffer").Buffer;
+const https = require("https");
 const { serializeError } = require("serialize-error");
 const Twit = require("twit");
 
@@ -168,6 +169,12 @@ const app = async () => {
     );
   } catch (error) {
     return console.error(JSON.stringify(serializeError(error)));
+  } finally {
+    https
+      .get("https://hc-ping.com/696f14b8-21f9-4cbf-8dad-7b847a8ab295")
+      .on("error", err => {
+        console.log("Ping failed: " + err);
+      });
   }
 };
 
