@@ -1,7 +1,7 @@
 {
   "name": "above-cville",
   "version": "1.0.0",
-  "description": "",
+  "description": "Monitor aircraft activity over Charlottesville, VA and forward notifications via Apprise.",
   "main": "clock.js",
   "scripts": {
     "start": "node clock.js",
@@ -19,21 +19,15 @@
   },
   "homepage": "https://github.com/hursey013/above-cville#readme",
   "dependencies": {
-    "axios": "^0.21.1",
-    "cardinal-direction": "^1.0.0",
-    "convert-units": "^2.3.4",
-    "dotenv": "^8.2.0",
-    "firebase-admin": "^9.4.2",
-    "indefinite": "^2.4.1",
-    "moment": "^2.29.1",
-    "safe-buffer": "^5.2.1",
-    "serialize-error": "^7.0.1",
-    "set-interval-async": "1.0.33",
-    "twit": "^2.2.11"
+    "dotenv": "^16.4.5",
+    "indefinite": "^2.4.3",
+    "moment": "^2.30.1",
+    "serialize-error": "^11.0.2",
+    "set-interval-async": "^1.0.33"
   },
   "devDependencies": {
-    "eslint": "^7.15.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "jest": "^26.6.3"
+    "eslint": "^8.57.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.7.0"
   }
 }

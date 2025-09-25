@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  pocketbase:
+    image: pocketbase/pocketbase:0.21
+    command: ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir", "/pb/pb_data"]
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+
+  apprise:
+    image: caronc/apprise-api:latest
+    environment:
+      - APPRISE_STATEFUL_MODE=1
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apprise:/config
+
+  above-cville:
+    build: .
+    depends_on:
+      - pocketbase
+      - apprise
+    restart: unless-stopped
+    environment:
+      AIRPLANES_LIVE_KEY: "${AIRPLANES_LIVE_KEY}"
+      AIRPLANES_LIVE_URL: "${AIRPLANES_LIVE_URL}"
+      AIRPLANES_LIVE_LAT: "${AIRPLANES_LIVE_LAT}"
+      AIRPLANES_LIVE_LON: "${AIRPLANES_LIVE_LON}"
+      AIRPLANES_LIVE_RADIUS: "${AIRPLANES_LIVE_RADIUS}"
+      REFRESH_SECONDS: "${REFRESH_SECONDS}"
+      COOLDOWN_MINUTES: "${COOLDOWN_MINUTES}"
+      MAXIMUM_ALT: "${MAXIMUM_ALT}"
+      PHOTO_API_URL: "${PHOTO_API_URL}"
+      PHOTO_API_USERNAME: "${PHOTO_API_USERNAME}"
+      PHOTO_API_PASSWORD: "${PHOTO_API_PASSWORD}"
+      POCKETBASE_URL: "http://pocketbase:8090"
+      POCKETBASE_STATES_COLLECTION: "${POCKETBASE_STATES_COLLECTION}"
+      POCKETBASE_IGNORED_COLLECTION: "${POCKETBASE_IGNORED_COLLECTION}"
+      POCKETBASE_OPERATORS_COLLECTION: "${POCKETBASE_OPERATORS_COLLECTION}"
+      POCKETBASE_ADMIN_TOKEN: "${POCKETBASE_ADMIN_TOKEN}"
+      POCKETBASE_ADMIN_EMAIL: "${POCKETBASE_ADMIN_EMAIL}"
+      POCKETBASE_ADMIN_PASSWORD: "${POCKETBASE_ADMIN_PASSWORD}"
+      POCKETBASE_CACHE_TTL_SECONDS: "${POCKETBASE_CACHE_TTL_SECONDS}"
+      APPRISE_URL: "http://apprise:8000/notify"
+      APPRISE_TARGETS: "${APPRISE_TARGETS}"
+      APPRISE_TAG: "${APPRISE_TAG}"
+      APPRISE_TIMEOUT: "${APPRISE_TIMEOUT}"
+      HEALTHCHECK_URL: "${HEALTHCHECK_URL}"
+    volumes:
+      - ./storage:/app/storage:ro

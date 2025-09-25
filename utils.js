@@ -1,27 +1,46 @@
 "use strict";
 
-const Compass = require("cardinal-direction");
-const convert = require("convert-units");
 const fs = require("fs");
+const path = require("path");
 const a = require("indefinite");
 const moment = require("moment");
+
 const {
   abbreviations,
   actionPhrases,
-  adsbx,
+  airplanesLive,
   articles,
   maximumAlt
 } = require("./config");
 const hashtags = require("./hashtags");
-const operators = require("./storage/operators.json");
-const types = require("./storage/types.json");
+
+const operatorsPath = path.join(__dirname, "storage", "operators.json");
+const typesPath = path.join(__dirname, "storage", "types.json");
+
+// Attempt to load optional data stores when present locally.
+// The files are large and typically mounted at runtime, so fall back to an empty object when absent.
+// eslint-disable-next-line global-require, import/no-dynamic-require
+const operators = fs.existsSync(operatorsPath) ? require(operatorsPath) : {};
+// eslint-disable-next-line global-require, import/no-dynamic-require
+const types = fs.existsSync(typesPath) ? require(typesPath) : {};
+
+const degreeToCardinal = degree => {
+  if (!Number.isFinite(Number(degree))) return undefined;
+
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const normalized = (Number(degree) % 360 + 360) % 360;
+  const index = Math.round(normalized / 45) % directions.length;
+  return directions[index];
+};
+
+const knotsToMph = knots => Number(knots) * 1.150779448;
 
 const addArticle = string => {
   // See if string matches any exceptions defined in the config
   for (const article of Object.keys(articles)) {
     if (
-      articles[article].some(a =>
-        string.toLowerCase().includes(a.toLowerCase())
+      articles[article].some(item =>
+        string.toLowerCase().includes(item.toLowerCase())
       )
     ) {
       return `${article} ${string}`;
@@ -50,9 +69,11 @@ const createStatus = (snap, state, ops, media) => {
       media: media && `\n📸 ${media}`,
       link:
         hex &&
-        `\n📡 https://globe.adsbexchange.com/?icao=${hex}&lat=${
-          adsbx.lat
-        }&lon=${adsbx.lon}&zoom=12.0&showTrace=${moment().format("YYYY-MM-DD")}`
+        `\n📡 https://globe.airplanes.live/?icao=${hex}&lat=${
+          airplanesLive.lat
+        }&lon=${airplanesLive.lon}&zoom=12.0&showTrace=${moment().format(
+          "YYYY-MM-DD"
+        )}`
     }
   );
 };
@@ -64,6 +85,8 @@ const fillTemplate = (templateString, templateVariables) =>
   templateString.replace(/\${(.*?)}/g, (_, g) => templateVariables[g] || "");
 
 const filterStates = (states = [], ignored) => {
+  const ignoredList = (ignored && ignored.val && ignored.val()) || [];
+
   return states.filter(({ alt_baro, flight, dbFlags, r: reg }) => {
     const opicao = deriveOpicao(flight, reg, dbFlags);
 
@@ -71,8 +94,8 @@ const filterStates = (states = [], ignored) => {
     if (alt_baro && alt_baro === "ground") return false;
     if (
       opicao &&
-      ignored &&
-      ignored.val().some(i => i.toLowerCase() === opicao.toLowerCase())
+      Array.isArray(ignoredList) &&
+      ignoredList.some(i => i.toLowerCase() === opicao.toLowerCase())
     )
       return false;
 
@@ -85,7 +108,8 @@ const formatAltitude = alt_baro =>
   ` ${numberWithCommas(alt_baro)} ft`;
 
 const formatCount = snap => {
-  const count = snap.val() && Object.keys(snap.val().timestamps).length;
+  const timestamps = snap && snap.val && snap.val() && snap.val().timestamps;
+  const count = timestamps && Object.keys(timestamps).length;
 
   return (
     Boolean(count) &&
@@ -95,12 +119,10 @@ const formatCount = snap => {
   );
 };
 
-const formatDirection = track =>
-  Boolean(track) &&
-  ` and heading ${Compass.cardinalFromDegree(
-    track,
-    Compass.CardinalSubset.Ordinal
-  )}`;
+const formatDirection = track => {
+  const cardinal = degreeToCardinal(track);
+  return cardinal ? ` and heading ${cardinal}` : false;
+};
 
 const formatHashTag = (state, snap) => {
   let string = "";
@@ -123,12 +145,13 @@ const formatIdentifier = (flight, reg, dbFlags) =>
 
 const formatOperator = (flight, hex, reg, ops, dbFlags) => {
   const opicao = deriveOpicao(flight, reg, dbFlags);
+  const snapshot = (ops && ops.val && ops.val()) || {};
   let value = "";
 
-  if (hex && ops.val().icao && ops.val().icao[hex.toUpperCase()]) {
-    value = ops.val().icao[hex.toUpperCase()];
-  } else if (opicao && ops.val().opicao && ops.val().opicao[opicao]) {
-    value = ops.val().opicao[opicao];
+  if (hex && snapshot.icao && snapshot.icao[hex.toUpperCase()]) {
+    value = snapshot.icao[hex.toUpperCase()];
+  } else if (opicao && snapshot.opicao && snapshot.opicao[opicao]) {
+    value = snapshot.opicao[opicao];
   } else if (opicao && operators[opicao]) {
     value = operators[opicao][0];
   }
@@ -136,13 +159,10 @@ const formatOperator = (flight, hex, reg, ops, dbFlags) => {
   return Boolean(value) && ` operated by ${sanitizeString(value)}`;
 };
 
-const formatSpeed = gs =>
-  Boolean(gs && gs !== 0) &&
-  ` at ${Math.round(
-    convert(Number(gs))
-      .from("knot")
-      .to("m/h")
-  )} mph`;
+const formatSpeed = gs => {
+  if (!gs || Number(gs) === 0) return false;
+  return ` at ${Math.round(knotsToMph(Number(gs)))} mph`;
+};
 
 const formatType = frame => {
   let value = "";
@@ -161,7 +181,7 @@ const isMilitary = (reg, dbFlags) =>
   (dbFlags && dbFlags === 1);
 
 const isNewState = (snap, cooldown) => {
-  const timestamps = snap.val() && snap.val().timestamps;
+  const timestamps = snap && snap.val && snap.val() && snap.val().timestamps;
 
   return (
     !snap.exists() ||
@@ -203,6 +223,7 @@ const sanitizeString = string =>
 module.exports = {
   addArticle,
   createStatus,
+  degreeToCardinal,
   filterStates,
   formatAltitude,
   formatCount,
@@ -214,6 +235,7 @@ module.exports = {
   formatType,
   isMilitary,
   isNewState,
+  knotsToMph,
   numberWithCommas,
   randomItem,
   sanitizeString

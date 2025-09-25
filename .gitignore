@@ -1,3 +1,6 @@
 .env
 node_modules/
-storage/
+storage/*
+!storage/.gitkeep
+!storage/operators.json
+!storage/types.json
