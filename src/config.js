@@ -1,0 +1,32 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const parseNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const clampSeconds = (value) => {
+  const seconds = Math.round(value);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : 1;
+};
+
+export const config = {
+  latitude: parseNumber(process.env.AIRPLANES_LAT, 38.0375),
+  longitude: parseNumber(process.env.AIRPLANES_LON, -78.4863),
+  radius: parseNumber(process.env.AIRPLANES_RADIUS, 2.5),
+  pollIntervalSeconds: clampSeconds(parseNumber(process.env.POLL_INTERVAL_SECONDS, 1)),
+  cooldownMinutes: Math.max(1, parseNumber(process.env.COOLDOWN_MINUTES, 20)),
+  apprise: {
+    apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
+    targets: (process.env.APPRISE_URLS ?? '')
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+  },
+  dataFile: process.env.DATA_FILE ?? '.data/db.json',
+  historyLimit: Math.max(0, parseNumber(process.env.HISTORY_LIMIT, 0))
+};
+
+export default config;
