@@ -1,39 +1,24 @@
 {
   "name": "above-cville",
-  "version": "1.0.0",
-  "description": "",
-  "main": "clock.js",
+  "version": "2.0.0",
+  "description": "Self-hosted aircraft spotter that polls airplanes.live and sends Apprise notifications.",
+  "type": "module",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node clock.js",
-    "test": "jest",
-    "test:watch": "npm run test -- --watch"
+    "start": "node src/index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hursey013/above-cville.git"
-  },
+  "keywords": [
+    "adsb",
+    "airplanes",
+    "apprise",
+    "self-hosted",
+    "notifications"
+  ],
   "author": "Brian Hurst",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/hursey013/above-cville/issues"
-  },
-  "homepage": "https://github.com/hursey013/above-cville#readme",
   "dependencies": {
-    "axios": "^0.21.1",
-    "cardinal-direction": "^1.0.0",
-    "convert-units": "^2.3.4",
-    "dotenv": "^8.2.0",
-    "firebase-admin": "^9.4.2",
-    "indefinite": "^2.4.1",
-    "moment": "^2.29.1",
-    "safe-buffer": "^5.2.1",
-    "serialize-error": "^7.0.1",
-    "set-interval-async": "1.0.33",
-    "twit": "^2.2.11"
-  },
-  "devDependencies": {
-    "eslint": "^7.15.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "jest": "^26.6.3"
+    "dotenv": "^16.4.5",
+    "lowdb": "^6.0.1",
+    "node-cron": "^3.0.3"
   }
 }

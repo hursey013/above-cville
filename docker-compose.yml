@@ -1,0 +1,26 @@
+services:
+  spotter:
+    build: .
+    container_name: above-cville-spotter
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - spotter-data:/app/.data
+    depends_on:
+      - apprise
+
+  apprise:
+    image: caronc/apprise:latest
+    container_name: above-cville-apprise
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - apprise-config:/config
+    environment:
+      - APPRISE_CONFIG=/config/apprise.yml
+
+volumes:
+  spotter-data:
+  apprise-config:
