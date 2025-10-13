@@ -3,7 +3,7 @@ import cron from 'node-cron';
 import config from './config.js';
 import db from './db.js';
 import { sendAppriseNotification } from './notifications.js';
-import { distanceNm, nowIso } from './utils.js';
+import { distanceNm } from './utils.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
@@ -47,52 +47,80 @@ const pollAirplanes = async () => {
         continue;
       }
 
-      const lastNotification = db.data.cooldowns[hex];
-      const secondsSinceLast = lastNotification ? (now - lastNotification) / 1000 : Infinity;
+      let sightingEntry = db.data.sightings.find((entry) => entry.hex === hex);
+      const timestamps = Array.isArray(sightingEntry?.timestamps) ? sightingEntry.timestamps : [];
+      const lastTimestampMs = timestamps.length
+        ? timestamps[timestamps.length - 1]
+        : null;
+      const secondsSinceLast = lastTimestampMs !== null ? (now - lastTimestampMs) / 1000 : Infinity;
       const distance =
         typeof plane.dist === 'number'
           ? plane.dist
           : distanceNm(config.latitude, config.longitude, plane.lat, plane.lon);
 
-      const sightingRecord = {
-        hex,
-        flight: plane.flight?.trim() || null,
-        registration: plane.r || null,
-        type: plane.t || null,
-        altitude: plane.alt_baro ?? plane.alt_geom ?? null,
-        groundSpeed: plane.gs ?? null,
-        latitude: typeof plane.lat === 'number' ? plane.lat : null,
-        longitude: typeof plane.lon === 'number' ? plane.lon : null,
-        distanceNm: typeof distance === 'number' ? distance : null,
-        detectedAt: nowIso(),
-        notified: false
-      };
-
       let shouldNotify = secondsSinceLast >= config.cooldownMinutes * 60;
 
-      if (!lastNotification) {
+      if (lastTimestampMs === null) {
         shouldNotify = true;
       }
 
       if (shouldNotify) {
-        await sendAppriseNotification(plane, sightingRecord.distanceNm ?? undefined);
-        db.data.cooldowns[hex] = now;
-        sightingRecord.notified = true;
+        const distanceNmValue = typeof distance === 'number' ? distance : null;
+        await sendAppriseNotification(plane, distanceNmValue ?? undefined);
+        if (!sightingEntry) {
+          sightingEntry = { hex, timestamps: [] };
+          db.data.sightings.push(sightingEntry);
+        }
+        if (!Array.isArray(sightingEntry.timestamps)) {
+          sightingEntry.timestamps = [];
+        }
+        sightingEntry.timestamps.push(now);
+        const distanceLabel = distanceNmValue !== null ? distanceNmValue.toFixed(2) : 'unknown';
         console.log(
-          `[notify] ${plane.flight?.trim() || hex.toUpperCase()} | distance: ${
-            sightingRecord.distanceNm?.toFixed(2) ?? 'unknown'
-          } NM`
+          `[notify] ${plane.flight?.trim() || hex.toUpperCase()} | distance: ${distanceLabel} NM`
         );
+        hasChanges = true;
       }
-
-      db.data.sightings.push(sightingRecord);
-      hasChanges = true;
     }
 
-    if (config.historyLimit > 0 && db.data.sightings.length > config.historyLimit) {
-      const removeCount = db.data.sightings.length - config.historyLimit;
-      db.data.sightings.splice(0, removeCount);
-      hasChanges = true;
+    if (config.historyLimit > 0) {
+      let totalEvents = db.data.sightings.reduce((sum, entry) => {
+        if (!Array.isArray(entry.timestamps)) {
+          entry.timestamps = [];
+        }
+        return sum + entry.timestamps.length;
+      }, 0);
+
+      while (totalEvents > config.historyLimit) {
+        let oldestIndex = -1;
+        let oldestTimestamp = null;
+
+        for (let index = 0; index < db.data.sightings.length; index += 1) {
+          const entry = db.data.sightings[index];
+          if (!entry.timestamps.length) {
+            continue;
+          }
+
+          const candidate = entry.timestamps[0];
+          if (!oldestTimestamp || candidate < oldestTimestamp) {
+            oldestIndex = index;
+            oldestTimestamp = candidate;
+          }
+        }
+
+        if (oldestIndex === -1) {
+          break;
+        }
+
+        const entry = db.data.sightings[oldestIndex];
+        entry.timestamps.shift();
+        if (!entry.timestamps.length) {
+          db.data.sightings.splice(oldestIndex, 1);
+        }
+
+        totalEvents -= 1;
+        hasChanges = true;
+      }
     }
   } catch (error) {
     console.error('Failed to poll airplanes.live', error);

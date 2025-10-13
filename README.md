@@ -29,7 +29,8 @@ Key settings:
 - `POLL_INTERVAL_SECONDS` – defaults to 1 second.
 - `COOLDOWN_MINUTES` – defaults to 20 minutes between notifications for the same aircraft.
 - `APPRISE_API_URL` – URL to your Apprise API server (defaults to the service defined in the Docker Compose file).
-- `APPRISE_URLS` – comma or newline separated list of Apprise target URLs (Discord, Gotify, SMTP, etc.).
+- `APPRISE_URLS` – comma or newline separated list of Apprise target URLs (Discord, Gotify, SMTP, etc.). Leave blank when using a config key.
+- `APPRISE_CONFIG_KEY` – optional Apprise configuration key. When set, all notifications are delivered via this key instead of direct URLs.
 - `DATA_FILE` – path to the lowdb JSON file that stores sightings and cool down data.
 
 ## Running locally
@@ -74,12 +75,11 @@ Persistent data lives in the `spotter-data` volume, so history survives containe
 
 ## Data model
 
-The lowdb database stores two collections:
+The lowdb database stores a single collection:
 
-- `cooldowns` – a map of ICAO hex codes to the last notification timestamp (in milliseconds) for enforcing the cool down period.
-- `sightings` – an append-only log of every plane detected, including whether a notification was emitted.
+- `sightings` – one record per ICAO hex with a `timestamps` array containing the epoch-millisecond moments when notifications were sent.
 
-This makes it easy to analyze frequent or rare visitors by processing the JSON file later.
+This compact structure keeps the JSON file small while still allowing later analysis of activity and ensuring cooldown enforcement is based on the most recent notification.
 
 ## Extending the project
 

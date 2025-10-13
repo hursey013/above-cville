@@ -1,6 +1,8 @@
 const EARTH_RADIUS_KM = 6371;
 const KM_TO_NM = 0.539957;
 
+export const trimTrailingSlash = (value = '') => value.replace(/\/+$/, '');
+
 export const distanceNm = (lat1, lon1, lat2, lon2) => {
   if (
     [lat1, lon1, lat2, lon2].some(
@@ -27,9 +29,7 @@ export const distanceNm = (lat1, lon1, lat2, lon2) => {
   return distanceKm * KM_TO_NM;
 };
 
-export const nowIso = () => new Date().toISOString();
-
 export default {
   distanceNm,
-  nowIso
+  trimTrailingSlash
 };

@@ -7,6 +7,14 @@ const parseNumber = (value, fallback) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const parseString = (value) => (typeof value === 'string' ? value.trim() : '');
+
+const parseStringList = (value) =>
+  (value ?? '')
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
 const clampSeconds = (value) => {
   const seconds = Math.round(value);
   return Number.isFinite(seconds) && seconds > 0 ? seconds : 1;
@@ -20,10 +28,8 @@ export const config = {
   cooldownMinutes: Math.max(1, parseNumber(process.env.COOLDOWN_MINUTES, 20)),
   apprise: {
     apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
-    targets: (process.env.APPRISE_URLS ?? '')
-      .split(/[\n,]/)
-      .map((item) => item.trim())
-      .filter(Boolean)
+    urls: parseStringList(process.env.APPRISE_URLS),
+    configKey: parseString(process.env.APPRISE_CONFIG_KEY)
   },
   dataFile: process.env.DATA_FILE ?? '.data/db.json',
   historyLimit: Math.max(0, parseNumber(process.env.HISTORY_LIMIT, 0))
