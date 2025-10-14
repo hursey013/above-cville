@@ -5,6 +5,8 @@ import db from './db.js';
 import { sendAppriseMessage } from './apprise.js';
 import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhotoUrl } from './photos.js';
+import { shouldIgnoreCarrier } from './filters.js';
+import { resolveAltitudeFt, isGrounded, isAboveConfiguredCeiling } from './utils.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
@@ -48,36 +50,16 @@ const pollAirplanes = async () => {
         continue;
       }
 
-      const flightCallsign = plane.flight?.trim();
-      if (flightCallsign) {
-        const carrierCode = flightCallsign.slice(0, 3).toUpperCase();
-        if (config.ignoredCarrierCodes.includes(carrierCode)) {
-          continue;
-        }
+      if (shouldIgnoreCarrier(plane.flight, config.ignoredCarrierCodes)) {
+        continue;
       }
 
-      const altitudeRaw = plane.alt_baro;
-      if (typeof altitudeRaw === 'string') {
-        if (altitudeRaw.trim().toLowerCase() === 'ground') {
-          continue;
-        }
+      if (isGrounded(plane)) {
+        continue;
       }
 
-      let altitudeNumeric = null;
-      if (typeof altitudeRaw === 'number' && Number.isFinite(altitudeRaw)) {
-        altitudeNumeric = altitudeRaw;
-      } else if (typeof altitudeRaw === 'string') {
-        const parsed = Number(altitudeRaw);
-        if (Number.isFinite(parsed)) {
-          altitudeNumeric = parsed;
-        }
-      }
-
-      const maxAltitude =
-        Number.isFinite(config.maxAltitudeFt) && config.maxAltitudeFt > 0
-          ? config.maxAltitudeFt
-          : null;
-      if (maxAltitude !== null && altitudeNumeric !== null && altitudeNumeric > maxAltitude) {
+      const altitudeFt = resolveAltitudeFt(plane);
+      if (isAboveConfiguredCeiling(altitudeFt, config.maxAltitudeFt)) {
         continue;
       }
 
@@ -117,9 +99,7 @@ const pollAirplanes = async () => {
           sightingEntry.timestamps = [];
         }
         sightingEntry.timestamps.push(now);
-        console.log(
-          `[notify] ${plane.flight?.trim() || hex.toUpperCase()}`, plane
-        );
+        console.log(`[notify] ${plane.flight?.trim() || hex.toUpperCase()}`);
         hasChanges = true;
       }
     }

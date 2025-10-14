@@ -1,97 +1,100 @@
-# Above Cville – Airplanes.live Spotter
+# Above Cville — Friendly Skies Watcher
 
-A minimal, self-hosted Node.js service that polls the [airplanes.live](https://airplanes.live/api-guide/) `/point/{lat}/{lon}/{radius}` endpoint once per second and sends aircraft sighting notifications through [Apprise](https://github.com/caronc/apprise). All detections are persisted with a 20 minute cool down per aircraft so you can review which planes visit most frequently without being spammed.
+Above Cville keeps an eye on the [airplanes.live](https://airplanes.live/api-guide/) feed around Charlottesville and pings you the moment an interesting aircraft drops in. Think of it as a neighborhood watch for the sky: zero fluff, lots of signal, and tuned for self-hosters who like notifications with personality. ✈️🛰️
 
-## Features
+---
 
-- Polls airplanes.live every second (configurable) for aircraft within a configurable radius.
-- Sends richly formatted notifications via Apprise for new aircraft or returning aircraft after a 20 minute cool down.
-- Persists sightings and cool down timers to a local [lowdb](https://github.com/typicode/lowdb) JSON database.
-- Includes a ready-to-run Docker Compose stack with Apprise for NAS/Container Manager deployments.
+## Highlights
 
-## Requirements
+- 🔁 **Real-time sweeps** – Polls airplanes.live on a tight schedule (configurable) and filters out repeat sightings with a cooldown timer.
+- 🚫 **Carrier filter** – Skip the commercial heavy hitters by listing their ICAO codes directly in the compose snippet. Want only corporate jets and medevacs? Done.
+- 🗣️ **Cheerful alerts** – Notifications read like a Bluesky post: speed, altitude, direction, and a quick note about how often the plane pops by.
+- 🖼️ **Photo flair** – If FlightAware has a shot of the aircraft, the link is attached so your Apprise target (Pushover, Discord, etc.) can grab it.
+- 🪶 **Featherweight** – Plain Node.js + [lowdb](https://github.com/typicode/lowdb) JSON storage. No external database, no message queues, no drama.
+- 🐳 **Docker native** – Ships with a battle-tested compose file so you can drop it onto Synology, Portainer, or whatever box you call “the lab.”
 
-- Node.js 18+ (for native `fetch` and top-level `await`).
+---
+
+## What you need
+
+- A place to run containers (Synology Container Manager, Portainer, Unraid, etc.).
 - Access to the public airplanes.live API.
-- An Apprise server (the provided `docker-compose.yml` starts one for you).
+- An [Apprise](https://github.com/caronc/apprise) endpoint (self-hosted or bundled with the compose file).
+- A target inside Apprise (Pushover/Discord/email/etc.) so the alerts land somewhere fun.
 
-## Configuration
+---
 
-Copy `.env.example` to `.env` and adjust the values:
+## Quick start (Portainer, Synology Container Manager, etc.)
 
-```bash
-cp .env.example .env
-```
+1. Open your container UI and choose **Create stack / Project → Create** (the option that accepts Docker Compose).
+2. Paste the snippet below into the editor.
+3. Adjust the environment values inline (lat/lon, Apprise URL, timezone, ignored carriers, etc.).
+4. Launch the stack. That’s it—no shell access needed.
 
-Key settings:
-
-- `AIRPLANES_LAT`, `AIRPLANES_LON`, `AIRPLANES_RADIUS` – location and radius (in nautical miles) to monitor.
-- `POLL_INTERVAL_SECONDS` – defaults to 1 second.
-- `COOLDOWN_MINUTES` – defaults to 20 minutes between notifications for the same aircraft.
-- `MAX_ALTITUDE_FT` – filters out aircraft above this pressure altitude (set ≤ 0 to disable).
-- `APPRISE_API_URL` – URL to your Apprise API server (defaults to the service defined in the Docker Compose file).
-- `APPRISE_URLS` – comma or newline separated list of Apprise target URLs (Discord, Gotify, SMTP, etc.). Leave blank when using a config key.
-- `APPRISE_CONFIG_KEY` – optional Apprise configuration key. When set, all notifications are delivered via this key instead of direct URLs.
-- `DATA_FILE` – path to the lowdb JSON file that stores sightings and cool down data.
-
-## Running locally
-
-```bash
-npm install
-npm start
-```
-
-The service logs notification activity to the console and writes persistent data to `.data/db.json` by default.
-
-Run the automated tests with:
-
-```bash
-npm test
-```
-
-## Docker & NAS deployment
-
-The included `docker-compose.yml` is tailored for home lab setups (Synology, Portainer, etc.). It builds the spotter service and launches an Apprise API container side-by-side.
+<details open>
+<summary><strong>Copy &amp; paste docker-compose.yml</strong></summary>
 
 ```yaml
 services:
-  spotter:
-    build: .
-    env_file:
-      - .env
+  above-cville:
+    image: ghcr.io/hursey013/above-cville:latest
+    restart: unless-stopped
+    environment:
+      # --- Location & polling ---
+      AIRPLANES_LAT: "38.0375" # Latitude to monitor
+      AIRPLANES_LON: "-78.4863" # Longitude to monitor
+      AIRPLANES_RADIUS: "5" # Radius in nautical miles
+      POLL_INTERVAL_SECONDS: "5" # How often to poll airplanes.live
+      COOLDOWN_MINUTES: "10" # Minimum minutes between alerts per aircraft
+      MAX_ALTITUDE_FT: "25000" # Ignore anything higher (set <=0 to disable)
+
+      # --- Carrier filter (optional; leave blank to watch everything) ---
+      IGNORE_CARRIERS: "AAL,ASH,AWI,DAL,EDV,JIA,PDT,UAL,ENY,RPA,SKW"
+
+      # --- Storage path for sightings ---
+      DATA_FILE: "data/db.json"
+
+      # --- Apprise connection ---
+      APPRISE_API_URL: "http://apprise:8000/notify"
+      APPRISE_CONFIG_KEY: "" # Provide if your Apprise API uses keyed endpoints
+      APPRISE_URLS: "" # Stateless mode: comma-separated target URLs
+
+      # --- Timezone for logs & cron output ---
+      TZ: "America/New_York"
     volumes:
-      - spotter-data:/app/.data
+      - ./data:/app/data
     depends_on:
       - apprise
+
   apprise:
-    image: caronc/apprise:latest
+    image: lscr.io/linuxserver/apprise-api:latest
+    restart: unless-stopped
+    environment:
+      PUID: "1026" # adjust to match your user
+      PGID: "100"
+      TZ: America/New_York
+    volumes:
+      - ./apprise-config:/config
     ports:
       - "8000:8000"
-    volumes:
-      - apprise-config:/config
 ```
 
-Steps:
+</details>
 
-1. Copy `.env.example` to `.env` and set your Apprise notification URLs.
-2. (Optional) Edit `apprise-config/apprise.yml` once the container is created to define default notification URLs.
-3. Run `docker compose up -d` (or import the stack into Synology Container Manager / Portainer).
-4. Monitor the logs with `docker compose logs -f spotter`.
+When you open the stack’s log viewer you should see a line like:
 
-Persistent data lives in the `spotter-data` volume, so history survives container restarts. The Apprise configuration is stored in the `apprise-config` volume.
+```
+Watching 38.0375, -78.4863 within 5 NM (cooldown: 10 minutes)
+```
 
-## Data model
+Each time a plane clears the filters you’ll get `[notify] <callsign>` followed by the friendly message in your configured Apprise destinations.
 
-The lowdb database stores a single collection:
+---
 
-- `sightings` – one record per ICAO hex with a `timestamps` array containing the epoch-millisecond moments when notifications were sent.
+## Tips & FAQs
 
-This compact structure keeps the JSON file small while still allowing later analysis of activity and ensuring cooldown enforcement is based on the most recent notification.
-
-## Extending the project
-
-- Integrate a lightweight web UI to browse the sightings log.
-- Add optional filters (airlines, aircraft types, altitude ranges).
-- Export aggregated statistics (e.g., most common tail numbers) as JSON or CSV.
-
-Contributions and improvements are welcome!
+- **Carrier skips are optional.** Leave `IGNORE_CARRIERS` empty to watch everything.
+- **Bluesky-ready tone.** Modify `composeNotificationMessage` in `src/messages.js` if you want to tweak phrasing or drop the emoji vibe.
+- **FlightAware attachments.** The notification includes the most recent FlightAware photo link when available.
+- **Restart-safe storage.** Sightings live in `data/db.json`. Delete the file if you want to reset history.
+- **Timezones & cron.** Adjust `TZ` in Docker and your system timezone so log timestamps and Apprise attachments make sense.

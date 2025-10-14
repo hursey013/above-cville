@@ -1,6 +1,11 @@
 import config from './config.js';
 import { trimTrailingSlash } from './utils.js';
 
+/**
+ * Ensure we work with a deduplicated, trimmed list of URLs.
+ * @param {unknown} list
+ * @returns {string[]}
+ */
 const sanitizeUrls = (list) =>
   Array.isArray(list)
     ? Array.from(
@@ -12,6 +17,11 @@ const sanitizeUrls = (list) =>
       )
     : [];
 
+/**
+ * Build a minimal Apprise API client that knows how to switch between JSON and multipart payloads.
+ * @param {{ apiUrl: string, urls?: string[], configKey?: string }} params
+ * @returns {{ send: (payload: { title?: string, body?: string, attachments?: string[], urls?: string[], configKey?: string }) => Promise<void> }}
+ */
 export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
   if (!apiUrl) {
     throw new Error('Apprise API URL is required');
@@ -21,6 +31,11 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
   const defaultUrls = sanitizeUrls(urls);
   const defaultKey = typeof configKey === 'string' ? configKey.trim() : '';
 
+  /**
+   * Dispatch a notification to Apprise.
+   * @param {{ title?: string, body?: string, attachments?: string[], urls?: string[], configKey?: string }} param0
+   * @returns {Promise<void>}
+   */
   const send = async ({ title, body, attachments, urls: overrideUrls, configKey: overrideKey }) => {
     const targets = sanitizeUrls(
       overrideUrls !== undefined ? overrideUrls : defaultUrls

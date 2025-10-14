@@ -14,6 +14,11 @@ const cardinalDirections = [
   'northwest'
 ];
 
+/**
+ * Convert a numeric heading to a friendly cardinal direction.
+ * @param {number} value - Heading in degrees.
+ * @returns {string|null}
+ */
 const clampBearing = (value) => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return null;
@@ -24,6 +29,11 @@ const clampBearing = (value) => {
   return cardinalDirections[index];
 };
 
+/**
+ * Resolve the most reliable altitude value from a plane object.
+ * @param {Record<string, any>} plane
+ * @returns {number|null}
+ */
 const resolveAltitudeFt = (plane) => {
   const candidates = [plane.alt_baro, plane.alt_geom, plane.alt];
   for (const candidate of candidates) {
@@ -40,6 +50,11 @@ const resolveAltitudeFt = (plane) => {
   return null;
 };
 
+/**
+ * Convert the reported ground speed (usually knots) to mph.
+ * @param {Record<string, any>} plane
+ * @returns {number|null}
+ */
 const resolveSpeedMph = (plane) => {
   const candidates = [plane.gs, plane.speed, plane.spd];
   for (const candidate of candidates) {
@@ -56,6 +71,12 @@ const resolveSpeedMph = (plane) => {
   return null;
 };
 
+/**
+ * Produce aggregate stats about previous sightings for a plane.
+ * @param {number[]} timestamps - Epoch milliseconds of sightings/notifications.
+ * @param {number} [now=Date.now()] - Reference timestamp for comparisons.
+ * @returns {{total:number,lastHour:number,lastDay:number,lastWeek:number,lastSeen:number|null,firstSeen:number|null,averageIntervalMs:number|null}}
+ */
 export const summarizeSightings = (timestamps = [], now = Date.now()) => {
   if (!Array.isArray(timestamps)) {
     return {
@@ -197,6 +218,13 @@ const variantIndex = (identity, stats, variantsLength) => {
   return Math.abs(hash) % variantsLength;
 };
 
+/**
+ * Build a conversational notification title + body for a detected aircraft.
+ * @param {Record<string, any>} plane - Raw plane object from airplanes.live.
+ * @param {number[]} timestamps - Historical notification timestamps for this plane.
+ * @param {number} [now=Date.now()] - Reference timestamp.
+ * @returns {{title: string, body: string}}
+ */
 export const composeNotificationMessage = (plane, timestamps = [], now = Date.now()) => {
   const identity = plane.flight?.trim() || plane.registration || plane.r || plane.hex?.toUpperCase() || 'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);

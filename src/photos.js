@@ -3,6 +3,11 @@ const DEFAULT_IMAGE = 'https://www.flightaware.com/images/og_default_image.png';
 
 const photoCache = new Map();
 
+/**
+ * Extract the OG image URL from a FlightAware photo gallery HTML document.
+ * @param {string} html
+ * @returns {string|null}
+ */
 const extractOgImage = (html) => {
   if (typeof html !== 'string' || !html) {
     return null;
@@ -29,6 +34,11 @@ const extractOgImage = (html) => {
   return url;
 };
 
+/**
+ * Resolve a FlightAware photo URL for a given registration, caching the result.
+ * @param {string|undefined|null} registration
+ * @returns {Promise<string|null>}
+ */
 export const fetchPlanePhotoUrl = async (registration) => {
   const trimmed = registration?.toString?.().trim?.().toUpperCase?.();
   if (!trimmed) {
