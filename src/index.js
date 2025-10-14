@@ -2,7 +2,8 @@ import cron from 'node-cron';
 
 import config from './config.js';
 import db from './db.js';
-import { sendAppriseNotification } from './notifications.js';
+import { sendAppriseMessage } from './apprise.js';
+import { composeNotificationMessage } from './messages.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
@@ -84,7 +85,13 @@ const pollAirplanes = async () => {
       }
 
       if (shouldNotify) {
-        await sendAppriseNotification(plane);
+        const messageTimestamps = [...timestamps, now];
+        try {
+          const { title, body } = composeNotificationMessage(plane, messageTimestamps, now);
+          await sendAppriseMessage({ title, body });
+        } catch (error) {
+          console.error('Failed to send Apprise notification', error);
+        }
         if (!sightingEntry) {
           sightingEntry = { hex, timestamps: [] };
           db.data.sightings.push(sightingEntry);
