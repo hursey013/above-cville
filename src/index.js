@@ -77,8 +77,6 @@ const pollAirplanes = async () => {
         ? timestamps[timestamps.length - 1]
         : null;
       const secondsSinceLast = lastTimestampMs !== null ? (now - lastTimestampMs) / 1000 : Infinity;
-      const distance = typeof plane.dist === 'number' ? plane.dist : null;
-
       let shouldNotify = secondsSinceLast >= config.cooldownMinutes * 60;
 
       if (lastTimestampMs === null) {
@@ -86,8 +84,7 @@ const pollAirplanes = async () => {
       }
 
       if (shouldNotify) {
-        const distanceNmValue = typeof distance === 'number' ? distance : null;
-        await sendAppriseNotification(plane, distanceNmValue ?? undefined);
+        await sendAppriseNotification(plane);
         if (!sightingEntry) {
           sightingEntry = { hex, timestamps: [] };
           db.data.sightings.push(sightingEntry);
@@ -96,9 +93,8 @@ const pollAirplanes = async () => {
           sightingEntry.timestamps = [];
         }
         sightingEntry.timestamps.push(now);
-        const distanceLabel = distanceNmValue !== null ? distanceNmValue.toFixed(2) : 'unknown';
         console.log(
-          `[notify] ${plane.flight?.trim() || hex.toUpperCase()} | distance: ${distanceLabel} NM`
+          `[notify] ${plane.flight?.trim() || hex.toUpperCase()}`
         );
         hasChanges = true;
       }

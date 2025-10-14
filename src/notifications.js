@@ -7,7 +7,7 @@ const formatPlaneTitle = (plane) => {
   return `${name} spotted nearby`;
 };
 
-const formatPlaneBody = (plane, distanceNm) => {
+const formatPlaneBody = (plane) => {
   const lines = [];
 
   if (plane.flight) {
@@ -36,11 +36,11 @@ const formatPlaneBody = (plane, distanceNm) => {
   return lines.join('\n');
 };
 
-export const sendAppriseNotification = async (plane, distanceNm) => {
+export const sendAppriseNotification = async (plane) => {
   try {
     await sendAppriseMessage({
       title: formatPlaneTitle(plane),
-      body: formatPlaneBody(plane, distanceNm)
+      body: formatPlaneBody(plane)
     });
   } catch (error) {
     console.error('Failed to send Apprise notification', error);

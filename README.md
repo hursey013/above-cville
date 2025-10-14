@@ -43,6 +43,12 @@ npm start
 
 The service logs notification activity to the console and writes persistent data to `.data/db.json` by default.
 
+Run the automated tests with:
+
+```bash
+npm test
+```
+
 ## Docker & NAS deployment
 
 The included `docker-compose.yml` is tailored for home lab setups (Synology, Portainer, etc.). It builds the spotter service and launches an Apprise API container side-by-side.
