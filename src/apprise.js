@@ -12,39 +12,6 @@ const sanitizeUrls = (list) =>
       )
     : [];
 
-const postNotification = async ({ appriseApiUrl, urls, title, body, attachments }) => {
-  const payload = {
-    title,
-    body
-  };
-
-  if (Array.isArray(urls) && urls.length) {
-    payload.urls = urls;
-  }
-
-  if (Array.isArray(attachments) && attachments.length) {
-    payload.attachments = attachments;
-  }
-
-  const response = await fetch(appriseApiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    let errorBody = '';
-    try {
-      errorBody = await response.text();
-    } catch {
-      errorBody = '(unable to read response body)';
-    }
-    throw new Error(`Apprise notification failed with status ${response.status}: ${errorBody}`);
-  }
-};
-
 export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
   if (!apiUrl) {
     throw new Error('Apprise API URL is required');
@@ -69,13 +36,62 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
 
     const endpoint = key ? `${baseUrl}/${encodeURIComponent(key)}` : baseUrl;
 
-    await postNotification({
-      appriseApiUrl: endpoint,
-      urls: key ? undefined : targets,
-      title,
-      body,
-      attachments
+    const hasAttachments = Array.isArray(attachments) && attachments.length;
+
+    if (!hasAttachments) {
+      const payload = {
+        title,
+        body
+      };
+      if (!key && targets.length) {
+        payload.urls = targets;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`Apprise notification failed with status ${response.status}: ${text}`);
+      }
+
+      return;
+    }
+
+    const form = new FormData();
+
+    if (!key && targets.length) {
+      form.append('urls', targets.join(','));
+    }
+
+    if (title) {
+      form.append('title', title);
+    }
+
+    if (body) {
+      form.append('body', body);
+    }
+
+    for (const attachment of attachments) {
+      if (typeof attachment === 'string' && attachment.trim()) {
+        form.append('attachment', attachment.trim());
+      }
+    }
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      body: form
     });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Apprise notification failed with status ${response.status}: ${text}`);
+    }
   };
 
   return { send };
