@@ -28,6 +28,7 @@ Key settings:
 - `AIRPLANES_LAT`, `AIRPLANES_LON`, `AIRPLANES_RADIUS` – location and radius (in nautical miles) to monitor.
 - `POLL_INTERVAL_SECONDS` – defaults to 1 second.
 - `COOLDOWN_MINUTES` – defaults to 20 minutes between notifications for the same aircraft.
+- `MAX_ALTITUDE_FT` – filters out aircraft above this pressure altitude (set ≤ 0 to disable).
 - `APPRISE_API_URL` – URL to your Apprise API server (defaults to the service defined in the Docker Compose file).
 - `APPRISE_URLS` – comma or newline separated list of Apprise target URLs (Discord, Gotify, SMTP, etc.). Leave blank when using a config key.
 - `APPRISE_CONFIG_KEY` – optional Apprise configuration key. When set, all notifications are delivered via this key instead of direct URLs.

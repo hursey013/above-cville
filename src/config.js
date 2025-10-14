@@ -26,6 +26,7 @@ export const config = {
   radius: parseNumber(process.env.AIRPLANES_RADIUS, 2.5),
   pollIntervalSeconds: clampSeconds(parseNumber(process.env.POLL_INTERVAL_SECONDS, 1)),
   cooldownMinutes: Math.max(1, parseNumber(process.env.COOLDOWN_MINUTES, 20)),
+  maxAltitudeFt: parseNumber(process.env.MAX_ALTITUDE_FT, 2500),
   apprise: {
     apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
     urls: parseStringList(process.env.APPRISE_URLS),

@@ -47,6 +47,31 @@ const pollAirplanes = async () => {
         continue;
       }
 
+      const altitudeRaw = plane.alt_baro;
+      if (typeof altitudeRaw === 'string') {
+        if (altitudeRaw.trim().toLowerCase() === 'ground') {
+          continue;
+        }
+      }
+
+      let altitudeNumeric = null;
+      if (typeof altitudeRaw === 'number' && Number.isFinite(altitudeRaw)) {
+        altitudeNumeric = altitudeRaw;
+      } else if (typeof altitudeRaw === 'string') {
+        const parsed = Number(altitudeRaw);
+        if (Number.isFinite(parsed)) {
+          altitudeNumeric = parsed;
+        }
+      }
+
+      const maxAltitude =
+        Number.isFinite(config.maxAltitudeFt) && config.maxAltitudeFt > 0
+          ? config.maxAltitudeFt
+          : null;
+      if (maxAltitude !== null && altitudeNumeric !== null && altitudeNumeric > maxAltitude) {
+        continue;
+      }
+
       let sightingEntry = db.data.sightings.find((entry) => entry.hex === hex);
       const timestamps = Array.isArray(sightingEntry?.timestamps) ? sightingEntry.timestamps : [];
       const lastTimestampMs = timestamps.length
