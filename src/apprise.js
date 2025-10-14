@@ -12,7 +12,7 @@ const sanitizeUrls = (list) =>
       )
     : [];
 
-const postNotification = async ({ appriseApiUrl, urls, title, body }) => {
+const postNotification = async ({ appriseApiUrl, urls, title, body, attachments }) => {
   const payload = {
     title,
     body
@@ -20,6 +20,10 @@ const postNotification = async ({ appriseApiUrl, urls, title, body }) => {
 
   if (Array.isArray(urls) && urls.length) {
     payload.urls = urls;
+  }
+
+  if (Array.isArray(attachments) && attachments.length) {
+    payload.attachments = attachments;
   }
 
   const response = await fetch(appriseApiUrl, {
@@ -50,7 +54,7 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
   const defaultUrls = sanitizeUrls(urls);
   const defaultKey = typeof configKey === 'string' ? configKey.trim() : '';
 
-  const send = async ({ title, body, urls: overrideUrls, configKey: overrideKey }) => {
+  const send = async ({ title, body, attachments, urls: overrideUrls, configKey: overrideKey }) => {
     const targets = sanitizeUrls(
       overrideUrls !== undefined ? overrideUrls : defaultUrls
     );
@@ -69,7 +73,8 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
       appriseApiUrl: endpoint,
       urls: key ? undefined : targets,
       title,
-      body
+      body,
+      attachments
     });
   };
 

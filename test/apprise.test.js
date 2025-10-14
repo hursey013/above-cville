@@ -41,12 +41,13 @@ test('send posts to trimmed base URL with unique targets', async () => {
       urls: ['  discord://token  ', 'discord://token']
     });
 
-    await client.send({ title: 'Flight spotted', body: 'Body text' });
+    await client.send({ title: 'Flight spotted', body: 'Body text', attachments: ['https://example.com/a.jpg'] });
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'http://example.com/notify');
     assert.deepEqual(calls[0].options.body.urls, ['discord://token']);
     assert.equal(calls[0].options.body.title, 'Flight spotted');
+    assert.deepEqual(calls[0].options.body.attachments, ['https://example.com/a.jpg']);
   } finally {
     if (originalFetch === undefined) {
       delete global.fetch;

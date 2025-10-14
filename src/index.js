@@ -4,6 +4,7 @@ import config from './config.js';
 import db from './db.js';
 import { sendAppriseMessage } from './apprise.js';
 import { composeNotificationMessage } from './messages.js';
+import { fetchPlanePhotoUrl } from './photos.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
@@ -88,7 +89,15 @@ const pollAirplanes = async () => {
         const messageTimestamps = [...timestamps, now];
         try {
           const { title, body } = composeNotificationMessage(plane, messageTimestamps, now);
-          await sendAppriseMessage({ title, body });
+          let attachments = undefined;
+          const registration = plane.registration ?? plane.r;
+          if (registration) {
+            const photoUrl = await fetchPlanePhotoUrl(registration);
+            if (photoUrl) {
+              attachments = [photoUrl];
+            }
+          }
+          await sendAppriseMessage({ title, body, attachments });
         } catch (error) {
           console.error('Failed to send Apprise notification', error);
         }
