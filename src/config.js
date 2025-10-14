@@ -32,8 +32,7 @@ export const config = {
     urls: parseStringList(process.env.APPRISE_URLS),
     configKey: parseString(process.env.APPRISE_CONFIG_KEY)
   },
-  dataFile: process.env.DATA_FILE ?? '.data/db.json',
-  historyLimit: Math.max(0, parseNumber(process.env.HISTORY_LIMIT, 0))
+  dataFile: process.env.DATA_FILE ?? '.data/db.json'
 };
 
 export default config;

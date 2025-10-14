@@ -108,45 +108,6 @@ const pollAirplanes = async () => {
       }
     }
 
-    if (config.historyLimit > 0) {
-      let totalEvents = db.data.sightings.reduce((sum, entry) => {
-        if (!Array.isArray(entry.timestamps)) {
-          entry.timestamps = [];
-        }
-        return sum + entry.timestamps.length;
-      }, 0);
-
-      while (totalEvents > config.historyLimit) {
-        let oldestIndex = -1;
-        let oldestTimestamp = null;
-
-        for (let index = 0; index < db.data.sightings.length; index += 1) {
-          const entry = db.data.sightings[index];
-          if (!entry.timestamps.length) {
-            continue;
-          }
-
-          const candidate = entry.timestamps[0];
-          if (!oldestTimestamp || candidate < oldestTimestamp) {
-            oldestIndex = index;
-            oldestTimestamp = candidate;
-          }
-        }
-
-        if (oldestIndex === -1) {
-          break;
-        }
-
-        const entry = db.data.sightings[oldestIndex];
-        entry.timestamps.shift();
-        if (!entry.timestamps.length) {
-          db.data.sightings.splice(oldestIndex, 1);
-        }
-
-        totalEvents -= 1;
-        hasChanges = true;
-      }
-    }
   } catch (error) {
     console.error('Failed to poll airplanes.live', error);
   } finally {
