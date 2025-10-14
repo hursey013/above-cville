@@ -2,6 +2,7 @@ import cron from 'node-cron';
 
 import config from './config.js';
 import db from './db.js';
+import logger from './logger.js';
 import { sendAppriseMessage } from './apprise.js';
 import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhotoUrl } from './photos.js';
@@ -31,7 +32,10 @@ const pollAirplanes = async () => {
     });
 
     if (!response.ok) {
-      console.error(`airplanes.live responded with ${response.status}`);
+      logger.error(
+        { status: response.status, url },
+        'airplanes.live responded with non-success status'
+      );
       return;
     }
 
@@ -88,8 +92,17 @@ const pollAirplanes = async () => {
             }
           }
           await sendAppriseMessage({ title, body, attachments });
+          logger.info(
+            {
+              callsign: plane.flight?.trim() || null,
+              hex,
+              altitudeFt,
+              attachments
+            },
+            'Notification dispatched'
+          );
         } catch (error) {
-          console.error('Failed to send Apprise notification', error);
+          logger.error({ err: error, hex }, 'Failed to send Apprise notification');
         }
         if (!sightingEntry) {
           sightingEntry = { hex, timestamps: [] };
@@ -99,13 +112,12 @@ const pollAirplanes = async () => {
           sightingEntry.timestamps = [];
         }
         sightingEntry.timestamps.push(now);
-        console.log(`[notify] ${plane.flight?.trim() || hex.toUpperCase()}`);
         hasChanges = true;
       }
     }
 
   } catch (error) {
-    console.error('Failed to poll airplanes.live', error);
+    logger.error({ err: error }, 'Failed to poll airplanes.live');
   } finally {
     if (hasChanges) {
       await db.write();
@@ -113,18 +125,25 @@ const pollAirplanes = async () => {
 
     isPolling = false;
     const elapsed = Date.now() - startedAt;
-    console.debug(`Poll completed in ${elapsed} ms`);
+    logger.debug({ elapsedMs: elapsed }, 'Poll cycle completed');
   }
 };
 
-console.log('Starting airplanes.live poller');
-console.log(
-  `Watching ${config.latitude}, ${config.longitude} within ${config.radius} NM (cooldown: ${config.cooldownMinutes} minutes)`
+logger.info('Starting airplanes.live poller');
+logger.info(
+  {
+    latitude: config.latitude,
+    longitude: config.longitude,
+    radiusNm: config.radius,
+    cooldownMinutes: config.cooldownMinutes,
+    pollIntervalSeconds: config.pollIntervalSeconds
+  },
+  'Watching location'
 );
 
 cron.schedule(cronExpression, () => {
   pollAirplanes().catch((error) => {
-    console.error('Unhandled polling error', error);
+    logger.error({ err: error }, 'Unhandled polling error');
   });
 });
 
