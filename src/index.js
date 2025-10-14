@@ -3,7 +3,6 @@ import cron from 'node-cron';
 import config from './config.js';
 import db from './db.js';
 import { sendAppriseNotification } from './notifications.js';
-import { distanceNm } from './utils.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
@@ -78,10 +77,7 @@ const pollAirplanes = async () => {
         ? timestamps[timestamps.length - 1]
         : null;
       const secondsSinceLast = lastTimestampMs !== null ? (now - lastTimestampMs) / 1000 : Infinity;
-      const distance =
-        typeof plane.dist === 'number'
-          ? plane.dist
-          : distanceNm(config.latitude, config.longitude, plane.lat, plane.lon);
+      const distance = typeof plane.dist === 'number' ? plane.dist : null;
 
       let shouldNotify = secondsSinceLast >= config.cooldownMinutes * 60;
 

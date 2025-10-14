@@ -15,8 +15,7 @@ const sanitizeUrls = (list) =>
 const postNotification = async ({ appriseApiUrl, urls, title, body }) => {
   const payload = {
     title,
-    body,
-    format: 'html'
+    body
   };
 
   if (Array.isArray(urls) && urls.length) {
