@@ -48,6 +48,14 @@ const pollAirplanes = async () => {
         continue;
       }
 
+      const flightCallsign = plane.flight?.trim();
+      if (flightCallsign) {
+        const carrierCode = flightCallsign.slice(0, 3).toUpperCase();
+        if (config.ignoredCarrierCodes.includes(carrierCode)) {
+          continue;
+        }
+      }
+
       const altitudeRaw = plane.alt_baro;
       if (typeof altitudeRaw === 'string') {
         if (altitudeRaw.trim().toLowerCase() === 'ground') {
@@ -110,7 +118,7 @@ const pollAirplanes = async () => {
         }
         sightingEntry.timestamps.push(now);
         console.log(
-          `[notify] ${plane.flight?.trim() || hex.toUpperCase()}`
+          `[notify] ${plane.flight?.trim() || hex.toUpperCase()}`, plane
         );
         hasChanges = true;
       }

@@ -15,6 +15,9 @@ const parseStringList = (value) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const parseUpperStringList = (value, fallback) =>
+  parseStringList(value ?? fallback).map((item) => item.toUpperCase());
+
 const clampSeconds = (value) => {
   const seconds = Math.round(value);
   return Number.isFinite(seconds) && seconds > 0 ? seconds : 1;
@@ -27,6 +30,10 @@ export const config = {
   pollIntervalSeconds: clampSeconds(parseNumber(process.env.POLL_INTERVAL_SECONDS, 5)),
   cooldownMinutes: Math.max(1, parseNumber(process.env.COOLDOWN_MINUTES, 10)),
   maxAltitudeFt: parseNumber(process.env.MAX_ALTITUDE_FT, 25000),
+  ignoredCarrierCodes: parseUpperStringList(
+    process.env.IGNORE_CARRIERS,
+    ''
+  ),
   apprise: {
     apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
     urls: parseStringList(process.env.APPRISE_URLS),
