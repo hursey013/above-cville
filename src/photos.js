@@ -39,7 +39,7 @@ export const fetchPlanePhotoUrl = async (registration) => {
     return photoCache.get(trimmed);
   }
 
-  const url = `${FLIGHTAWARE_BASE}/${encodeURIComponent(trimmed)}`;
+  const url = `${FLIGHTAWARE_BASE}/${encodeURIComponent(trimmed)}/sort/date`;
 
   try {
     const response = await fetch(url, {

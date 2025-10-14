@@ -27,12 +27,13 @@ test('send posts to trimmed base URL with unique targets', async () => {
   global.fetch = async (url, options) => {
     calls.push({
       url,
-      options: {
-        ...options,
-        body: JSON.parse(options.body)
-      }
+      options
     });
-    return okResponse;
+    return {
+      ok: true,
+      status: 200,
+      text: async () => ''
+    };
   };
 
   try {
@@ -45,9 +46,14 @@ test('send posts to trimmed base URL with unique targets', async () => {
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'http://example.com/notify');
-    assert.deepEqual(calls[0].options.body.urls, ['discord://token']);
-    assert.equal(calls[0].options.body.title, 'Flight spotted');
-    assert.deepEqual(calls[0].options.body.attachments, ['https://example.com/a.jpg']);
+    const body = calls[0].options.body;
+    assert.ok(body instanceof FormData, 'Expected FormData payload when attachments provided');
+    const entries = Array.from(body.entries());
+    const mapped = Object.fromEntries(entries.map(([key, value]) => [key, value]));
+    assert.equal(mapped.urls, 'discord://token');
+    assert.equal(mapped.title, 'Flight spotted');
+    assert.equal(mapped.body, 'Body text');
+    assert.equal(mapped.attachment, 'https://example.com/a.jpg');
   } finally {
     if (originalFetch === undefined) {
       delete global.fetch;
@@ -62,10 +68,7 @@ test('send uses config key endpoints when provided', async () => {
   global.fetch = async (url, options) => {
     calls.push({
       url,
-      options: {
-        ...options,
-        body: JSON.parse(options.body)
-      }
+      options
     });
     return okResponse;
   };
@@ -80,7 +83,8 @@ test('send uses config key endpoints when provided', async () => {
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'http://example.com/notify/alerts%2Fteam');
-    assert.ok(!('urls' in calls[0].options.body));
+    const body = JSON.parse(calls[0].options.body);
+    assert.ok(!('urls' in body));
   } finally {
     if (originalFetch === undefined) {
       delete global.fetch;
