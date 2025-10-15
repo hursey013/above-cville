@@ -40,6 +40,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.match(body, /first time/i);
   assert.match(body, /Cirrus SR22 \(Light\)/);
   assert.match(body, /west/i);
+  assert.match(body, /https:\/\/globe\.airplanes\.live\/\?icao=abc123$/);
 });
 
 test('composeNotificationMessage references frequent visitors', () => {
@@ -62,6 +63,7 @@ test('composeNotificationMessage references frequent visitors', () => {
   assert.match(body, /laps|busy|regular/i);
   assert.match(body, /north/i);
   assert.match(body, /Cessna 172 Skyhawk \(Small\)/);
+  assert.match(body, /https:\/\/globe\.airplanes\.live\/\?icao=def456$/);
 });
 
 test('composeNotificationMessage truncates long bodies to Bluesky limits', () => {
@@ -77,5 +79,6 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
   };
   const { body } = composeNotificationMessage(plane, [now], now);
   assert.ok(body.length <= 300);
-  assert.ok(body.endsWith('…'));
+  assert.match(body, /…/);
+  assert.ok(body.endsWith('https://globe.airplanes.live/?icao=long1'));
 });

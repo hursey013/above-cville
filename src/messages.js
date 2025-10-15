@@ -1,3 +1,5 @@
+import config from './config.js';
+
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const WEEK_MS = 7 * DAY_MS;
@@ -321,7 +323,15 @@ const selectFacts = (facts, seed) => {
 };
 
 const truncateMessage = (text, limit = 300) => {
-  if (typeof text !== 'string' || text.length <= limit) {
+  if (typeof text !== 'string') {
+    return '';
+  }
+
+  if (limit <= 0) {
+    return '';
+  }
+
+  if (text.length <= limit) {
     return text;
   }
 
@@ -397,11 +407,26 @@ export const composeNotificationMessage = (
     frequencyLine,
   ].filter(Boolean);
 
-  const messageBody = bodyLines.join('\n\n');
+  const linkBase = config.aircraftLinkBase;
+  const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
+  const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
+
+  const limit = 300;
+  const newlinePadding = detailsUrl && bodyLines.length ? 2 : 0;
+  const reservedLength = detailsUrl ? detailsUrl.length + newlinePadding : 0;
+  const availableLength = Math.max(0, limit - reservedLength);
+
+  const coreMessage = truncateMessage(bodyLines.join('\n\n'), availableLength);
+
+  const body = detailsUrl
+    ? coreMessage
+      ? `${coreMessage}\n\n${detailsUrl}`
+      : detailsUrl
+    : coreMessage;
 
   return {
     title: `${identity} spotted nearby`,
-    body: truncateMessage(messageBody),
+    body,
   };
 };
 

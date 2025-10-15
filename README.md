@@ -59,6 +59,9 @@ services:
       APPRISE_CONFIG_KEY: "" # Provide if your Apprise API uses keyed endpoints
       APPRISE_URLS: "" # Stateless mode: comma-separated target URLs
 
+      # --- Aircraft detail link ---
+      AIRCRAFT_LINK_BASE: "https://globe.airplanes.live/?icao=" # Link prefix appended with the ICAO hex
+
       # --- Timezone for logs & cron output ---
       TZ: "America/New_York"
     volumes:
@@ -96,6 +99,7 @@ Each time a plane clears the filters you’ll get `[notify] <callsign>` followed
 - **Carrier skips are optional.** Leave `IGNORE_CARRIERS` empty to watch everything.
 - **Bluesky-ready tone.** Modify `composeNotificationMessage` in `src/messages.js` if you want to tweak phrasing or drop the emoji vibe.
 - **FlightAware attachments.** The notification includes the most recent FlightAware photo link when available.
+- **Details link.** Each alert ends with a tracker URL (defaults to globe.airplanes.live); change `AIRCRAFT_LINK_BASE` to point at your favourite viewer.
 - **Restart-safe storage.** Sightings live in `data/db.json`. Delete the file if you want to reset history.
 - **Timezones & cron.** Adjust `TZ` in Docker and your system timezone so log timestamps and Apprise attachments make sense.
 
