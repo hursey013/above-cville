@@ -19,31 +19,31 @@ const cardinalDirections = [
 const CATEGORY_SUMMARIES = {
   A1: {
     shortLabel: 'Light',
-    summary: '🛩️ Light private flyer.',
+    emoji: '🛩️',
   },
   A2: {
     shortLabel: 'Small',
-    summary: '🛫 Small regional bird.',
+    emoji: '🛫',
   },
   A3: {
     shortLabel: 'Large',
-    summary: '🛬 Big commercial ride.',
+    emoji: '🛬',
   },
   A4: {
     shortLabel: 'Wake-maker',
-    summary: '🌀 Wake-maker (think 757).',
+    emoji: '🌀',
   },
   A5: {
     shortLabel: 'Heavy',
-    summary: '✈️ Heavy long-hauler.',
+    emoji: '✈️',
   },
   A6: {
     shortLabel: 'High-perf',
-    summary: '⚡ High-performance speedster.',
+    emoji: '⚡',
   },
   A7: {
     shortLabel: 'Rotorcraft',
-    summary: '🚁 Rotorcraft (helicopter class).',
+    emoji: '🚁',
   },
 };
 
@@ -232,11 +232,11 @@ const formatSpeed = (mph, categoryInfo) => {
     return null;
   }
 
-  const rotorcraft =
-    categoryInfo?.shortLabel &&
-    categoryInfo.shortLabel.toLowerCase() === 'rotorcraft';
+  const category = categoryInfo?.shortLabel
+    ? categoryInfo.shortLabel.toLowerCase()
+    : null;
 
-  if (rotorcraft) {
+  if (category === 'rotorcraft') {
     if (mph >= 130) {
       return `Chopping through at about ${mph} mph.`;
     }
@@ -244,6 +244,62 @@ const formatSpeed = (mph, categoryInfo) => {
       return `Cruising the pattern around ${mph} mph.`;
     }
     return `Hovering around ${mph} mph.`;
+  }
+
+  if (category === 'high-perf') {
+    if (mph >= 300) {
+      return `Ripping along near ${mph} mph.`;
+    }
+    if (mph >= 200) {
+      return `Keeping the throttle up around ${mph} mph.`;
+    }
+    return `Loosening the reins near ${mph} mph.`;
+  }
+
+  if (category === 'heavy' || category === 'wake-maker') {
+    if (mph >= 300) {
+      return `Hauling that airframe near ${mph} mph.`;
+    }
+    if (mph >= 200) {
+      return `Muscling through around ${mph} mph.`;
+    }
+    return `Keeping the widebody moving near ${mph} mph.`;
+  }
+
+  if (category === 'large') {
+    if (mph >= 280) {
+      return `Making a brisk pass around ${mph} mph.`;
+    }
+    if (mph >= 200) {
+      return `Keeping the cadence near ${mph} mph.`;
+    }
+    return `Rolling by around ${mph} mph.`;
+  }
+
+  if (category === 'light') {
+    if (mph >= 200) {
+      return `Scooting along near ${mph} mph.`;
+    }
+    if (mph >= 120) {
+      return `Skipping overhead around ${mph} mph.`;
+    }
+    if (mph >= 60) {
+      return `Gliding easily near ${mph} mph.`;
+    }
+    return `Loitering gently near ${mph} mph.`;
+  }
+
+  if (category === 'small') {
+    if (mph >= 200) {
+      return `Keeping a tidy pace around ${mph} mph.`;
+    }
+    if (mph >= 120) {
+      return `Scooting by around ${mph} mph.`;
+    }
+    if (mph >= 60) {
+      return `Taking an easy pass near ${mph} mph.`;
+    }
+    return `Loitering around ${mph} mph.`;
   }
 
   if (mph >= 300) {
@@ -271,15 +327,68 @@ const formatAltitude = (altitude, categoryInfo) => {
   }
 
   const rounded = Math.round(altitude).toLocaleString();
-  const rotorcraft =
-    categoryInfo?.shortLabel &&
-    categoryInfo.shortLabel.toLowerCase() === 'rotorcraft';
+  const category = categoryInfo?.shortLabel
+    ? categoryInfo.shortLabel.toLowerCase()
+    : null;
 
-  if (rotorcraft) {
+  if (category === 'rotorcraft') {
     if (altitude <= 1200) {
       return `Skimming the skyline near ${rounded} ft.`;
     }
     return `Holding above town around ${rounded} ft.`;
+  }
+
+  if (category === 'heavy' || category === 'wake-maker') {
+    if (altitude >= 30000) {
+      return `Stacked way up near ${rounded} ft.`;
+    }
+    if (altitude >= 20000) {
+      return `Cruising that big frame near ${rounded} ft.`;
+    }
+    if (altitude >= 10000) {
+      return `Looming overhead around ${rounded} ft.`;
+    }
+    return `Keeping the bulk low near ${rounded} ft.`;
+  }
+
+  if (category === 'high-perf') {
+    if (altitude >= 20000) {
+      return `Knifing through around ${rounded} ft.`;
+    }
+    if (altitude >= 10000) {
+      return `Slicing the sky near ${rounded} ft.`;
+    }
+    return `Darting by around ${rounded} ft.`;
+  }
+
+  if (category === 'light') {
+    if (altitude >= 10000) {
+      return `Dancing up near ${rounded} ft.`;
+    }
+    if (altitude >= 5000) {
+      return `Skipping along around ${rounded} ft.`;
+    }
+    return `Lingering close to town near ${rounded} ft.`;
+  }
+
+  if (category === 'small') {
+    if (altitude >= 10000) {
+      return `Floating steady near ${rounded} ft.`;
+    }
+    if (altitude >= 5000) {
+      return `Keeping a level perch near ${rounded} ft.`;
+    }
+    return `Hanging out near ${rounded} ft.`;
+  }
+
+  if (category === 'large') {
+    if (altitude >= 20000) {
+      return `Cruising solid near ${rounded} ft.`;
+    }
+    if (altitude >= 10000) {
+      return `Keeping a stately perch near ${rounded} ft.`;
+    }
+    return `Rolling through around ${rounded} ft.`;
   }
 
   if (altitude >= 30000) {
@@ -422,9 +531,18 @@ export const composeNotificationMessage = (
     'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);
 
+  const linkBase = config.aircraftLinkBase;
+  const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
+  const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
+  const linkedIdentity = detailsUrl ? `[${identity}](${detailsUrl})` : identity;
+
   const description = formatAircraftDescription(plane.desc);
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
+  const categoryKey = categoryInfo?.shortLabel
+    ? categoryInfo.shortLabel.toLowerCase()
+    : null;
+  const isRotorcraft = categoryKey === 'rotorcraft';
 
   const dbFlagsRaw =
     typeof plane.dbFlags === 'string' ? plane.dbFlags.trim() : '';
@@ -436,7 +554,7 @@ export const composeNotificationMessage = (
     ? '🪖 Military traffic on the scope.'
     : null;
   const interestingSentence = isInteresting
-    ? '👀 Marked as interesting traffic.'
+    ? '🕵️ Marked as interesting traffic.'
     : null;
   const operatorSentence = operatorName ? `Operated by ${operatorName}.` : null;
 
@@ -445,28 +563,29 @@ export const composeNotificationMessage = (
   const directionPhrase = directionMessage(plane);
   const frequencySentence = frequencyMessage(stats);
 
-  const intros = [
-    '👀 Can you see it?',
-    '☝️ Look up!',
-    '➡️ There it goes!',
-    '✈️ Up above!',
-  ];
+  const intros = ['Can you see it?', 'Look up!', 'There it goes!', 'Up above!'];
   const intro = intros[variantIndex(identity, stats, intros.length)];
-  const primaryLine = `${intro} ${identity} just popped up near Charlottesville.`;
+  const categoryEmoji = categoryInfo?.emoji ?? '✈️';
+  const primaryLine = `${categoryEmoji} ${intro} ${linkedIdentity} just popped up nearby.`;
 
   const descriptionSentence = (() => {
     if (description) {
-      const label = categoryInfo?.shortLabel
-        ? ` (${categoryInfo.shortLabel})`
-        : '';
-      const summaryTail = categoryInfo?.summary
-        ? stripTrailingPunctuation(categoryInfo.summary)
-        : '';
-      const summarySuffix = summaryTail ? ` — ${summaryTail}` : '';
-      return `Looks like a ${description}${label} overhead${summarySuffix}.`;
+      if (isRotorcraft) {
+        return `${linkedIdentity} is working the pattern in a ${description}.`;
+      }
+      if (categoryKey === 'heavy' || categoryKey === 'wake-maker') {
+        return `${linkedIdentity} looks like a big ${description} muscling past.`;
+      }
+      if (categoryKey === 'light') {
+        return `${linkedIdentity} looks like a nimble ${description} overhead.`;
+      }
+      if (categoryKey === 'high-perf') {
+        return `${linkedIdentity} looks like a sharp ${description} slicing by.`;
+      }
+      return `${linkedIdentity} looks like a ${description} overhead.`;
     }
-    if (categoryInfo?.summary) {
-      return categoryInfo.summary;
+    if (detailsUrl) {
+      return `${linkedIdentity} just checked in overhead.`;
     }
     return null;
   })();
@@ -501,22 +620,9 @@ export const composeNotificationMessage = (
     frequencySentence,
   ].filter(Boolean);
 
-  const linkBase = config.aircraftLinkBase;
-  const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
-  const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
-
   const limit = 300;
-  const newlinePadding = detailsUrl && bodySentences.length ? 2 : 0;
-  const reservedLength = detailsUrl ? detailsUrl.length + newlinePadding : 0;
-  const availableLength = Math.max(0, limit - reservedLength);
-
-  const coreMessage = truncateMessage(bodySentences.join(' '), availableLength);
-
-  const body = detailsUrl
-    ? coreMessage
-      ? `${coreMessage}\n\n📡 <${detailsUrl}>`
-      : detailsUrl
-    : coreMessage;
+  const coreMessage = truncateMessage(bodySentences.join(' '), limit);
+  const body = coreMessage;
 
   return {
     title: primaryLine,
