@@ -62,6 +62,9 @@ services:
       # --- Aircraft detail link ---
       AIRCRAFT_LINK_BASE: "https://globe.airplanes.live/?icao=" # Link prefix appended with the ICAO hex
 
+      # --- Formatting options ---
+      SUPPRESS_TITLES: "false" # Set to "true" when your destination (e.g., Bluesky) ignores notification titles
+
       # --- Timezone for logs & cron output ---
       TZ: "America/New_York"
     volumes:
@@ -102,6 +105,7 @@ Each time a plane clears the filters you’ll get `[notify] <callsign>` followed
 - **Details link.** Each alert ends with a tracker URL (defaults to globe.airplanes.live); change `AIRCRAFT_LINK_BASE` to point at your favourite viewer.
 - **Restart-safe storage.** Sightings live in `data/db.json`. Delete the file if you want to reset history.
 - **Timezones & cron.** Adjust `TZ` in Docker and your system timezone so log timestamps and Apprise attachments make sense.
+- **Suppress titles.** Use `SUPPRESS_TITLES=true` for destinations (like Bluesky) that only care about the message body.
 
 ---
 

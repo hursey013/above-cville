@@ -498,7 +498,7 @@ export const composeNotificationMessage = (
     : coreMessage;
 
   return {
-    title: `${identity} spotted nearby`,
+    title: config.suppressTitles ? undefined : `${identity} spotted nearby`,
     body,
   };
 };
