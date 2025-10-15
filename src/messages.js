@@ -345,7 +345,7 @@ const directionMessage = (plane) => {
       typeof candidate === 'string' ? Number(candidate) : candidate;
     const cardinal = clampBearing(bearing);
     if (cardinal) {
-      return `Heading ${cardinal}.`;
+      return `headed ${cardinal}`;
     }
   }
   return null;
@@ -359,22 +359,6 @@ const variantIndex = (identity, stats, variantsLength) => {
   const codePoint = identity?.codePointAt?.(0) ?? 0;
   const hash = codePoint + stats.total + stats.lastHour * 3;
   return Math.abs(hash) % variantsLength;
-};
-
-const selectFacts = (facts, seed) => {
-  if (!Array.isArray(facts) || !facts.length) {
-    return [];
-  }
-
-  const count = Math.min(facts.length, 2);
-  const start = seed % facts.length;
-  const selected = [];
-
-  for (let index = 0; index < count; index += 1) {
-    selected.push(facts[(start + index) % facts.length]);
-  }
-
-  return selected;
 };
 
 const truncateMessage = (text, limit = 300) => {
@@ -393,6 +377,21 @@ const truncateMessage = (text, limit = 300) => {
   const sliceIndex = text.lastIndexOf(' ', limit - 1);
   const endIndex = sliceIndex > 0 ? sliceIndex : limit - 1;
   return `${text.slice(0, endIndex).trimEnd()}…`;
+};
+
+const stripTrailingPunctuation = (text) => {
+  if (typeof text !== 'string') {
+    return text;
+  }
+  return text.replace(/[\s.!?]+$/u, '').trim();
+};
+
+const capitalizeSentence = (text) => {
+  if (typeof text !== 'string' || !text.trim()) {
+    return text;
+  }
+  const trimmed = text.trim();
+  return trimmed[0].toUpperCase() + trimmed.slice(1);
 };
 
 /**
@@ -418,7 +417,6 @@ export const composeNotificationMessage = (
   const description = formatAircraftDescription(plane.desc);
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
-  const categoryLine = categoryInfo?.summary ?? null;
 
   const dbFlagsRaw =
     typeof plane.dbFlags === 'string' ? plane.dbFlags.trim() : '';
@@ -426,16 +424,18 @@ export const composeNotificationMessage = (
   const isInteresting = dbFlagsRaw.length > 1 && dbFlagsRaw[1] === '1';
   const operatorName =
     dbFlagsRaw && plane.ownOp ? formatAircraftDescription(plane.ownOp) : null;
-  const militaryLine = isMilitary ? '🛡️ Military traffic.' : null;
-  const interestingLine = isInteresting
+  const militarySentence = isMilitary
+    ? '🪖 Military traffic on the scope.'
+    : null;
+  const interestingSentence = isInteresting
     ? '👀 Marked as interesting traffic.'
     : null;
-  const operatorLine = operatorName ? `Operated by ${operatorName}.` : null;
+  const operatorSentence = operatorName ? `Operated by ${operatorName}.` : null;
 
-  const speedLine = formatSpeed(resolveSpeedMph(plane), categoryInfo);
-  const altitudeLine = formatAltitude(resolveAltitudeFt(plane), categoryInfo);
-  const directionLine = directionMessage(plane);
-  const frequencyLine = frequencyMessage(stats);
+  const speedPhrase = formatSpeed(resolveSpeedMph(plane), categoryInfo);
+  const altitudePhrase = formatAltitude(resolveAltitudeFt(plane), categoryInfo);
+  const directionPhrase = directionMessage(plane);
+  const frequencySentence = frequencyMessage(stats);
 
   const intros = [
     '👀 Can you see it?',
@@ -446,38 +446,49 @@ export const composeNotificationMessage = (
   const intro = intros[variantIndex(identity, stats, intros.length)];
   const primaryLine = `${intro} ${identity} just popped up near Charlottesville.`;
 
-  const descriptionLine = description
-    ? `Meet ${description}${
-        categoryInfo ? ` (${categoryInfo.shortLabel})` : ''
-      }.`
-    : null;
+  const descriptionSentence = (() => {
+    if (description) {
+      const label = categoryInfo?.shortLabel
+        ? ` (${categoryInfo.shortLabel})`
+        : '';
+      const summaryTail = categoryInfo?.summary
+        ? stripTrailingPunctuation(categoryInfo.summary)
+        : '';
+      const summarySuffix = summaryTail ? ` — ${summaryTail}` : '';
+      return `Looks like a ${description}${label} overhead${summarySuffix}.`;
+    }
+    if (categoryInfo?.summary) {
+      return categoryInfo.summary;
+    }
+    return null;
+  })();
 
-  const optionalFacts = [categoryLine, speedLine, altitudeLine].filter(Boolean);
-  const variantSeed = optionalFacts.length
-    ? variantIndex(identity, stats, optionalFacts.length)
-    : 0;
-  const selectedOptionalFacts = selectFacts(optionalFacts, variantSeed);
+  const movementClauses = [speedPhrase, altitudePhrase, directionPhrase]
+    .map((clause) => stripTrailingPunctuation(clause ?? ''))
+    .filter(Boolean);
 
-  const factLines = [];
-  if (militaryLine) {
-    factLines.push(militaryLine);
+  let movementSentence = null;
+  if (movementClauses.length) {
+    const clauses = movementClauses.slice();
+    const lastClause = clauses.pop();
+    let combined = '';
+    if (!clauses.length) {
+      combined = lastClause;
+    } else if (clauses.length === 1) {
+      combined = `${clauses[0]} and ${lastClause}`;
+    } else {
+      combined = `${clauses.join(', ')}, and ${lastClause}`;
+    }
+    movementSentence = `${capitalizeSentence(combined)}.`;
   }
-  if (interestingLine) {
-    factLines.push(interestingLine);
-  }
-  if (operatorLine) {
-    factLines.push(operatorLine);
-  }
-  if (directionLine) {
-    factLines.push(directionLine);
-  }
-  factLines.push(...selectedOptionalFacts);
 
-  const bodyLines = [
-    primaryLine,
-    descriptionLine,
-    ...factLines,
-    frequencyLine,
+  const bodySentences = [
+    descriptionSentence,
+    movementSentence,
+    militarySentence,
+    interestingSentence,
+    operatorSentence,
+    frequencySentence,
   ].filter(Boolean);
 
   const linkBase = config.aircraftLinkBase;
@@ -485,20 +496,20 @@ export const composeNotificationMessage = (
   const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
 
   const limit = 300;
-  const newlinePadding = detailsUrl && bodyLines.length ? 2 : 0;
+  const newlinePadding = detailsUrl && bodySentences.length ? 2 : 0;
   const reservedLength = detailsUrl ? detailsUrl.length + newlinePadding : 0;
   const availableLength = Math.max(0, limit - reservedLength);
 
-  const coreMessage = truncateMessage(bodyLines.join('\n\n'), availableLength);
+  const coreMessage = truncateMessage(bodySentences.join(' '), availableLength);
 
   const body = detailsUrl
     ? coreMessage
-      ? `${coreMessage}\n\n${detailsUrl}`
+      ? `${coreMessage}\n\n📡 <${detailsUrl}>`
       : detailsUrl
     : coreMessage;
 
   return {
-    title: config.suppressTitles ? undefined : `${identity} spotted nearby`,
+    title: primaryLine,
     body,
   };
 };

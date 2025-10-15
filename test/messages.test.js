@@ -1,7 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
-import config from '../src/config.js';
 import {
   composeNotificationMessage,
   summarizeSightings,
@@ -27,8 +26,6 @@ test('summarizeSightings tallies recent activity windows', () => {
 
 test('composeNotificationMessage highlights first-time sightings', () => {
   const now = Date.now();
-  const previousSuppress = config.suppressTitles;
-  config.suppressTitles = false;
 
   const plane = {
     hex: 'abc123',
@@ -41,11 +38,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
     dbFlags: '10',
     ownOp: 'UNITED STATES AIR FORCE',
   };
-  const oldSuppress = process.env.SUPPRESS_TITLES;
-  delete process.env.SUPPRESS_TITLES;
   const { title, body } = composeNotificationMessage(plane, [now], now);
-  config.suppressTitles = previousSuppress;
-  process.env.SUPPRESS_TITLES = oldSuppress;
   assert.match(title, /N100CV/i);
   assert.match(body, /first time/i);
   assert.match(body, /Cirrus SR22 \(Light\)/);
@@ -116,25 +109,4 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
   assert.match(body, /Rotorcraft/);
   assert.match(body, /(Hovering around|Cruising the pattern|Chopping through)/);
   assert.match(body, /https:\/\/globe\.airplanes\.live\/\?icao=rot001$/);
-});
-
-test('composeNotificationMessage can suppress titles via config toggle', () => {
-  const now = Date.now();
-  const plane = {
-    hex: 'supp01',
-    registration: 'N12AB',
-    gs: 150,
-    alt_baro: 2500,
-    track: 10,
-    desc: 'PIPER PA46',
-  };
-
-  const previous = config.suppressTitles;
-  config.suppressTitles = true;
-
-  const { title } = composeNotificationMessage(plane, [now], now);
-
-  assert.equal(title, undefined);
-
-  config.suppressTitles = previous;
 });

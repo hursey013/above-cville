@@ -36,7 +36,6 @@ export const config = {
   aircraftLinkBase:
     parseString(process.env.AIRCRAFT_LINK_BASE) ||
     'https://globe.airplanes.live/?icao=',
-  suppressTitles: parseString(process.env.SUPPRESS_TITLES) === 'true',
   apprise: {
     apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
     urls: parseStringList(process.env.APPRISE_URLS),
