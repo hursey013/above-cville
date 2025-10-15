@@ -588,40 +588,47 @@ export const composeNotificationMessage = (
     militarySentence,
     interestingSentence,
     operatorPhrase,
+    frequencySentence,
   ].filter(Boolean);
 
   const limit = 280;
-  const linkLine = includeDetailsLink ? `📡 <${detailsUrl}>` : null;
-  const newlinePadding = linkLine ? 2 : 0;
-  const reservedLength = linkLine ? linkLine.length + newlinePadding : 0;
-  const prefixReserve =
-    linkLine || infoSentences.length || frequencySentence ? 1 : 0;
-  const availableLength = Math.max(0, limit - reservedLength - prefixReserve);
-  const frequencyReserve =
-    frequencySentence && availableLength > 0
-      ? frequencySentence.length + (infoSentences.length ? 1 : 0)
-      : 0;
-  const infoAvailable = Math.max(0, availableLength - frequencyReserve);
+  const linkLine = includeDetailsLink ? detailsUrl : null;
+
   const infoText = infoSentences.join(' ');
-  const infoCore = truncateMessage(infoText, infoAvailable);
-
-  let coreMessage = infoCore;
-  if (frequencySentence) {
-    coreMessage = coreMessage
-      ? `${coreMessage} ${frequencySentence}`
-      : frequencySentence;
-  }
-
-  let body = coreMessage;
+  let remaining = limit - primaryLine.length;
+  let linkSegment = null;
   if (linkLine) {
-    body = coreMessage ? `${coreMessage}\n\n${linkLine}` : linkLine;
+    const linkNeeded = linkLine.length + 1;
+    if (remaining >= linkNeeded) {
+      remaining -= linkNeeded;
+      linkSegment = linkLine;
+    }
   }
-  if (body) {
-    body = `\n${body}`;
+
+  let infoCore = '';
+  if (infoText && remaining > 1) {
+    const infoLimit = remaining - 1;
+    if (infoLimit > 0) {
+      const candidate = truncateMessage(infoText, infoLimit);
+      if (candidate) {
+        infoCore = candidate;
+        remaining -= 1 + infoCore.length;
+      }
+    }
   }
+
+  const parts = [primaryLine];
+  if (infoCore) {
+    parts.push(infoCore);
+  }
+  if (linkSegment) {
+    parts.push(linkSegment);
+  }
+
+  const body = parts.join(' ');
 
   return {
-    title: primaryLine,
+    title: undefined,
     body,
   };
 };

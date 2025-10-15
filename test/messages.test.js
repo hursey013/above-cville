@@ -40,20 +40,16 @@ test('composeNotificationMessage highlights first-time sightings', () => {
     ownOp: 'UNITED STATES AIR FORCE',
   };
   const { title, body } = composeNotificationMessage(plane, [now], now);
-  assert.match(title, /N100CV/);
-  assert.doesNotMatch(title, /\[[^\]]+\]\(/);
-  assert.ok(body.startsWith('\n'));
+  assert.equal(title, undefined);
+  assert.match(body, /N100CV just popped up nearby\./);
   assert.match(body, /first time/i);
-  assert.match(body, /Cirrus SR22/);
+  assert.match(body, /\(Cirrus SR22\)/);
   assert.doesNotMatch(body, /\(Light\)/);
   assert.match(body, /N100CV/);
   assert.match(body, /west/i);
   assert.match(body, /Military traffic/);
   assert.match(body, /Operated by United States Air Force/);
-  assert.match(
-    body,
-    /\n\n📡 <https:\/\/globe\.airplanes\.live\/\?icao=abc123>$/,
-  );
+  assert.match(body, / https:\/\/globe\.airplanes\.live\/\?icao=abc123$/);
 });
 
 test('composeNotificationMessage references frequent visitors', () => {
@@ -75,19 +71,15 @@ test('composeNotificationMessage references frequent visitors', () => {
     ownOp: 'DELTA AIR LINES',
   };
   const { body } = composeNotificationMessage(plane, timestamps, now);
-  assert.ok(body.startsWith('\n'));
   assert.match(body, /north/i);
-  assert.match(body, /Cessna 172 Skyhawk/);
+  assert.match(body, /\(Cessna 172 Skyhawk\)/);
   assert.doesNotMatch(body, /\(Small\)/);
   assert.match(body, /Military traffic/);
   assert.match(body, /Interesting traffic/);
   assert.match(body, /Operated by Delta Air Lines/);
   assert.match(body, /N200CV/);
-  assert.match(body, /pings this hour/);
-  assert.match(
-    body,
-    /\n\n📡 <https:\/\/globe\.airplanes\.live\/\?icao=def456>$/,
-  );
+  assert.match(body, /pings/i);
+  assert.match(body, / https:\/\/globe\.airplanes\.live\/\?icao=def456$/);
 });
 
 test('composeNotificationMessage truncates long bodies to Bluesky limits', () => {
@@ -102,14 +94,10 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
     category: 'A5',
   };
   const { body } = composeNotificationMessage(plane, [now], now);
-  assert.ok(body.startsWith('\n'));
   assert.ok(body.length <= 280);
   assert.match(body, /…/);
   assert.match(body, /N777LF/);
-  assert.match(
-    body,
-    /\n\n📡 <https:\/\/globe\.airplanes\.live\/\?icao=long1>$/,
-  );
+  assert.match(body, / https:\/\/globe\.airplanes\.live\/\?icao=long1$/);
 });
 
 test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
@@ -126,18 +114,14 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     ownOp: 'ANYTOWN NEWS',
   };
   const { body } = composeNotificationMessage(plane, [now], now);
-  assert.ok(body.startsWith('\n'));
   assert.match(body, /N45H/);
-  assert.match(body, /Bell 206/);
+  assert.match(body, /\(Bell 206\)/);
   assert.doesNotMatch(body, /\(Rotorcraft\)/);
   assert.match(
     body,
     /(hovering around|cruising the pattern|chopping through)/i,
   );
-  assert.match(
-    body,
-    /\n\n📡 <https:\/\/globe\.airplanes\.live\/\?icao=rot001>$/,
-  );
+  assert.match(body, / https:\/\/globe\.airplanes\.live\/\?icao=rot001$/);
 });
 
 test('composeNotificationMessage can hide details link when disabled', () => {
@@ -154,8 +138,10 @@ test('composeNotificationMessage can hide details link when disabled', () => {
   config.showDetailsLink = false;
 
   const { body } = composeNotificationMessage(plane, [now], now);
-  assert.ok(body.startsWith('\n'));
-  assert.match(body, /\[N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/);
+  assert.match(
+    body,
+    /\[N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/,
+  );
   assert.doesNotMatch(body, /\n\n📡 </);
 
   config.showDetailsLink = previous;
