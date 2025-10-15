@@ -566,7 +566,7 @@ export const composeNotificationMessage = (
   const intros = ['Can you see it?', 'Look up!', 'There it goes!', 'Up above!'];
   const intro = intros[variantIndex(identity, stats, intros.length)];
   const categoryEmoji = categoryInfo?.emoji ?? '✈️';
-  const primaryLine = `${categoryEmoji} ${intro} ${linkedIdentity} just popped up nearby.`;
+  const primaryLine = `${categoryEmoji} ${intro} ${identity} just popped up nearby.`;
 
   const descriptionSentence = (() => {
     if (description) {
