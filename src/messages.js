@@ -258,10 +258,10 @@ const formatSpeed = (mph, categoryInfo) => {
 
   if (category === 'heavy' || category === 'wake-maker') {
     if (mph >= 300) {
-      return `Hauling that airframe near ${mph} mph.`;
+      return `Hauling near ${mph} mph.`;
     }
     if (mph >= 200) {
-      return `Muscling through around ${mph} mph.`;
+      return `Rolling near ${mph} mph.`;
     }
     return `Keeping the widebody moving near ${mph} mph.`;
   }
@@ -348,7 +348,7 @@ const formatAltitude = (altitude, categoryInfo) => {
     if (altitude >= 10000) {
       return `Looming overhead around ${rounded} ft.`;
     }
-    return `Keeping the bulk low near ${rounded} ft.`;
+    return `Low around ${rounded} ft.`;
   }
 
   if (category === 'high-perf') {
@@ -495,14 +495,6 @@ const stripTrailingPunctuation = (text) => {
   return text.replace(/[\s.!?]+$/u, '').trim();
 };
 
-const capitalizeSentence = (text) => {
-  if (typeof text !== 'string' || !text.trim()) {
-    return text;
-  }
-  const trimmed = text.trim();
-  return trimmed[0].toUpperCase() + trimmed.slice(1);
-};
-
 const lowercaseFirst = (text) => {
   if (typeof text !== 'string' || !text.trim()) {
     return text;
@@ -537,8 +529,11 @@ export const composeNotificationMessage = (
   const linkedIdentity = detailsUrl ? `[${identity}](${detailsUrl})` : identity;
   const includeDetailsLink = Boolean(detailsUrl) && config.showDetailsLink;
   const descriptiveIdentity = includeDetailsLink ? identity : linkedIdentity;
-
   const description = formatAircraftDescription(plane.desc);
+  const subjectIdentity = description
+    ? `${descriptiveIdentity} (${description})`
+    : descriptiveIdentity;
+
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
   const categoryKey = categoryInfo?.shortLabel
@@ -571,37 +566,13 @@ export const composeNotificationMessage = (
   const categoryEmoji = categoryInfo?.emoji ?? '✈️';
   const primaryLine = `${categoryEmoji} ${intro} ${identity} just popped up nearby.`;
 
-  const descriptionSentence = (() => {
-    if (description) {
-      if (isRotorcraft) {
-        return `${descriptiveIdentity} is working the pattern in a ${description}.`;
-      }
-      if (categoryKey === 'heavy' || categoryKey === 'wake-maker') {
-        return `${descriptiveIdentity} looks like a big ${description} muscling past.`;
-      }
-      if (categoryKey === 'light') {
-        return `${descriptiveIdentity} looks like a nimble ${description} overhead.`;
-      }
-      if (categoryKey === 'high-perf') {
-        return `${descriptiveIdentity} looks like a sharp ${description} slicing by.`;
-      }
-      return `${descriptiveIdentity} looks like a ${description} overhead.`;
-    }
-    if (detailsUrl) {
-      return `${descriptiveIdentity} just checked in overhead.`;
-    }
-    return null;
-  })();
-
   const movementClauses = [speedPhrase, altitudePhrase, directionPhrase]
     .map((clause) => stripTrailingPunctuation(clause ?? ''))
     .filter(Boolean);
 
   let movementSentence = null;
   if (movementClauses.length) {
-    const clauses = movementClauses.map((clause, index) =>
-      index === 0 ? lowercaseFirst(clause) : lowercaseFirst(clause),
-    );
+    const clauses = movementClauses.map((clause) => lowercaseFirst(clause));
     const lastClause = clauses.pop();
     let combined = '';
     if (!clauses.length) {
@@ -611,11 +582,14 @@ export const composeNotificationMessage = (
     } else {
       combined = `${clauses.join(', ')}, and ${lastClause}`;
     }
-    movementSentence = `${capitalizeSentence(combined)}.`;
+    movementSentence = `${subjectIdentity} is ${combined}.`;
+  } else if (description) {
+    movementSentence = `${subjectIdentity} is overhead.`;
+  } else {
+    movementSentence = `${descriptiveIdentity} is overhead.`;
   }
 
   const infoSentences = [
-    descriptionSentence,
     movementSentence,
     militarySentence,
     interestingSentence,
@@ -626,7 +600,9 @@ export const composeNotificationMessage = (
   const linkLine = includeDetailsLink ? `📡 <${detailsUrl}>` : null;
   const newlinePadding = linkLine ? 2 : 0;
   const reservedLength = linkLine ? linkLine.length + newlinePadding : 0;
-  const availableLength = Math.max(0, limit - reservedLength);
+  const prefixReserve =
+    linkLine || infoSentences.length || frequencySentence ? 1 : 0;
+  const availableLength = Math.max(0, limit - reservedLength - prefixReserve);
   const frequencyReserve =
     frequencySentence && availableLength > 0
       ? frequencySentence.length + (infoSentences.length ? 1 : 0)
@@ -645,6 +621,9 @@ export const composeNotificationMessage = (
   let body = coreMessage;
   if (linkLine) {
     body = coreMessage ? `${coreMessage}\n\n${linkLine}` : linkLine;
+  }
+  if (body) {
+    body = `\n${body}`;
   }
 
   return {

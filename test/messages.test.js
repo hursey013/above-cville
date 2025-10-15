@@ -42,6 +42,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   const { title, body } = composeNotificationMessage(plane, [now], now);
   assert.match(title, /N100CV/);
   assert.doesNotMatch(title, /\[[^\]]+\]\(/);
+  assert.ok(body.startsWith('\n'));
   assert.match(body, /first time/i);
   assert.match(body, /Cirrus SR22/);
   assert.doesNotMatch(body, /\(Light\)/);
@@ -74,6 +75,7 @@ test('composeNotificationMessage references frequent visitors', () => {
     ownOp: 'DELTA AIR LINES',
   };
   const { body } = composeNotificationMessage(plane, timestamps, now);
+  assert.ok(body.startsWith('\n'));
   assert.match(body, /north/i);
   assert.match(body, /Cessna 172 Skyhawk/);
   assert.doesNotMatch(body, /\(Small\)/);
@@ -100,6 +102,7 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
     category: 'A5',
   };
   const { body } = composeNotificationMessage(plane, [now], now);
+  assert.ok(body.startsWith('\n'));
   assert.ok(body.length <= 280);
   assert.match(body, /…/);
   assert.match(body, /N777LF/);
@@ -123,10 +126,14 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     ownOp: 'ANYTOWN NEWS',
   };
   const { body } = composeNotificationMessage(plane, [now], now);
+  assert.ok(body.startsWith('\n'));
   assert.match(body, /N45H/);
   assert.match(body, /Bell 206/);
   assert.doesNotMatch(body, /\(Rotorcraft\)/);
-  assert.match(body, /(Hovering around|Cruising the pattern|Chopping through)/);
+  assert.match(
+    body,
+    /(hovering around|cruising the pattern|chopping through)/i,
+  );
   assert.match(
     body,
     /\n\n📡 <https:\/\/globe\.airplanes\.live\/\?icao=rot001>$/,
@@ -147,7 +154,7 @@ test('composeNotificationMessage can hide details link when disabled', () => {
   config.showDetailsLink = false;
 
   const { body } = composeNotificationMessage(plane, [now], now);
-
+  assert.ok(body.startsWith('\n'));
   assert.match(body, /\[N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/);
   assert.doesNotMatch(body, /\n\n📡 </);
 
