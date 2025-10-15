@@ -110,12 +110,13 @@ const pollAirplanes = async () => {
               hex,
               altitudeFt,
               attachments,
+              plane,
             },
             'Notification dispatched',
           );
         } catch (error) {
           logger.error(
-            { err: error, hex },
+            { err: error, hex, plane },
             'Failed to send Apprise notification',
           );
         }
