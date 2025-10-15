@@ -12,8 +12,8 @@ const sanitizeUrls = (list) =>
         new Set(
           list
             .map((value) => (typeof value === 'string' ? value.trim() : ''))
-            .filter(Boolean)
-        )
+            .filter(Boolean),
+        ),
       )
     : [];
 
@@ -36,9 +36,15 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
    * @param {{ title?: string, body?: string, attachments?: string[], urls?: string[], configKey?: string }} param0
    * @returns {Promise<void>}
    */
-  const send = async ({ title, body, attachments, urls: overrideUrls, configKey: overrideKey }) => {
+  const send = async ({
+    title,
+    body,
+    attachments,
+    urls: overrideUrls,
+    configKey: overrideKey,
+  }) => {
     const targets = sanitizeUrls(
-      overrideUrls !== undefined ? overrideUrls : defaultUrls
+      overrideUrls !== undefined ? overrideUrls : defaultUrls,
     );
     const key =
       typeof overrideKey === 'string' && overrideKey.trim()
@@ -56,7 +62,7 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
     if (!hasAttachments) {
       const payload = {
         title,
-        body
+        body,
       };
       if (!key && targets.length) {
         payload.urls = targets;
@@ -65,14 +71,16 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const text = await response.text().catch(() => '');
-        throw new Error(`Apprise notification failed with status ${response.status}: ${text}`);
+        throw new Error(
+          `Apprise notification failed with status ${response.status}: ${text}`,
+        );
       }
 
       return;
@@ -100,12 +108,14 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
 
     const response = await fetch(endpoint, {
       method: 'POST',
-      body: form
+      body: form,
     });
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`Apprise notification failed with status ${response.status}: ${text}`);
+      throw new Error(
+        `Apprise notification failed with status ${response.status}: ${text}`,
+      );
     }
   };
 
@@ -128,10 +138,10 @@ export const sendAppriseMessage = async (payload) => {
   await appriseClient.send({
     urls: config.apprise.urls,
     configKey: config.apprise.configKey,
-    ...payload
+    ...payload,
   });
 };
 
 export default {
-  send: sendAppriseMessage
+  send: sendAppriseMessage,
 };

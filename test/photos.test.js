@@ -8,7 +8,7 @@ const originalFetch = global.fetch;
 const createOkResponse = (body) => ({
   ok: true,
   status: 200,
-  text: async () => body
+  text: async () => body,
 });
 
 const defaultMeta =

@@ -5,15 +5,21 @@ import {
   trimTrailingSlash,
   resolveAltitudeFt,
   isGrounded,
-  isAboveConfiguredCeiling
+  isAboveConfiguredCeiling,
 } from '../src/utils.js';
 
 test('trimTrailingSlash removes trailing slashes', () => {
-  assert.equal(trimTrailingSlash('http://example.com///'), 'http://example.com');
+  assert.equal(
+    trimTrailingSlash('http://example.com///'),
+    'http://example.com',
+  );
 });
 
 test('trimTrailingSlash leaves untouched strings intact', () => {
-  assert.equal(trimTrailingSlash('http://example.com/path'), 'http://example.com/path');
+  assert.equal(
+    trimTrailingSlash('http://example.com/path'),
+    'http://example.com/path',
+  );
 });
 
 test('trimTrailingSlash handles nullish values', () => {

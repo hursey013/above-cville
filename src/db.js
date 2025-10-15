@@ -16,7 +16,7 @@ await ensureStorage();
 
 const adapter = new JSONFile(dataFilePath);
 const defaultData = {
-  sightings: []
+  sightings: [],
 };
 
 const db = new Low(adapter, defaultData);

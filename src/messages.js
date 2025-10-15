@@ -11,7 +11,7 @@ const cardinalDirections = [
   'south',
   'southwest',
   'west',
-  'northwest'
+  'northwest',
 ];
 
 /**
@@ -86,7 +86,7 @@ export const summarizeSightings = (timestamps = [], now = Date.now()) => {
       lastWeek: 0,
       lastSeen: null,
       firstSeen: null,
-      averageIntervalMs: null
+      averageIntervalMs: null,
     };
   }
 
@@ -102,7 +102,7 @@ export const summarizeSightings = (timestamps = [], now = Date.now()) => {
       lastWeek: 0,
       lastSeen: null,
       firstSeen: null,
-      averageIntervalMs: null
+      averageIntervalMs: null,
     };
   }
 
@@ -128,7 +128,7 @@ export const summarizeSightings = (timestamps = [], now = Date.now()) => {
     lastWeek,
     lastSeen,
     firstSeen,
-    averageIntervalMs
+    averageIntervalMs,
   };
 };
 
@@ -197,9 +197,15 @@ const frequencyMessage = (stats) => {
 };
 
 const directionMessage = (plane) => {
-  const directionCandidates = [plane.track, plane.trak, plane.dir, plane.heading];
+  const directionCandidates = [
+    plane.track,
+    plane.trak,
+    plane.dir,
+    plane.heading,
+  ];
   for (const candidate of directionCandidates) {
-    const bearing = typeof candidate === 'string' ? Number(candidate) : candidate;
+    const bearing =
+      typeof candidate === 'string' ? Number(candidate) : candidate;
     const cardinal = clampBearing(bearing);
     if (cardinal) {
       return `Heading ${cardinal}.`;
@@ -225,8 +231,17 @@ const variantIndex = (identity, stats, variantsLength) => {
  * @param {number} [now=Date.now()] - Reference timestamp.
  * @returns {{title: string, body: string}}
  */
-export const composeNotificationMessage = (plane, timestamps = [], now = Date.now()) => {
-  const identity = plane.flight?.trim() || plane.registration || plane.r || plane.hex?.toUpperCase() || 'Unknown aircraft';
+export const composeNotificationMessage = (
+  plane,
+  timestamps = [],
+  now = Date.now(),
+) => {
+  const identity =
+    plane.flight?.trim() ||
+    plane.registration ||
+    plane.r ||
+    plane.hex?.toUpperCase() ||
+    'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);
   const speedMph = resolveSpeedMph(plane);
   const altitudeFt = resolveAltitudeFt(plane);
@@ -240,7 +255,7 @@ export const composeNotificationMessage = (plane, timestamps = [], now = Date.no
     '🌤️ Sky update:',
     '✈️ Airwatch:',
     '👀 Heads up:',
-    '📡 Spotter note:'
+    '📡 Spotter note:',
   ];
   const intro = intros[variantIndex(identity, stats, intros.length)];
 
@@ -267,11 +282,11 @@ export const composeNotificationMessage = (plane, timestamps = [], now = Date.no
 
   return {
     title: `${identity} spotted nearby`,
-    body: bodyLines.join('\n\n')
+    body: bodyLines.join('\n\n'),
   };
 };
 
 export default {
   summarizeSightings,
-  composeNotificationMessage
+  composeNotificationMessage,
 };

@@ -98,3 +98,11 @@ Each time a plane clears the filters you’ll get `[notify] <callsign>` followed
 - **FlightAware attachments.** The notification includes the most recent FlightAware photo link when available.
 - **Restart-safe storage.** Sightings live in `data/db.json`. Delete the file if you want to reset history.
 - **Timezones & cron.** Adjust `TZ` in Docker and your system timezone so log timestamps and Apprise attachments make sense.
+
+---
+
+## Development notes
+
+- Node 18+ is required for native `fetch`, top-level `await`, and the Node test runner.
+- Run `npm test` to exercise helpers (message composer, Apprise client, carrier filters, FlightAware scraper, utility functions).
+- Run `npm run lint` for ESLint + Prettier (same setup as balance-bot) before opening a PR.

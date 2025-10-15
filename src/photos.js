@@ -13,8 +13,7 @@ const extractOgImage = (html) => {
     return null;
   }
 
-  const metaRegex =
-    /<meta\s+(?:[^>]*?\s)?property=["']og:image["'][^>]*>/i;
+  const metaRegex = /<meta\s+(?:[^>]*?\s)?property=["']og:image["'][^>]*>/i;
   const match = html.match(metaRegex);
   if (!match) {
     return null;
@@ -54,8 +53,8 @@ export const fetchPlanePhotoUrl = async (registration) => {
   try {
     const response = await fetch(url, {
       headers: {
-        Accept: 'text/html,application/xhtml+xml'
-      }
+        Accept: 'text/html,application/xhtml+xml',
+      },
     });
 
     if (!response.ok) {
@@ -75,5 +74,5 @@ export const fetchPlanePhotoUrl = async (registration) => {
 };
 
 export default {
-  fetchPlanePhotoUrl
+  fetchPlanePhotoUrl,
 };

@@ -42,7 +42,10 @@ export const resolveAltitudeFt = (plane) => {
  */
 export const isGrounded = (plane) => {
   const altitudeRaw = plane?.alt_baro;
-  return typeof altitudeRaw === 'string' && altitudeRaw.trim().toLowerCase() === 'ground';
+  return (
+    typeof altitudeRaw === 'string' &&
+    altitudeRaw.trim().toLowerCase() === 'ground'
+  );
 };
 
 /**
@@ -63,5 +66,5 @@ export default {
   trimTrailingSlash,
   resolveAltitudeFt,
   isGrounded,
-  isAboveConfiguredCeiling
+  isAboveConfiguredCeiling,
 };

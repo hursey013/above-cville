@@ -7,7 +7,11 @@ import { sendAppriseMessage } from './apprise.js';
 import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhotoUrl } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
-import { resolveAltitudeFt, isGrounded, isAboveConfiguredCeiling } from './utils.js';
+import {
+  resolveAltitudeFt,
+  isGrounded,
+  isAboveConfiguredCeiling,
+} from './utils.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
@@ -27,14 +31,15 @@ const pollAirplanes = async () => {
     const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'above-cville/2.0.0 (+https://github.com/hursey013/above-cville)'
-      }
+        'User-Agent':
+          'above-cville/2.0.0 (+https://github.com/hursey013/above-cville)',
+      },
     });
 
     if (!response.ok) {
       logger.error(
         { status: response.status, url },
-        'airplanes.live responded with non-success status'
+        'airplanes.live responded with non-success status',
       );
       return;
     }
@@ -68,11 +73,14 @@ const pollAirplanes = async () => {
       }
 
       let sightingEntry = db.data.sightings.find((entry) => entry.hex === hex);
-      const timestamps = Array.isArray(sightingEntry?.timestamps) ? sightingEntry.timestamps : [];
+      const timestamps = Array.isArray(sightingEntry?.timestamps)
+        ? sightingEntry.timestamps
+        : [];
       const lastTimestampMs = timestamps.length
         ? timestamps[timestamps.length - 1]
         : null;
-      const secondsSinceLast = lastTimestampMs !== null ? (now - lastTimestampMs) / 1000 : Infinity;
+      const secondsSinceLast =
+        lastTimestampMs !== null ? (now - lastTimestampMs) / 1000 : Infinity;
       let shouldNotify = secondsSinceLast >= config.cooldownMinutes * 60;
 
       if (lastTimestampMs === null) {
@@ -82,7 +90,11 @@ const pollAirplanes = async () => {
       if (shouldNotify) {
         const messageTimestamps = [...timestamps, now];
         try {
-          const { title, body } = composeNotificationMessage(plane, messageTimestamps, now);
+          const { title, body } = composeNotificationMessage(
+            plane,
+            messageTimestamps,
+            now,
+          );
           let attachments = undefined;
           const registration = plane.registration ?? plane.r;
           if (registration) {
@@ -97,12 +109,15 @@ const pollAirplanes = async () => {
               callsign: plane.flight?.trim() || null,
               hex,
               altitudeFt,
-              attachments
+              attachments,
             },
-            'Notification dispatched'
+            'Notification dispatched',
           );
         } catch (error) {
-          logger.error({ err: error, hex }, 'Failed to send Apprise notification');
+          logger.error(
+            { err: error, hex },
+            'Failed to send Apprise notification',
+          );
         }
         if (!sightingEntry) {
           sightingEntry = { hex, timestamps: [] };
@@ -115,7 +130,6 @@ const pollAirplanes = async () => {
         hasChanges = true;
       }
     }
-
   } catch (error) {
     logger.error({ err: error }, 'Failed to poll airplanes.live');
   } finally {
@@ -136,9 +150,9 @@ logger.info(
     longitude: config.longitude,
     radiusNm: config.radius,
     cooldownMinutes: config.cooldownMinutes,
-    pollIntervalSeconds: config.pollIntervalSeconds
+    pollIntervalSeconds: config.pollIntervalSeconds,
   },
-  'Watching location'
+  'Watching location',
 );
 
 cron.schedule(cronExpression, () => {

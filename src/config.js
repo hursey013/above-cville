@@ -27,19 +27,18 @@ export const config = {
   latitude: parseNumber(process.env.AIRPLANES_LAT, 38.0375),
   longitude: parseNumber(process.env.AIRPLANES_LON, -78.4863),
   radius: parseNumber(process.env.AIRPLANES_RADIUS, 2.5),
-  pollIntervalSeconds: clampSeconds(parseNumber(process.env.POLL_INTERVAL_SECONDS, 5)),
+  pollIntervalSeconds: clampSeconds(
+    parseNumber(process.env.POLL_INTERVAL_SECONDS, 5),
+  ),
   cooldownMinutes: Math.max(1, parseNumber(process.env.COOLDOWN_MINUTES, 10)),
   maxAltitudeFt: parseNumber(process.env.MAX_ALTITUDE_FT, 25000),
-  ignoredCarrierCodes: parseUpperStringList(
-    process.env.IGNORE_CARRIERS,
-    ''
-  ),
+  ignoredCarrierCodes: parseUpperStringList(process.env.IGNORE_CARRIERS, ''),
   apprise: {
     apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
     urls: parseStringList(process.env.APPRISE_URLS),
-    configKey: parseString(process.env.APPRISE_CONFIG_KEY)
+    configKey: parseString(process.env.APPRISE_CONFIG_KEY),
   },
-  dataFile: process.env.DATA_FILE ?? 'data/db.json'
+  dataFile: process.env.DATA_FILE ?? 'data/db.json',
 };
 
 export default config;

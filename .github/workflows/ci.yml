@@ -46,6 +46,16 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          load: true
+          tags: ghcr.io/${{ github.repository_owner }}/above-cville:ci-test
+
+      - name: Smoke test container
+        run: docker run --rm ghcr.io/${{ github.repository_owner }}/above-cville:ci-test node -e "console.log('container boot ok')"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/above-cville:latest

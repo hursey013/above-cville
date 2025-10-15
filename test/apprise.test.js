@@ -7,7 +7,7 @@ const originalFetch = global.fetch;
 const okResponse = {
   ok: true,
   status: 200,
-  text: async () => ''
+  text: async () => '',
 };
 
 test('createAppriseClient requires an API URL', () => {
@@ -18,7 +18,7 @@ test('send throws when no URLs or config key are provided', async () => {
   const client = createAppriseClient({ apiUrl: 'http://example.com/notify' });
   await assert.rejects(
     client.send({ title: 'Missing', body: 'No destination' }),
-    /No Apprise destination/i
+    /No Apprise destination/i,
   );
 });
 
@@ -27,29 +27,38 @@ test('send posts to trimmed base URL with unique targets', async () => {
   global.fetch = async (url, options) => {
     calls.push({
       url,
-      options
+      options,
     });
     return {
       ok: true,
       status: 200,
-      text: async () => ''
+      text: async () => '',
     };
   };
 
   try {
     const client = createAppriseClient({
       apiUrl: 'http://example.com/notify///',
-      urls: ['  discord://token  ', 'discord://token']
+      urls: ['  discord://token  ', 'discord://token'],
     });
 
-    await client.send({ title: 'Flight spotted', body: 'Body text', attachments: ['https://example.com/a.jpg'] });
+    await client.send({
+      title: 'Flight spotted',
+      body: 'Body text',
+      attachments: ['https://example.com/a.jpg'],
+    });
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'http://example.com/notify');
     const body = calls[0].options.body;
-    assert.ok(body instanceof FormData, 'Expected FormData payload when attachments provided');
+    assert.ok(
+      body instanceof FormData,
+      'Expected FormData payload when attachments provided',
+    );
     const entries = Array.from(body.entries());
-    const mapped = Object.fromEntries(entries.map(([key, value]) => [key, value]));
+    const mapped = Object.fromEntries(
+      entries.map(([key, value]) => [key, value]),
+    );
     assert.equal(mapped.urls, 'discord://token');
     assert.equal(mapped.title, 'Flight spotted');
     assert.equal(mapped.body, 'Body text');
@@ -68,7 +77,7 @@ test('send uses config key endpoints when provided', async () => {
   global.fetch = async (url, options) => {
     calls.push({
       url,
-      options
+      options,
     });
     return okResponse;
   };
@@ -76,7 +85,7 @@ test('send uses config key endpoints when provided', async () => {
   try {
     const client = createAppriseClient({
       apiUrl: 'http://example.com/notify',
-      configKey: 'alerts/team'
+      configKey: 'alerts/team',
     });
 
     await client.send({ title: 'Flight spotted', body: 'Body text' });
