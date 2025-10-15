@@ -34,12 +34,16 @@ test('composeNotificationMessage highlights first-time sightings', () => {
     track: 270,
     desc: 'CIRRUS SR22',
     category: 'A1',
+    dbFlags: '10',
+    ownOp: 'UNITED STATES AIR FORCE',
   };
   const { title, body } = composeNotificationMessage(plane, [now], now);
   assert.match(title, /N100CV/i);
   assert.match(body, /first time/i);
   assert.match(body, /Cirrus SR22 \(Light\)/);
   assert.match(body, /west/i);
+  assert.match(body, /Military traffic/);
+  assert.match(body, /Operated by United States Air Force/);
   assert.match(body, /https:\/\/globe\.airplanes\.live\/\?icao=abc123$/);
 });
 
@@ -58,11 +62,15 @@ test('composeNotificationMessage references frequent visitors', () => {
     track: 45,
     desc: 'CESSNA 172 SKYHAWK',
     category: 'A2',
+    dbFlags: '11',
+    ownOp: 'DELTA AIR LINES',
   };
   const { body } = composeNotificationMessage(plane, timestamps, now);
-  assert.match(body, /laps|busy|regular/i);
   assert.match(body, /north/i);
   assert.match(body, /Cessna 172 Skyhawk \(Small\)/);
+  assert.match(body, /Military traffic/);
+  assert.match(body, /interesting traffic/);
+  assert.match(body, /Operated by Delta Air Lines/);
   assert.match(body, /https:\/\/globe\.airplanes\.live\/\?icao=def456$/);
 });
 

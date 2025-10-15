@@ -56,29 +56,39 @@ const getCategoryInfo = (rawCode) => {
   return CATEGORY_SUMMARIES[code] ?? null;
 };
 
-const formatSegment = (segment) => {
+const formatSegment = (segment, originalSegment = segment) => {
   if (!segment) {
     return segment;
   }
 
-  if (/[0-9]/.test(segment)) {
-    return segment.toUpperCase();
+  const lower = segment.toLowerCase();
+  const original = String(originalSegment);
+
+  if (/[0-9]/.test(lower)) {
+    return original.toUpperCase();
   }
 
-  if (segment.length <= 3) {
-    return segment.toUpperCase();
+  if (lower.length <= 2) {
+    return original.toUpperCase();
   }
 
-  return segment[0].toUpperCase() + segment.slice(1).toLowerCase();
+  return lower[0].toUpperCase() + lower.slice(1);
 };
 
-const normalizeWord = (word) =>
-  word
-    .split(/([-/])/)
-    .map((token) =>
-      token === '-' || token === '/' ? token : formatSegment(token),
-    )
+const normalizeWord = (word) => {
+  const originalSegments = word.split(/([-/])/);
+  const lowerSegments = word.toLowerCase().split(/([-/])/);
+
+  return lowerSegments
+    .map((segment, index) => {
+      if (segment === '-' || segment === '/') {
+        return segment;
+      }
+      const original = originalSegments[index] ?? segment;
+      return formatSegment(segment, original);
+    })
     .join('');
+};
 
 const formatAircraftDescription = (value) => {
   if (typeof value !== 'string') {
@@ -90,9 +100,12 @@ const formatAircraftDescription = (value) => {
     return null;
   }
 
-  const lower = trimmed.toLowerCase();
-  const words = lower.split(/\s+/).map(normalizeWord);
-  const result = words.join(' ').replace(/\s+/g, ' ').trim();
+  const result = trimmed
+    .split(/\s+/)
+    .map((word) => normalizeWord(word))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   return result || null;
 };
 
@@ -365,6 +378,18 @@ export const composeNotificationMessage = (
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
   const categoryLine = categoryInfo?.summary ?? null;
 
+  const dbFlagsRaw =
+    typeof plane.dbFlags === 'string' ? plane.dbFlags.trim() : '';
+  const isMilitary = dbFlagsRaw.startsWith('1');
+  const isInteresting = dbFlagsRaw.length > 1 && dbFlagsRaw[1] === '1';
+  const operatorName =
+    dbFlagsRaw && plane.ownOp ? formatAircraftDescription(plane.ownOp) : null;
+  const militaryLine = isMilitary ? '🛡️ Military traffic.' : null;
+  const interestingLine = isInteresting
+    ? '👀 Marked as interesting traffic.'
+    : null;
+  const operatorLine = operatorName ? `Operated by ${operatorName}.` : null;
+
   const speedPhrase = formatSpeed(resolveSpeedMph(plane));
   const altitudePhrase = formatAltitude(resolveAltitudeFt(plane));
   const directionLine = directionMessage(plane);
@@ -395,6 +420,15 @@ export const composeNotificationMessage = (
   const selectedOptionalFacts = selectFacts(optionalFacts, variantSeed);
 
   const factLines = [];
+  if (militaryLine) {
+    factLines.push(militaryLine);
+  }
+  if (interestingLine) {
+    factLines.push(interestingLine);
+  }
+  if (operatorLine) {
+    factLines.push(operatorLine);
+  }
   if (directionLine) {
     factLines.push(directionLine);
   }
