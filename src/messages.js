@@ -394,6 +394,14 @@ const capitalizeSentence = (text) => {
   return trimmed[0].toUpperCase() + trimmed.slice(1);
 };
 
+const lowercaseFirst = (text) => {
+  if (typeof text !== 'string' || !text.trim()) {
+    return text;
+  }
+  const trimmed = text.trim();
+  return trimmed[0].toLowerCase() + trimmed.slice(1);
+};
+
 /**
  * Build a conversational notification title + body for a detected aircraft.
  * @param {Record<string, any>} plane - Raw plane object from airplanes.live.
@@ -469,7 +477,9 @@ export const composeNotificationMessage = (
 
   let movementSentence = null;
   if (movementClauses.length) {
-    const clauses = movementClauses.slice();
+    const clauses = movementClauses.map((clause, index) =>
+      index === 0 ? lowercaseFirst(clause) : lowercaseFirst(clause),
+    );
     const lastClause = clauses.pop();
     let combined = '';
     if (!clauses.length) {
