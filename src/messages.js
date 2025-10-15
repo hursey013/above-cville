@@ -19,27 +19,27 @@ const cardinalDirections = [
 const CATEGORY_SUMMARIES = {
   A1: {
     shortLabel: 'Light',
-    summary: '🛩️ Light class (<15,500 lbs).',
+    summary: '🛩️ Light private flyer.',
   },
   A2: {
     shortLabel: 'Small',
-    summary: '🛫 Small class (15,500–75,000 lbs).',
+    summary: '🛫 Small regional bird.',
   },
   A3: {
     shortLabel: 'Large',
-    summary: '🛬 Large class (75,000–300,000 lbs).',
+    summary: '🛬 Big commercial ride.',
   },
   A4: {
-    shortLabel: 'High vortex',
-    summary: '🌀 High vortex large (B757-style wake).',
+    shortLabel: 'Wake-maker',
+    summary: '🌀 Wake-maker (think 757).',
   },
   A5: {
     shortLabel: 'Heavy',
-    summary: '✈️ Heavy class (>300,000 lbs).',
+    summary: '✈️ Heavy long-hauler.',
   },
   A6: {
-    shortLabel: 'High performance',
-    summary: '⚡ High-performance (>5g & 400 kts).',
+    shortLabel: 'High-perf',
+    summary: '⚡ High-performance speedster.',
   },
   A7: {
     shortLabel: 'Rotorcraft',
@@ -227,44 +227,78 @@ export const summarizeSightings = (timestamps = [], now = Date.now()) => {
   };
 };
 
-const formatSpeed = (mph) => {
+const formatSpeed = (mph, categoryInfo) => {
   if (!Number.isFinite(mph) || mph <= 0) {
     return null;
   }
 
-  if (mph >= 220) {
-    return `zipping along around ${mph} mph`;
+  const rotorcraft =
+    categoryInfo?.shortLabel &&
+    categoryInfo.shortLabel.toLowerCase() === 'rotorcraft';
+
+  if (rotorcraft) {
+    if (mph >= 130) {
+      return `Chopping through at about ${mph} mph.`;
+    }
+    if (mph >= 80) {
+      return `Cruising the pattern around ${mph} mph.`;
+    }
+    return `Hovering around ${mph} mph.`;
   }
 
-  if (mph >= 150) {
-    return `cruising at roughly ${mph} mph`;
+  if (mph >= 300) {
+    return `Bolting along near ${mph} mph.`;
   }
 
-  if (mph >= 90) {
-    return `gliding by near ${mph} mph`;
+  if (mph >= 200) {
+    return `Cruising near ${mph} mph.`;
   }
 
-  return `floating in at a relaxed ${mph} mph`;
+  if (mph >= 120) {
+    return `Making good time around ${mph} mph.`;
+  }
+
+  if (mph >= 60) {
+    return `Taking a leisurely pass around ${mph} mph.`;
+  }
+
+  return `Drifting by around ${mph} mph.`;
 };
 
-const formatAltitude = (altitude) => {
+const formatAltitude = (altitude, categoryInfo) => {
   if (!Number.isFinite(altitude) || altitude <= 0) {
     return null;
   }
 
-  if (altitude >= 6000) {
-    return `soaring high around ${Math.round(altitude).toLocaleString()} ft`;
+  const rounded = Math.round(altitude).toLocaleString();
+  const rotorcraft =
+    categoryInfo?.shortLabel &&
+    categoryInfo.shortLabel.toLowerCase() === 'rotorcraft';
+
+  if (rotorcraft) {
+    if (altitude <= 1200) {
+      return `Skimming the skyline near ${rounded} ft.`;
+    }
+    return `Holding above town around ${rounded} ft.`;
   }
 
-  if (altitude >= 3000) {
-    return `cruising around ${Math.round(altitude).toLocaleString()} ft`;
+  if (altitude >= 30000) {
+    return `Way up around ${rounded} ft.`;
   }
 
-  if (altitude >= 1500) {
-    return `keeping it cozy near ${Math.round(altitude).toLocaleString()} ft`;
+  if (altitude >= 20000) {
+    return `Cruising high near ${rounded} ft.`;
   }
 
-  return `skimming low at roughly ${Math.round(altitude).toLocaleString()} ft`;
+  if (altitude >= 10000) {
+    return `Gliding along around ${rounded} ft.`;
+  }
+
+  if (altitude >= 5000) {
+    return `Keeping a comfy perch near ${rounded} ft.`;
+  }
+
+  return `Keeping it low near ${rounded} ft.`;
 };
 
 const frequencyMessage = (stats) => {
@@ -390,8 +424,8 @@ export const composeNotificationMessage = (
     : null;
   const operatorLine = operatorName ? `Operated by ${operatorName}.` : null;
 
-  const speedPhrase = formatSpeed(resolveSpeedMph(plane));
-  const altitudePhrase = formatAltitude(resolveAltitudeFt(plane));
+  const speedLine = formatSpeed(resolveSpeedMph(plane), categoryInfo);
+  const altitudeLine = formatAltitude(resolveAltitudeFt(plane), categoryInfo);
   const directionLine = directionMessage(plane);
   const frequencyLine = frequencyMessage(stats);
 
@@ -409,9 +443,6 @@ export const composeNotificationMessage = (
         categoryInfo ? ` (${categoryInfo.shortLabel})` : ''
       }.`
     : null;
-
-  const speedLine = speedPhrase ? `They're ${speedPhrase}.` : null;
-  const altitudeLine = altitudePhrase ? `Currently ${altitudePhrase}.` : null;
 
   const optionalFacts = [categoryLine, speedLine, altitudeLine].filter(Boolean);
   const variantSeed = optionalFacts.length

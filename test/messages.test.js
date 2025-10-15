@@ -90,3 +90,22 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
   assert.match(body, /…/);
   assert.ok(body.endsWith('https://globe.airplanes.live/?icao=long1'));
 });
+
+test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
+  const now = Date.now();
+  const plane = {
+    hex: 'rot001',
+    registration: 'N45H',
+    gs: 55,
+    alt_baro: 600,
+    track: 180,
+    desc: 'BELL 206',
+    category: 'A7',
+    dbFlags: '01',
+    ownOp: 'ANYTOWN NEWS',
+  };
+  const { body } = composeNotificationMessage(plane, [now], now);
+  assert.match(body, /Rotorcraft/);
+  assert.match(body, /(Hovering around|Cruising the pattern|Chopping through)/);
+  assert.match(body, /https:\/\/globe\.airplanes\.live\/\?icao=rot001$/);
+});
