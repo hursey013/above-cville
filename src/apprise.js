@@ -22,7 +22,7 @@ const sanitizeUrls = (list) =>
  * @param {{ apiUrl: string, urls?: string[], configKey?: string }} params
  * @returns {{ send: (payload: { title?: string, body?: string, attachments?: string[], urls?: string[], configKey?: string }) => Promise<void> }}
  */
-export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
+export const createNotifier = ({ apiUrl, urls = [], configKey = '' }) => {
   if (!apiUrl) {
     throw new Error('Apprise API URL is required');
   }
@@ -36,7 +36,7 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
    * @param {{ title?: string, body?: string, attachments?: string[], urls?: string[], configKey?: string }} param0
    * @returns {Promise<void>}
    */
-  const send = async ({
+  const sendNotification = async ({
     title,
     body,
     attachments,
@@ -119,23 +119,23 @@ export const createAppriseClient = ({ apiUrl, urls = [], configKey = '' }) => {
     }
   };
 
-  return { send };
+  return { sendNotification };
 };
 
 let appriseClient = null;
 
 try {
-  appriseClient = createAppriseClient(config.apprise);
+  appriseClient = createNotifier(config.apprise);
 } catch (error) {
   console.warn(`Apprise notifications disabled: ${error.message}`);
 }
 
-export const sendAppriseMessage = async (payload) => {
+export const sendAppriseNotification = async (payload) => {
   if (!appriseClient) {
     return;
   }
 
-  await appriseClient.send({
+  await appriseClient.sendNotification({
     urls: config.apprise.urls,
     configKey: config.apprise.configKey,
     ...payload,
@@ -143,5 +143,6 @@ export const sendAppriseMessage = async (payload) => {
 };
 
 export default {
-  send: sendAppriseMessage,
+  createNotifier,
+  sendNotification: sendAppriseNotification,
 };

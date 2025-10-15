@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
-import { createAppriseClient } from '../src/apprise.js';
+import { createNotifier } from '../src/apprise.js';
 
 const originalFetch = global.fetch;
 const okResponse = {
@@ -10,14 +10,14 @@ const okResponse = {
   text: async () => '',
 };
 
-test('createAppriseClient requires an API URL', () => {
-  assert.throws(() => createAppriseClient({ apiUrl: '' }), /required/i);
+test('createNotifier requires an API URL', () => {
+  assert.throws(() => createNotifier({ apiUrl: '' }), /required/i);
 });
 
 test('send throws when no URLs or config key are provided', async () => {
-  const client = createAppriseClient({ apiUrl: 'http://example.com/notify' });
+  const client = createNotifier({ apiUrl: 'http://example.com/notify' });
   await assert.rejects(
-    client.send({ title: 'Missing', body: 'No destination' }),
+    client.sendNotification({ title: 'Missing', body: 'No destination' }),
     /No Apprise destination/i,
   );
 });
@@ -37,12 +37,12 @@ test('send posts to trimmed base URL with unique targets', async () => {
   };
 
   try {
-    const client = createAppriseClient({
+    const client = createNotifier({
       apiUrl: 'http://example.com/notify///',
       urls: ['  discord://token  ', 'discord://token'],
     });
 
-    await client.send({
+    await client.sendNotification({
       title: 'Flight spotted',
       body: 'Body text',
       attachments: ['https://example.com/a.jpg'],
@@ -83,12 +83,15 @@ test('send uses config key endpoints when provided', async () => {
   };
 
   try {
-    const client = createAppriseClient({
+    const client = createNotifier({
       apiUrl: 'http://example.com/notify',
       configKey: 'alerts/team',
     });
 
-    await client.send({ title: 'Flight spotted', body: 'Body text' });
+    await client.sendNotification({
+      title: 'Flight spotted',
+      body: 'Body text',
+    });
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'http://example.com/notify/alerts%2Fteam');

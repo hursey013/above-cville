@@ -3,7 +3,7 @@ import cron from 'node-cron';
 import config from './config.js';
 import db from './db.js';
 import logger from './logger.js';
-import { sendAppriseMessage } from './apprise.js';
+import { sendAppriseNotification } from './apprise.js';
 import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhotoUrl } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
@@ -103,7 +103,7 @@ const pollAirplanes = async () => {
               attachments = [photoUrl];
             }
           }
-          await sendAppriseMessage({ title, body, attachments });
+          await sendAppriseNotification({ title, body, attachments });
           logger.info(
             {
               callsign: plane.flight?.trim() || null,
