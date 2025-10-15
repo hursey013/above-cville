@@ -278,28 +278,28 @@ const formatSpeed = (mph, categoryInfo) => {
 
   if (category === 'light') {
     if (mph >= 200) {
-      return `Scooting along near ${mph} mph.`;
+      return `Scooting near ${mph} mph.`;
     }
     if (mph >= 120) {
-      return `Skipping overhead around ${mph} mph.`;
+      return `Skipping near ${mph} mph.`;
     }
     if (mph >= 60) {
-      return `Gliding easily near ${mph} mph.`;
+      return `Gliding near ${mph} mph.`;
     }
-    return `Loitering gently near ${mph} mph.`;
+    return `Loitering near ${mph} mph.`;
   }
 
   if (category === 'small') {
     if (mph >= 200) {
-      return `Keeping a tidy pace around ${mph} mph.`;
+      return `Pacing near ${mph} mph.`;
     }
     if (mph >= 120) {
-      return `Scooting by around ${mph} mph.`;
+      return `Scooting near ${mph} mph.`;
     }
     if (mph >= 60) {
-      return `Taking an easy pass near ${mph} mph.`;
+      return `Easy pass near ${mph} mph.`;
     }
-    return `Loitering around ${mph} mph.`;
+    return `Loitering near ${mph} mph.`;
   }
 
   if (mph >= 300) {
@@ -363,22 +363,22 @@ const formatAltitude = (altitude, categoryInfo) => {
 
   if (category === 'light') {
     if (altitude >= 10000) {
-      return `Dancing up near ${rounded} ft.`;
+      return `High near ${rounded} ft.`;
     }
     if (altitude >= 5000) {
-      return `Skipping along around ${rounded} ft.`;
+      return `Mid near ${rounded} ft.`;
     }
-    return `Lingering close to town near ${rounded} ft.`;
+    return `Low near ${rounded} ft.`;
   }
 
   if (category === 'small') {
     if (altitude >= 10000) {
-      return `Floating steady near ${rounded} ft.`;
+      return `Steady ~${rounded} ft.`;
     }
     if (altitude >= 5000) {
-      return `Keeping a level perch near ${rounded} ft.`;
+      return `Level ~${rounded} ft.`;
     }
-    return `Hanging out near ${rounded} ft.`;
+    return `Low ~${rounded} ft.`;
   }
 
   if (category === 'large') {
@@ -416,7 +416,7 @@ const frequencyMessage = (stats) => {
   }
 
   if (stats.lastHour >= 3) {
-    return `They're doing laps — ${stats.lastHour} pings in the last hour!`;
+    return `${stats.lastHour} pings this hour.`;
   }
 
   if (stats.lastDay >= 3) {
@@ -535,6 +535,8 @@ export const composeNotificationMessage = (
   const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
   const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
   const linkedIdentity = detailsUrl ? `[${identity}](${detailsUrl})` : identity;
+  const includeDetailsLink = Boolean(detailsUrl) && config.showDetailsLink;
+  const descriptiveIdentity = includeDetailsLink ? identity : linkedIdentity;
 
   const description = formatAircraftDescription(plane.desc);
   const categoryInfo =
@@ -554,13 +556,14 @@ export const composeNotificationMessage = (
     ? '🪖 Military traffic on the scope.'
     : null;
   const interestingSentence = isInteresting
-    ? '🕵️ Marked as interesting traffic.'
+    ? '🕵️ Interesting traffic.'
     : null;
   const operatorSentence = operatorName ? `Operated by ${operatorName}.` : null;
 
   const speedPhrase = formatSpeed(resolveSpeedMph(plane), categoryInfo);
   const altitudePhrase = formatAltitude(resolveAltitudeFt(plane), categoryInfo);
   const directionPhrase = directionMessage(plane);
+  const operatorPhrase = operatorSentence;
   const frequencySentence = frequencyMessage(stats);
 
   const intros = ['Can you see it?', 'Look up!', 'There it goes!', 'Up above!'];
@@ -571,21 +574,21 @@ export const composeNotificationMessage = (
   const descriptionSentence = (() => {
     if (description) {
       if (isRotorcraft) {
-        return `${linkedIdentity} is working the pattern in a ${description}.`;
+        return `${descriptiveIdentity} is working the pattern in a ${description}.`;
       }
       if (categoryKey === 'heavy' || categoryKey === 'wake-maker') {
-        return `${linkedIdentity} looks like a big ${description} muscling past.`;
+        return `${descriptiveIdentity} looks like a big ${description} muscling past.`;
       }
       if (categoryKey === 'light') {
-        return `${linkedIdentity} looks like a nimble ${description} overhead.`;
+        return `${descriptiveIdentity} looks like a nimble ${description} overhead.`;
       }
       if (categoryKey === 'high-perf') {
-        return `${linkedIdentity} looks like a sharp ${description} slicing by.`;
+        return `${descriptiveIdentity} looks like a sharp ${description} slicing by.`;
       }
-      return `${linkedIdentity} looks like a ${description} overhead.`;
+      return `${descriptiveIdentity} looks like a ${description} overhead.`;
     }
     if (detailsUrl) {
-      return `${linkedIdentity} just checked in overhead.`;
+      return `${descriptiveIdentity} just checked in overhead.`;
     }
     return null;
   })();
@@ -611,18 +614,38 @@ export const composeNotificationMessage = (
     movementSentence = `${capitalizeSentence(combined)}.`;
   }
 
-  const bodySentences = [
+  const infoSentences = [
     descriptionSentence,
     movementSentence,
     militarySentence,
     interestingSentence,
-    operatorSentence,
-    frequencySentence,
+    operatorPhrase,
   ].filter(Boolean);
 
-  const limit = 300;
-  const coreMessage = truncateMessage(bodySentences.join(' '), limit);
-  const body = coreMessage;
+  const limit = 280;
+  const linkLine = includeDetailsLink ? `📡 <${detailsUrl}>` : null;
+  const newlinePadding = linkLine ? 2 : 0;
+  const reservedLength = linkLine ? linkLine.length + newlinePadding : 0;
+  const availableLength = Math.max(0, limit - reservedLength);
+  const frequencyReserve =
+    frequencySentence && availableLength > 0
+      ? frequencySentence.length + (infoSentences.length ? 1 : 0)
+      : 0;
+  const infoAvailable = Math.max(0, availableLength - frequencyReserve);
+  const infoText = infoSentences.join(' ');
+  const infoCore = truncateMessage(infoText, infoAvailable);
+
+  let coreMessage = infoCore;
+  if (frequencySentence) {
+    coreMessage = coreMessage
+      ? `${coreMessage} ${frequencySentence}`
+      : frequencySentence;
+  }
+
+  let body = coreMessage;
+  if (linkLine) {
+    body = coreMessage ? `${coreMessage}\n\n${linkLine}` : linkLine;
+  }
 
   return {
     title: primaryLine,
