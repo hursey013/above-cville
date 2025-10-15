@@ -536,10 +536,6 @@ export const composeNotificationMessage = (
 
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
-  const categoryKey = categoryInfo?.shortLabel
-    ? categoryInfo.shortLabel.toLowerCase()
-    : null;
-  const isRotorcraft = categoryKey === 'rotorcraft';
 
   const dbFlagsRaw =
     typeof plane.dbFlags === 'string' ? plane.dbFlags.trim() : '';
@@ -550,9 +546,7 @@ export const composeNotificationMessage = (
   const militarySentence = isMilitary
     ? '🪖 Military traffic on the scope.'
     : null;
-  const interestingSentence = isInteresting
-    ? '🕵️ Interesting traffic.'
-    : null;
+  const interestingSentence = isInteresting ? '🕵️ Interesting traffic.' : null;
   const operatorSentence = operatorName ? `Operated by ${operatorName}.` : null;
 
   const speedPhrase = formatSpeed(resolveSpeedMph(plane), categoryInfo);
