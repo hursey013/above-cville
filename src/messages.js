@@ -318,7 +318,15 @@ const frequencyMessage = (stats) => {
     return `Regular visitor — ${stats.lastWeek} sightings this week.`;
   }
 
-  if (stats.averageIntervalMs && stats.averageIntervalMs < DAY_MS) {
+  const historySpan =
+    stats.lastSeen && stats.firstSeen ? stats.lastSeen - stats.firstSeen : 0;
+  const hasMultiDayHistory = historySpan >= 2 * DAY_MS;
+
+  if (
+    stats.averageIntervalMs &&
+    stats.averageIntervalMs < DAY_MS &&
+    hasMultiDayHistory
+  ) {
     return 'We catch them almost every day.';
   }
 
