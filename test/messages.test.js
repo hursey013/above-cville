@@ -32,10 +32,13 @@ test('composeNotificationMessage highlights first-time sightings', () => {
     gs: 110,
     alt_baro: 1800,
     track: 270,
+    desc: 'CIRRUS SR22',
+    category: 'A1',
   };
   const { title, body } = composeNotificationMessage(plane, [now], now);
   assert.match(title, /N100CV/i);
   assert.match(body, /first time/i);
+  assert.match(body, /Cirrus SR22 \(Light\)/);
   assert.match(body, /west/i);
 });
 
@@ -52,8 +55,27 @@ test('composeNotificationMessage references frequent visitors', () => {
     gs: 180,
     alt_baro: 4200,
     track: 45,
+    desc: 'CESSNA 172 SKYHAWK',
+    category: 'A2',
   };
   const { body } = composeNotificationMessage(plane, timestamps, now);
   assert.match(body, /laps|busy|regular/i);
   assert.match(body, /north/i);
+  assert.match(body, /Cessna 172 Skyhawk \(Small\)/);
+});
+
+test('composeNotificationMessage truncates long bodies to Bluesky limits', () => {
+  const now = Date.now();
+  const plane = {
+    hex: 'long1',
+    registration: 'N777LF',
+    gs: 220,
+    alt_baro: 2500,
+    track: 90,
+    desc: Array(40).fill('GULFSTREAM G650').join(' '),
+    category: 'A5',
+  };
+  const { body } = composeNotificationMessage(plane, [now], now);
+  assert.ok(body.length <= 300);
+  assert.ok(body.endsWith('…'));
 });

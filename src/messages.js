@@ -14,6 +14,86 @@ const cardinalDirections = [
   'northwest',
 ];
 
+const CATEGORY_SUMMARIES = {
+  A1: {
+    shortLabel: 'Light',
+    summary: '🛩️ Light class (<15,500 lbs).',
+  },
+  A2: {
+    shortLabel: 'Small',
+    summary: '🛫 Small class (15,500–75,000 lbs).',
+  },
+  A3: {
+    shortLabel: 'Large',
+    summary: '🛬 Large class (75,000–300,000 lbs).',
+  },
+  A4: {
+    shortLabel: 'High vortex',
+    summary: '🌀 High vortex large (B757-style wake).',
+  },
+  A5: {
+    shortLabel: 'Heavy',
+    summary: '✈️ Heavy class (>300,000 lbs).',
+  },
+  A6: {
+    shortLabel: 'High performance',
+    summary: '⚡ High-performance (>5g & 400 kts).',
+  },
+  A7: {
+    shortLabel: 'Rotorcraft',
+    summary: '🚁 Rotorcraft (helicopter class).',
+  },
+};
+
+const getCategoryInfo = (rawCode) => {
+  if (!rawCode) {
+    return null;
+  }
+
+  const code = String(rawCode).trim().toUpperCase();
+  return CATEGORY_SUMMARIES[code] ?? null;
+};
+
+const formatSegment = (segment) => {
+  if (!segment) {
+    return segment;
+  }
+
+  if (/[0-9]/.test(segment)) {
+    return segment.toUpperCase();
+  }
+
+  if (segment.length <= 3) {
+    return segment.toUpperCase();
+  }
+
+  return segment[0].toUpperCase() + segment.slice(1).toLowerCase();
+};
+
+const normalizeWord = (word) =>
+  word
+    .split(/([-/])/)
+    .map((token) =>
+      token === '-' || token === '/' ? token : formatSegment(token),
+    )
+    .join('');
+
+const formatAircraftDescription = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const lower = trimmed.toLowerCase();
+  const words = lower.split(/\s+/).map(normalizeWord);
+  const result = words.join(' ').replace(/\s+/g, ' ').trim();
+  return result || null;
+};
+
 /**
  * Convert a numeric heading to a friendly cardinal direction.
  * @param {number} value - Heading in degrees.
@@ -224,6 +304,32 @@ const variantIndex = (identity, stats, variantsLength) => {
   return Math.abs(hash) % variantsLength;
 };
 
+const selectFacts = (facts, seed) => {
+  if (!Array.isArray(facts) || !facts.length) {
+    return [];
+  }
+
+  const count = Math.min(facts.length, 2);
+  const start = seed % facts.length;
+  const selected = [];
+
+  for (let index = 0; index < count; index += 1) {
+    selected.push(facts[(start + index) % facts.length]);
+  }
+
+  return selected;
+};
+
+const truncateMessage = (text, limit = 300) => {
+  if (typeof text !== 'string' || text.length <= limit) {
+    return text;
+  }
+
+  const sliceIndex = text.lastIndexOf(' ', limit - 1);
+  const endIndex = sliceIndex > 0 ? sliceIndex : limit - 1;
+  return `${text.slice(0, endIndex).trimEnd()}…`;
+};
+
 /**
  * Build a conversational notification title + body for a detected aircraft.
  * @param {Record<string, any>} plane - Raw plane object from airplanes.live.
@@ -243,13 +349,16 @@ export const composeNotificationMessage = (
     plane.hex?.toUpperCase() ||
     'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);
-  const speedMph = resolveSpeedMph(plane);
-  const altitudeFt = resolveAltitudeFt(plane);
 
-  const speedPhrase = formatSpeed(speedMph);
-  const altitudePhrase = formatAltitude(altitudeFt);
-  const directionPhrase = directionMessage(plane);
-  const frequencyPhrase = frequencyMessage(stats);
+  const description = formatAircraftDescription(plane.desc);
+  const categoryInfo =
+    getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
+  const categoryLine = categoryInfo?.summary ?? null;
+
+  const speedPhrase = formatSpeed(resolveSpeedMph(plane));
+  const altitudePhrase = formatAltitude(resolveAltitudeFt(plane));
+  const directionLine = directionMessage(plane);
+  const frequencyLine = frequencyMessage(stats);
 
   const intros = [
     '🌤️ Sky update:',
@@ -258,31 +367,41 @@ export const composeNotificationMessage = (
     '📡 Spotter note:',
   ];
   const intro = intros[variantIndex(identity, stats, intros.length)];
-
   const primaryLine = `${intro} ${identity} just popped up near Charlottesville.`;
 
-  const descriptors = [];
-  if (speedPhrase) {
-    descriptors.push(`They're ${speedPhrase}.`);
-  }
-  if (altitudePhrase) {
-    descriptors.push(`Currently ${altitudePhrase}.`);
-  }
-  if (directionPhrase) {
-    descriptors.push(directionPhrase);
-  }
+  const descriptionLine = description
+    ? `Meet ${description}${
+        categoryInfo ? ` (${categoryInfo.shortLabel})` : ''
+      }.`
+    : null;
 
-  const descriptorLine = descriptors.length ? descriptors.join(' ') : null;
+  const speedLine = speedPhrase ? `They're ${speedPhrase}.` : null;
+  const altitudeLine = altitudePhrase ? `Currently ${altitudePhrase}.` : null;
 
-  const bodyLines = [primaryLine];
-  if (descriptorLine) {
-    bodyLines.push(descriptorLine);
+  const optionalFacts = [categoryLine, speedLine, altitudeLine].filter(Boolean);
+  const variantSeed = optionalFacts.length
+    ? variantIndex(identity, stats, optionalFacts.length)
+    : 0;
+  const selectedOptionalFacts = selectFacts(optionalFacts, variantSeed);
+
+  const factLines = [];
+  if (directionLine) {
+    factLines.push(directionLine);
   }
-  bodyLines.push(frequencyPhrase);
+  factLines.push(...selectedOptionalFacts);
+
+  const bodyLines = [
+    primaryLine,
+    descriptionLine,
+    ...factLines,
+    frequencyLine,
+  ].filter(Boolean);
+
+  const messageBody = bodyLines.join('\n\n');
 
   return {
     title: `${identity} spotted nearby`,
-    body: bodyLines.join('\n\n'),
+    body: truncateMessage(messageBody),
   };
 };
 
