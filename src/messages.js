@@ -430,10 +430,10 @@ export const composeNotificationMessage = (
   const frequencyLine = frequencyMessage(stats);
 
   const intros = [
-    '🌤️ Sky update:',
-    '✈️ Airwatch:',
-    '👀 Heads up:',
-    '📡 Spotter note:',
+    '👀 Can you see it?',
+    '☝️ Look up!',
+    '➡️ There it goes!',
+    '✈️ Up above!',
   ];
   const intro = intros[variantIndex(identity, stats, intros.length)];
   const primaryLine = `${intro} ${identity} just popped up near Charlottesville.`;
