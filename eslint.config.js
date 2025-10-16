@@ -5,7 +5,7 @@ import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
   {
-    ignores: ['data/**', 'apprise-config/**', 'node_modules/**'],
+    ignores: ['data/**', 'node_modules/**'],
   },
   js.configs.recommended,
   {
