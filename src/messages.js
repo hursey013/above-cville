@@ -473,15 +473,16 @@ export const composeNotificationMessage = (
 
   const limit = 300;
   const linkLine = includeDetailsLink ? detailsUrl : null;
+  const linkText = linkLine ? `📡 ${linkLine}` : null;
 
   const infoText = infoSentences.join(' ');
   let remaining = limit - primaryLine.length;
   let linkSegment = null;
-  if (linkLine) {
-    const linkNeeded = linkLine.length + 2;
+  if (linkText) {
+    const linkNeeded = linkText.length + 2;
     if (remaining >= linkNeeded) {
       remaining -= linkNeeded;
-      linkSegment = linkLine;
+      linkSegment = linkText;
     }
   }
 

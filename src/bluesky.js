@@ -4,7 +4,7 @@ import { BskyAgent, RichText } from '@atproto/api';
 import config from './config.js';
 
 const MAX_BSKY_CHARS = 300;
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 976 * 1024; // Bluesky image uploads must stay under ~1 MB
 const IMAGE_FETCH_HEADERS = {
   Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
   'User-Agent':
