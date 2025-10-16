@@ -18,12 +18,12 @@
 
 ## Say hello to above-cville
 
-above-cville keeps a watch on the [airplanes.live](https://airplanes.live) feed over Charlottesville, pinging [@abovecville.bsky.social](https://bsky.app/profile/abovecville.bsky.social) every time something fun zips by.
+above-cville keeps a watch on the [airplanes.live](https://airplanes.live) feed over Charlottesville, pinging [@abovecville](https://bsky.app/profile/abovecville.bsky.social) every time something fun zips by.
 
 ## What it does
 
-- 🔁 **Real-time sweeps** – Polls airplanes.live on a tight schedule (configurable) and filters out repeat sightings with a cooldown timer.
-- 🗣️ **Readable chatter** – 300-character Bluesky posts call out identity, altitude, speed, direction, and how often we’ve seen the plane lately.
+- 🔁 **Real-time sweeps** – Polls airplanes.live on a configurable schedule and filters out repeat sightings with a cooldown timer.
+- 🗣️ **Readable chatter** – 300-character Bluesky posts call out altitude, speed, direction, and how often we’ve seen the plane lately.
 - 🪖 **Spot the cool stuff** – Military and “interesting” tags from airplanes.live bubble up with their own little flourish.
 - 🖼️ **Photo flair** – If FlightAware has a current shot, above-cville will automatically embed it with the post.
 
