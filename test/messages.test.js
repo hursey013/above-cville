@@ -43,6 +43,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.equal(title, undefined);
   assert.match(
     body,
+    // eslint-disable-next-line no-misleading-character-class
     /(Can you see it\?|Look up!|There it goes!|Up above!) [✈️🛩️🛫🛬🌀⚡🚁]/,
   );
   assert.match(body, /first time/i);
