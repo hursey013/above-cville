@@ -68,6 +68,18 @@ export const clampBearing = (value) => {
 };
 
 const APPROXIMATION_WORDS = ['around', 'near', 'about', 'roughly'];
+const normalizeString = (value) =>
+  value?.toString?.().trim?.() ?? '';
+
+export const normalizeRegistration = (value) => {
+  const normalized = normalizeString(value);
+  return normalized ? normalized.toUpperCase() : '';
+};
+
+export const normalizeHex = (value) => {
+  const normalized = normalizeString(value);
+  return normalized ? normalized.toLowerCase() : '';
+};
 const KNOTS_TO_MPH = 1.15078;
 
 export const createApproxWordPicker = () => {
@@ -344,6 +356,8 @@ export default {
   isGrounded,
   matchTemplate,
   lowercaseFirst,
+  normalizeRegistration,
+  normalizeHex,
   normalizeWord,
   resolveApproxWord,
   resolveAltitudeFt,

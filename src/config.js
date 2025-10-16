@@ -38,6 +38,9 @@ export const config = {
     'https://globe.airplanes.live/?icao=',
   showDetailsLink:
     parseString(process.env.SHOW_DETAILS_LINK).toLowerCase() !== 'false',
+  planespotters: {
+    apiKey: parseString(process.env.PLANESPOTTERS_API_KEY),
+  },
   bluesky: {
     service: parseString(process.env.BLUESKY_SERVICE) || 'https://bsky.social',
     handle: parseString(process.env.BLUESKY_HANDLE),

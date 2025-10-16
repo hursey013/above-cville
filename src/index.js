@@ -5,7 +5,7 @@ import db from './db.js';
 import logger from './logger.js';
 import { publishBlueskyPost } from './bluesky.js';
 import { composeNotificationMessage } from './messages.js';
-import { fetchPlanePhotoUrl, buildPlanePhotoPageUrl } from './photos.js';
+import { fetchPlanePhoto } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
 import {
   resolveAltitudeFt,
@@ -92,13 +92,13 @@ const pollAirplanes = async () => {
         try {
           let attachments = undefined;
           let photoPageUrl = null;
-          const registration = plane.registration ?? plane.r;
-          if (registration) {
-            const photoUrl = await fetchPlanePhotoUrl(registration);
-            if (photoUrl) {
-              attachments = [photoUrl];
-              photoPageUrl = buildPlanePhotoPageUrl(registration);
-            }
+          const photo = await fetchPlanePhoto({
+            hex,
+            registration: plane.registration ?? plane.r,
+          });
+          if (photo?.imageUrl) {
+            attachments = [photo.imageUrl];
+            photoPageUrl = photo.pageUrl ?? null;
           }
           const { body } = composeNotificationMessage(
             plane,
@@ -111,6 +111,7 @@ const pollAirplanes = async () => {
             {
               ...plane,
               attachments,
+              photoSource: photo?.source ?? null,
             },
             'Bluesky update published',
           );
