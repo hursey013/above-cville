@@ -558,7 +558,7 @@ export const composeNotificationMessage = (
   const intros = ['Can you see it?', 'Look up!', 'There it goes!', 'Up above!'];
   const intro = intros[variantIndex(identity, stats, intros.length)];
   const categoryEmoji = categoryInfo?.emoji ?? '✈️';
-  const primaryLine = `${categoryEmoji} ${intro} ${identity} just popped up nearby.`;
+  const primaryLine = `${intro} ${categoryEmoji}`;
 
   const movementClauses = [speedPhrase, altitudePhrase, directionPhrase]
     .map((clause) => stripTrailingPunctuation(clause ?? ''))
@@ -598,7 +598,7 @@ export const composeNotificationMessage = (
   let remaining = limit - primaryLine.length;
   let linkSegment = null;
   if (linkLine) {
-    const linkNeeded = linkLine.length + 1;
+    const linkNeeded = linkLine.length + 2;
     if (remaining >= linkNeeded) {
       remaining -= linkNeeded;
       linkSegment = linkLine;
@@ -617,15 +617,13 @@ export const composeNotificationMessage = (
     }
   }
 
-  const parts = [primaryLine];
+  const textSegments = [primaryLine];
   if (infoCore) {
-    parts.push(infoCore);
+    textSegments.push(infoCore);
   }
-  if (linkSegment) {
-    parts.push(linkSegment);
-  }
+  const text = textSegments.join(' ');
 
-  const body = parts.join(' ');
+  const body = linkSegment ? `${text}\n\n${linkSegment}` : text;
 
   return {
     title: undefined,
