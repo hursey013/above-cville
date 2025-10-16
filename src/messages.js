@@ -13,21 +13,22 @@ import {
   createApproxWordPicker,
   variantIndex,
 } from './utils.js';
+import { buildPlanePhotoPageUrl } from './photos.js';
 import {
-  rotorcraftSpeedTemplates,
-  rotorcraftAltitudeTemplates,
-  highPerfSpeedTemplates,
-  highPerfAltitudeTemplates,
-  heavySpeedTemplates,
-  heavyAltitudeTemplates,
-  largeSpeedTemplates,
-  largeAltitudeTemplates,
-  lightSpeedTemplates,
-  lightAltitudeTemplates,
-  smallSpeedTemplates,
-  smallAltitudeTemplates,
-  defaultSpeedTemplates,
   defaultAltitudeTemplates,
+  defaultSpeedTemplates,
+  heavyAltitudeTemplates,
+  heavySpeedTemplates,
+  highPerfAltitudeTemplates,
+  highPerfSpeedTemplates,
+  largeAltitudeTemplates,
+  largeSpeedTemplates,
+  lightAltitudeTemplates,
+  lightSpeedTemplates,
+  rotorcraftAltitudeTemplates,
+  rotorcraftSpeedTemplates,
+  smallAltitudeTemplates,
+  smallSpeedTemplates,
 } from './templates/index.js';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -317,9 +318,9 @@ export const composeNotificationMessage = (
   }
 
   const infoSentences = [
-    movementSentence,
     militarySentence,
     interestingSentence,
+    movementSentence,
     operatorSentence,
     frequencySentence,
   ].filter(Boolean);
@@ -327,15 +328,26 @@ export const composeNotificationMessage = (
   const limit = 300;
   const linkLine = includeDetailsLink ? detailsUrl : null;
   const linkText = linkLine ? `📡 ${linkLine}` : null;
+  const photoPageUrl = buildPlanePhotoPageUrl(
+    plane.registration ?? plane.r ?? plane.flight,
+  );
+  const photoLinkText = photoPageUrl ? `📷 ${photoPageUrl}` : null;
 
   const infoText = infoSentences.join(' ');
   let remaining = limit - primaryLine.length;
-  let linkSegment = null;
+  const linkSegments = [];
   if (linkText) {
     const linkNeeded = linkText.length + 2;
     if (remaining >= linkNeeded) {
       remaining -= linkNeeded;
-      linkSegment = linkText;
+      linkSegments.push(linkText);
+    }
+  }
+  if (photoLinkText) {
+    const photoLinkNeeded = photoLinkText.length + 2;
+    if (remaining >= photoLinkNeeded) {
+      remaining -= photoLinkNeeded;
+      linkSegments.push(photoLinkText);
     }
   }
 
@@ -357,7 +369,8 @@ export const composeNotificationMessage = (
   }
   const text = textSegments.join(' ');
 
-  const body = linkSegment ? `${text}\n\n${linkSegment}` : text;
+  const linkBlock = linkSegments.length ? linkSegments.join(' ') : null;
+  const body = linkBlock ? `${text}\n\n${linkBlock}` : text;
 
   return {
     title: undefined,

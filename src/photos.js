@@ -3,6 +3,17 @@ const DEFAULT_IMAGE = 'https://www.flightaware.com/images/og_default_image.png';
 
 const photoCache = new Map();
 
+const normalizeRegistration = (registration) =>
+  registration?.toString?.().trim?.().toUpperCase?.() ?? '';
+
+export const buildPlanePhotoPageUrl = (registration) => {
+  const normalized = normalizeRegistration(registration);
+  if (!normalized) {
+    return null;
+  }
+  return `${FLIGHTAWARE_BASE}/${encodeURIComponent(normalized)}`;
+};
+
 /**
  * Extract the OG image URL from a FlightAware photo gallery HTML document.
  * @param {string} html
@@ -39,16 +50,16 @@ const extractOgImage = (html) => {
  * @returns {Promise<string|null>}
  */
 export const fetchPlanePhotoUrl = async (registration) => {
-  const trimmed = registration?.toString?.().trim?.().toUpperCase?.();
-  if (!trimmed) {
+  const normalized = normalizeRegistration(registration);
+  if (!normalized) {
     return null;
   }
 
-  if (photoCache.has(trimmed)) {
-    return photoCache.get(trimmed);
+  if (photoCache.has(normalized)) {
+    return photoCache.get(normalized);
   }
 
-  const url = `${FLIGHTAWARE_BASE}/${encodeURIComponent(trimmed)}/sort/date`;
+  const url = `${FLIGHTAWARE_BASE}/${encodeURIComponent(normalized)}/sort/date`;
 
   try {
     const response = await fetch(url, {
@@ -58,21 +69,22 @@ export const fetchPlanePhotoUrl = async (registration) => {
     });
 
     if (!response.ok) {
-      photoCache.set(trimmed, null);
+      photoCache.set(normalized, null);
       return null;
     }
 
     const html = await response.text();
     const imageUrl = extractOgImage(html);
-    photoCache.set(trimmed, imageUrl ?? null);
+    photoCache.set(normalized, imageUrl ?? null);
     return imageUrl ?? null;
   } catch (error) {
-    console.warn(`Failed to fetch FlightAware photo for ${trimmed}`, error);
-    photoCache.set(trimmed, null);
+    console.warn(`Failed to fetch FlightAware photo for ${normalized}`, error);
+    photoCache.set(normalized, null);
     return null;
   }
 };
 
 export default {
   fetchPlanePhotoUrl,
+  buildPlanePhotoPageUrl,
 };

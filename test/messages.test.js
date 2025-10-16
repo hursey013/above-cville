@@ -53,7 +53,10 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.match(body, /west/i);
   assert.match(body, /Military traffic/);
   assert.match(body, /Operated by United States Air Force/);
-  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=abc123$/);
+  assert.match(
+    body,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=abc123( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N100CV)?$/,
+  );
 });
 
 test('composeNotificationMessage references frequent visitors', () => {
@@ -83,7 +86,10 @@ test('composeNotificationMessage references frequent visitors', () => {
   assert.match(body, /Operated by Delta Air Lines/);
   assert.match(body, /N200CV \(Cessna 172 Skyhawk\)/);
   assert.match(body, /pings/i);
-  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=def456$/);
+  assert.match(
+    body,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=def456( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N200CV)?$/,
+  );
 });
 
 test('composeNotificationMessage truncates long bodies to Bluesky limits', () => {
@@ -101,7 +107,10 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
   assert.ok(body.length <= 300);
   assert.match(body, /…/);
   assert.match(body, /N777LF \(/);
-  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1$/);
+  assert.match(
+    body,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N777LF)?$/,
+  );
 });
 
 test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
@@ -124,7 +133,10 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     body,
     /(hovering around|cruising the pattern|chopping through)/i,
   );
-  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001$/);
+  assert.match(
+    body,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N45H)?$/,
+  );
 });
 
 test('composeNotificationMessage can hide details link when disabled', () => {
