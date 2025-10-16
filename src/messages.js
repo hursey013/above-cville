@@ -13,7 +13,6 @@ import {
   createApproxWordPicker,
   variantIndex,
 } from './utils.js';
-import { buildPlanePhotoPageUrl } from './photos.js';
 import {
   defaultAltitudeTemplates,
   defaultSpeedTemplates,
@@ -222,6 +221,7 @@ export const composeNotificationMessage = (
   plane,
   timestamps = [],
   now = Date.now(),
+  options = {},
 ) => {
   const identity =
     plane.flight?.trim() ||
@@ -328,9 +328,9 @@ export const composeNotificationMessage = (
   const limit = 300;
   const linkLine = includeDetailsLink ? detailsUrl : null;
   const linkText = linkLine ? `📡 ${linkLine}` : null;
-  const photoPageUrl = buildPlanePhotoPageUrl(
-    plane.registration ?? plane.r ?? plane.flight,
-  );
+  const photoPageUrlRaw = options?.photoPageUrl;
+  const photoPageUrl =
+    typeof photoPageUrlRaw === 'string' ? photoPageUrlRaw.trim() : '';
   const photoLinkText = photoPageUrl ? `📷 ${photoPageUrl}` : null;
 
   const infoText = infoSentences.join(' ');

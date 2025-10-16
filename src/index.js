@@ -5,7 +5,7 @@ import db from './db.js';
 import logger from './logger.js';
 import { publishBlueskyPost } from './bluesky.js';
 import { composeNotificationMessage } from './messages.js';
-import { fetchPlanePhotoUrl } from './photos.js';
+import { fetchPlanePhotoUrl, buildPlanePhotoPageUrl } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
 import {
   resolveAltitudeFt,
@@ -90,19 +90,22 @@ const pollAirplanes = async () => {
       if (shouldNotify) {
         const messageTimestamps = [...timestamps, now];
         try {
-          const { body } = composeNotificationMessage(
-            plane,
-            messageTimestamps,
-            now,
-          );
           let attachments = undefined;
+          let photoPageUrl = null;
           const registration = plane.registration ?? plane.r;
           if (registration) {
             const photoUrl = await fetchPlanePhotoUrl(registration);
             if (photoUrl) {
               attachments = [photoUrl];
+              photoPageUrl = buildPlanePhotoPageUrl(registration);
             }
           }
+          const { body } = composeNotificationMessage(
+            plane,
+            messageTimestamps,
+            now,
+            { photoPageUrl },
+          );
           await publishBlueskyPost({ text: body, attachments });
           logger.info(
             {
