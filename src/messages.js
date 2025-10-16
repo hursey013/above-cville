@@ -418,8 +418,17 @@ export const composeNotificationMessage = (
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
 
-  const dbFlagsRaw =
-    typeof plane.dbFlags === 'string' ? plane.dbFlags.trim() : '';
+  let dbFlagsRaw = '';
+  if (plane.dbFlags !== undefined && plane.dbFlags !== null) {
+    if (typeof plane.dbFlags === 'string') {
+      dbFlagsRaw = plane.dbFlags.trim();
+    } else if (
+      typeof plane.dbFlags === 'number' &&
+      Number.isFinite(plane.dbFlags)
+    ) {
+      dbFlagsRaw = String(plane.dbFlags);
+    }
+  }
   const isMilitary = dbFlagsRaw.startsWith('1');
   const isInteresting = dbFlagsRaw.length > 1 && dbFlagsRaw[1] === '1';
   const operatorName =
