@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc" viewBox="0 0 1500 500">
+  <title id="title">Above Cville Profile Banner</title>
+  <desc id="desc">Radar-themed banner for Above Cville.</desc>
+  <defs>
+    <linearGradient id="skyBanner" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#bde8ff"/>
+      <stop offset="100%" stop-color="#1d4fa3"/>
+    </linearGradient>
+    <radialGradient id="sweep" cx="60%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="rgba(61,223,255,0.28)"/>
+      <stop offset="60%" stop-color="rgba(61,223,255,0.06)"/>
+      <stop offset="100%" stop-color="rgba(61,223,255,0)"/>
+    </radialGradient>
+    <clipPath id="bannerClip">
+      <rect width="1500" height="500" rx="24" ry="24"/>
+    </clipPath>
+  </defs>
+  <rect width="1500" height="500" fill="url(#skyBanner)" clip-path="url(#bannerClip)"/>
+
+  <!-- subtle grid -->
+  <g clip-path="url(#bannerClip)" stroke="#0b3844" stroke-width="2" opacity="0.25">
+    <line x1="0" y1="250" x2="1500" y2="250"/>
+    <line x1="0" y1="125" x2="1500" y2="125"/>
+    <line x1="0" y1="375" x2="1500" y2="375"/>
+    <line x1="500" y1="0" x2="500" y2="500"/>
+    <line x1="1000" y1="0" x2="1000" y2="500"/>
+  </g>
+
+  <!-- radar glow -->
+  <circle cx="980" cy="250" r="300" fill="url(#sweep)" clip-path="url(#bannerClip)"/>
+
+  <!-- radar tracking arcs -->
+  <g clip-path="url(#bannerClip)" fill="none" stroke="#a6f3ff" stroke-linecap="round">
+    <path d="M420 240 A260 260 0 0 1 1330 210" stroke-width="10" opacity="0.18"/>
+    <path d="M480 270 A320 320 0 0 1 1380 250" stroke-width="8" opacity="0.14"/>
+    <path d="M540 300 A380 380 0 0 1 1420 300" stroke-width="6" opacity="0.1"/>
+    <circle cx="980" cy="250" r="170" stroke-width="5" opacity="0.14"/>
+    <circle cx="980" cy="250" r="220" stroke-width="4" opacity="0.11"/>
+    <circle cx="980" cy="250" r="260" stroke-width="3" opacity="0.08"/>
+    <path d="M980 250 L1260 190" stroke-width="7" opacity="0.2"/>
+  </g>
+
+  <!-- radar blips -->
+  <g clip-path="url(#bannerClip)">
+    <circle cx="1110" cy="210" r="10" fill="#57ffb4" opacity="0.55"/>
+    <circle cx="1150" cy="350" r="8" fill="#57ffb4" opacity="0.4"/>
+    <circle cx="1040" cy="300" r="9" fill="#57ffb4" opacity="0.45"/>
+    <circle cx="900" cy="260" r="7" fill="#57ffb4" opacity="0.4"/>
+    <circle cx="1230" cy="240" r="6" fill="#57ffb4" opacity="0.38"/>
+  </g>
+</svg>

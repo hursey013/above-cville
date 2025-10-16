@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc" viewBox="0 0 240 240">
+  <title id="title">Above Cville Logo</title>
+  <desc id="desc">Circular blue sky with soft clouds and a sleek airplane silhouette.</desc>
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#bde8ff"/>
+      <stop offset="100%" stop-color="#1d4fa3"/>
+    </radialGradient>
+    <linearGradient id="cloud" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#e2f1ff" stop-opacity="0.6"/>
+    </linearGradient>
+    <clipPath id="badgeClip">
+      <circle cx="120" cy="120" r="108"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="120" cy="120" r="108" fill="url(#sky)" stroke="#10305f" stroke-width="8"/>
+
+  <!-- clouds -->
+  <g fill="none" stroke="url(#cloud)" stroke-linecap="round" clip-path="url(#badgeClip)">
+    <path d="M48 108c10-26 44-34 70-18 14-22 54-26 74-6 18-10 42-6 48 12" stroke-width="14" opacity="0.7"/>
+    <path d="M42 160c8-18 38-26 60-16 12-16 46-18 64-6 18-12 48-8 60 10" stroke-width="18" opacity="0.55"/>
+  </g>
+
+  <!-- airplane silhouette -->
+  <g transform="translate(0 75) scale(0.28) rotate(-22)">
+    <path d="M552 264C582.9 264 608 289.1 608 320C608 350.9 582.9 376 552 376L424.7 376L265.5 549.6C259.4 556.2 250.9 560 241.9 560L198.2 560C187.3 560 179.6 549.3 183 538.9L237.3 376L137.6 376L84.8 442C81.8 445.8 77.2 448 72.3 448L52.5 448C42.1 448 34.5 438.2 37 428.1L64 320L37 211.9C34.4 201.8 42.1 192 52.5 192L72.3 192C77.2 192 81.8 194.2 84.8 198L137.6 264L237.3 264L183 101.1C179.6 90.7 187.3 80 198.2 80L241.9 80C250.9 80 259.4 83.8 265.5 90.4L424.7 264L552 264z" fill="#0b203d" opacity="0.95"/>
+  </g>
+</svg>
