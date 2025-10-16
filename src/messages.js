@@ -1,4 +1,5 @@
 import config from './config.js';
+import logger from './logger.js';
 import {
   clampBearing,
   formatAircraftDescription,
@@ -243,21 +244,30 @@ export const composeNotificationMessage = (
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
 
-  let dbFlagsRaw = '';
-  if (plane.dbFlags !== undefined && plane.dbFlags !== null) {
-    if (typeof plane.dbFlags === 'string') {
-      dbFlagsRaw = plane.dbFlags.trim();
-    } else if (
-      typeof plane.dbFlags === 'number' &&
-      Number.isFinite(plane.dbFlags)
-    ) {
-      dbFlagsRaw = String(plane.dbFlags);
+  const rawDbFlags = plane.dbFlags;
+  let dbFlag = null;
+  if (typeof rawDbFlags === 'number' && Number.isFinite(rawDbFlags)) {
+    dbFlag = rawDbFlags;
+  } else if (typeof rawDbFlags === 'string') {
+    const parsed = Number(rawDbFlags.trim());
+    if (Number.isFinite(parsed)) {
+      dbFlag = parsed;
     }
   }
-  const isMilitary = dbFlagsRaw.startsWith('1');
-  const isInteresting = dbFlagsRaw.length > 1 && dbFlagsRaw[1] === '1';
+
+  if (dbFlag !== null && dbFlag !== 1 && dbFlag !== 2) {
+    logger.warn(
+      { dbFlag, plane },
+      'Unexpected dbFlags value from airplanes.live payload',
+    );
+  }
+
+  const isMilitary = dbFlag === 1;
+  const isInteresting = dbFlag === 2;
   const operatorName =
-    dbFlagsRaw && plane.ownOp ? formatAircraftDescription(plane.ownOp) : null;
+    dbFlag !== null && plane.ownOp
+      ? formatAircraftDescription(plane.ownOp)
+      : null;
   const militarySentence = isMilitary
     ? '🪖 Military traffic on the scope.'
     : null;

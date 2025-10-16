@@ -36,7 +36,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
     track: 270,
     desc: 'CIRRUS SR22',
     category: 'A1',
-    dbFlags: '10',
+    dbFlags: 1,
     ownOp: 'UNITED STATES AIR FORCE',
   };
   const { title, body } = composeNotificationMessage(plane, [now], now);
@@ -71,14 +71,14 @@ test('composeNotificationMessage references frequent visitors', () => {
     track: 45,
     desc: 'CESSNA 172 SKYHAWK',
     category: 'A2',
-    dbFlags: '11',
+    dbFlags: 2,
     ownOp: 'DELTA AIR LINES',
   };
   const { body } = composeNotificationMessage(plane, timestamps, now);
   assert.match(body, /north/i);
   assert.match(body, /\(Cessna 172 Skyhawk\)/);
   assert.doesNotMatch(body, /\(Small\)/);
-  assert.match(body, /Military traffic/);
+  assert.doesNotMatch(body, /Military traffic/);
   assert.match(body, /Interesting traffic/);
   assert.match(body, /Operated by Delta Air Lines/);
   assert.match(body, /N200CV \(Cessna 172 Skyhawk\)/);
