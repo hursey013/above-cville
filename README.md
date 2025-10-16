@@ -18,14 +18,14 @@
 
 ## Say hello to above-cville
 
-Keeping an eye on the [airplanes.live](https://airplanes.live) feed around Charlottesville and pings you the moment an interesting aircraft drops in.
+above-cville keeps a friendly watch on the [airplanes.live](https://airplanes.live) feed over Charlottesville, pinging Bluesky every time something fun zips by.
 
-## Highlights
+## What it does
 
 - 🔁 **Real-time sweeps** – Polls airplanes.live on a tight schedule (configurable) and filters out repeat sightings with a cooldown timer.
-- 🚫 **Carrier filter** – Skip the commercial heavy hitters by listing their ICAO codes directly in the compose snippet.
-- 🗣️ **Fun alerts** – Notifications read like a Bluesky post: speed, altitude, direction, and a quick note about how often the plane pops by.
-- 🖼️ **Photo flair** – If FlightAware has a shot of the aircraft, the Bluesky post automatically embeds it.
+- 🗣️ **Readable chatter** – 300-character Bluesky posts call out identity, altitude, speed, direction, and how often we’ve seen the plane lately.
+- 🪖 **Spot the cool stuff** – Military and “interesting” tags from airplanes.live bubble up with their own little flourish.
+- 🖼️ **Photo flair** – If FlightAware has a current shot, above-cville will automatically embed it with the post.
 
 ---
 
@@ -37,7 +37,7 @@ Keeping an eye on the [airplanes.live](https://airplanes.live) feed around Charl
 
 ---
 
-## Quick start
+## Getting airborne fast
 
 ```yaml
 services:
@@ -49,7 +49,7 @@ services:
       AIRPLANES_LAT: '38.0375' # Latitude to monitor
       AIRPLANES_LON: '-78.4863' # Longitude to monitor
       AIRPLANES_RADIUS: '5' # Radius in nautical miles
-      POLL_INTERVAL_SECONDS: '5' # How often to poll airplanes.live
+      POLL_INTERVAL_SECONDS: '5' # How often to poll airplanes.live (minimum 1)
       COOLDOWN_MINUTES: '10' # Minimum minutes between alerts per aircraft
       MAX_ALTITUDE_FT: '25000' # Ignore anything higher (set <=0 to disable)
 
@@ -64,8 +64,9 @@ services:
       BLUESKY_APP_PASSWORD: 'xxxx-xxxx-xxxx-xxxx'
       BLUESKY_SERVICE: 'https://bsky.social' # Optional override for self-hosted PDS
 
-      # --- Aircraft detail link ---
+      # --- Details link ---
       AIRCRAFT_LINK_BASE: 'https://globe.airplanes.live/?icao=' # Link prefix appended with the ICAO hex
+      SHOW_DETAILS_LINK: 'true'
 
       # --- Timezone for logs & cron output ---
       TZ: 'America/New_York'
@@ -73,10 +74,44 @@ services:
       - ./data:/app/data
 ```
 
-When you open the stack’s log viewer you should see a line like:
+When you open the stack’s log viewer you’ll see JSON logs from Pino. A healthy startup looks a bit like:
 
-```
-Watching 38.0375, -78.4863 within 5 NM (cooldown: 10 minutes)
+```json
+{
+  "level": 30,
+  "time": 1713811200000,
+  "msg": "Watching location",
+  "latitude": 38.0375,
+  "longitude": -78.4863,
+  "radiusNm": 2.5,
+  "cooldownMinutes": 10,
+  "pollIntervalSeconds": 5
+}
 ```
 
-Each time a plane clears the filters you’ll get `[notify] <callsign>` followed by the friendly text that will be posted to Bluesky.
+Each time a plane clears the filters you’ll get another info log with `msg:"Bluesky update published"` plus the callsign, hex, altitude, and any attachments that went out.
+
+---
+
+## airplanes.live & contributing back
+
+airplanes.live runs one of the largest independent, unfiltered ADS-B and MLAT tracking networks on the planet. Their open map, APIs, and data streams exist because thousands of volunteers share their receiver feeds—if you’re watching the skies with above-cville, consider giving a little data back.
+
+### Fastest way to start feeding
+
+- **Already have gear running?** Drop their feeder install script onto your existing Raspberry Pi or SDR box:
+
+  ```bash
+  curl -L -o /tmp/feed.sh https://raw.githubusercontent.com/airplanes-live/feed/main/install.sh
+  sudo bash /tmp/feed.sh
+  ```
+
+  Once it finishes, check your status at [Airplanes.live MyFeed](https://airplanes.live/myfeed).
+
+- **Building from scratch?** Their [hardware guide](https://airplanes.live/hardware/) and the bundled [Airplanes.live image](https://airplanes.live/image-guide/) walk through antennas, dongles, and flashing an SD card for a turnkey feeder.
+
+Want more details? The [how-to-feed primer](https://airplanes.live/how-to-feed/) covers setup in five minutes, and the [feed client source](https://github.com/airplanes-live/feed) is open for tinkering. They’re also an active bunch—hop into the [Airplanes.live Discord](https://discord.gg/jfVRF2XRwF) if you need help or just want to geek out about traffic.
+
+## License
+
+above-cville is released under the [MIT License](./LICENSE).
