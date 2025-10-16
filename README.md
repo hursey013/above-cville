@@ -25,7 +25,7 @@ above-cville keeps a watch on the [airplanes.live](https://airplanes.live) feed 
 - 🔁 **Real-time sweeps** – Polls airplanes.live on a configurable schedule and filters out repeat sightings with a cooldown timer.
 - 🗣️ **Readable chatter** – 300-character Bluesky posts call out altitude, speed, direction, and how often we’ve seen the plane lately.
 - 🪖 **Spot the cool stuff** – Military and “interesting” tags from airplanes.live bubble up with their own little flourish.
-- 🖼️ **Photo flair** – If FlightAware has a current shot, above-cville will automatically embed it with the post.
+- 🖼️ **Photo flair** – If FlightAware or Planespotters.net has a current shot, above-cville will automatically embed it with the post.
 
 ## What you need
 
@@ -110,6 +110,8 @@ airplanes.live runs one of the largest independent, unfiltered ADS-B and MLAT tr
 - **Building from scratch?** Their [hardware guide](https://airplanes.live/hardware/) and the bundled [Airplanes.live image](https://airplanes.live/image-guide/) walk through antennas, dongles, and flashing an SD card for a turnkey feeder.
 
 Want more details? The [how-to-feed primer](https://airplanes.live/how-to-feed/) covers setup in five minutes, and the [feed client source](https://github.com/airplanes-live/feed) is open for tinkering. They’re also an active bunch—hop into the [Airplanes.live Discord](https://discord.gg/jfVRF2XRwF) if you need help or just want to geek out about traffic.
+
+---
 
 ## License
 
