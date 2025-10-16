@@ -1,7 +1,8 @@
+const textEncoder = new TextEncoder();
+
 const toCodePointLength = (input) => Array.from(input).length;
 
-const toCodePointIndex = (input, codeUnitIndex) =>
-  toCodePointLength(input.slice(0, codeUnitIndex));
+const toByteLength = (input) => textEncoder.encode(input).length;
 
 const sanitizeUrl = (value) => {
   if (typeof value !== 'string') {
@@ -42,10 +43,16 @@ export class RichText {
       if (!uri) {
         continue;
       }
-      const start = toCodePointIndex(this.text, match.index ?? 0);
-      const end = start + toCodePointLength(match[0]);
+      if (match.index == null) {
+        continue;
+      }
+      const byteStart = toByteLength(this.text.slice(0, match.index));
+      const byteEnd = byteStart + toByteLength(match[0]);
       matches.push({
-        index: { start, end },
+        index: {
+          byteStart,
+          byteEnd,
+        },
         features: [
           {
             $type: 'app.bsky.richtext.facet#link',
@@ -76,7 +83,8 @@ export class BskyAgent {
       bsky: {
         feed: {
           post: {
-            create: async (params, record) => this.#createRecord(params, record),
+            create: async (params, record) =>
+              this.#createRecord(params, record),
           },
         },
       },
@@ -88,7 +96,9 @@ export class BskyAgent {
     const pass = typeof password === 'string' ? password.trim() : '';
 
     if (!id || !pass) {
-      throw new Error('Identifier and app password are required for Bluesky login.');
+      throw new Error(
+        'Identifier and app password are required for Bluesky login.',
+      );
     }
 
     const response = await fetch(
@@ -161,7 +171,9 @@ export class BskyAgent {
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`Failed to create Bluesky record (${response.status}): ${text}`);
+      throw new Error(
+        `Failed to create Bluesky record (${response.status}): ${text}`,
+      );
     }
 
     return response.json();
