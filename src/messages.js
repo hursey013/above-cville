@@ -266,7 +266,7 @@ export const composeNotificationMessage = (
   const isMilitary = dbFlag === 1;
   const isInteresting = dbFlag === 2;
   const operatorName =
-    dbFlag !== null && plane.ownOp
+    plane.ownOp && (isMilitary || isInteresting)
       ? formatAircraftDescription(plane.ownOp)
       : null;
   const militarySentence = isMilitary
