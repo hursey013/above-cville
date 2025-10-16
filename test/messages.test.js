@@ -53,10 +53,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.match(body, /west/i);
   assert.match(body, /Military traffic/);
   assert.match(body, /Operated by United States Air Force/);
-  assert.match(
-    body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=abc123$/,
-  );
+  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=abc123$/);
 });
 
 test('composeNotificationMessage references frequent visitors', () => {
@@ -86,10 +83,7 @@ test('composeNotificationMessage references frequent visitors', () => {
   assert.match(body, /Operated by Delta Air Lines/);
   assert.match(body, /N200CV \(Cessna 172 Skyhawk\)/);
   assert.match(body, /pings/i);
-  assert.match(
-    body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=def456$/,
-  );
+  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=def456$/);
 });
 
 test('composeNotificationMessage truncates long bodies to Bluesky limits', () => {
@@ -107,10 +101,7 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
   assert.ok(body.length <= 300);
   assert.match(body, /…/);
   assert.match(body, /N777LF \(/);
-  assert.match(
-    body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1$/,
-  );
+  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1$/);
 });
 
 test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
@@ -133,10 +124,7 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     body,
     /(hovering around|cruising the pattern|chopping through)/i,
   );
-  assert.match(
-    body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001$/,
-  );
+  assert.match(body, /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001$/);
 });
 
 test('composeNotificationMessage can hide details link when disabled', () => {

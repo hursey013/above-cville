@@ -8,110 +8,30 @@ import {
   resolveSpeedMph,
   stripTrailingPunctuation,
   truncateMessage,
+  matchTemplate,
+  createApproxWordPicker,
   variantIndex,
 } from './utils.js';
+import {
+  rotorcraftSpeedTemplates,
+  rotorcraftAltitudeTemplates,
+  highPerfSpeedTemplates,
+  highPerfAltitudeTemplates,
+  heavySpeedTemplates,
+  heavyAltitudeTemplates,
+  largeSpeedTemplates,
+  largeAltitudeTemplates,
+  lightSpeedTemplates,
+  lightAltitudeTemplates,
+  smallSpeedTemplates,
+  smallAltitudeTemplates,
+  defaultSpeedTemplates,
+  defaultAltitudeTemplates,
+} from './templates/index.js';
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const WEEK_MS = 7 * DAY_MS;
-
-/**
- * Evaluate a list of range templates and return the first matching string.
- * @param {number} value
- * @param {{test:(value:number)=>boolean,template:(value:number)=>string}[]} templates
- * @returns {string|null}
- */
-const matchTemplate = (value, templates) => {
-  if (!Array.isArray(templates)) {
-    return null;
-  }
-  for (const { test, template } of templates) {
-    if (test(value)) {
-      return template(value);
-    }
-  }
-  return null;
-};
-
-const rotorcraftSpeedTemplates = [
-  {
-    test: (mph) => mph >= 130,
-    template: (mph) => `Chopping through about ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 80,
-    template: (mph) => `Cruising the pattern around ${mph} mph.`,
-  },
-  { test: () => true, template: (mph) => `Hovering around ${mph} mph.` },
-];
-
-const highPerfSpeedTemplates = [
-  {
-    test: (mph) => mph >= 300,
-    template: (mph) => `Ripping along around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 200,
-    template: (mph) => `Keeping the throttle up at about ${mph} mph.`,
-  },
-  {
-    test: () => true,
-    template: (mph) => `Loosening the reins roughly ${mph} mph.`,
-  },
-];
-
-const heavySpeedTemplates = [
-  {
-    test: (mph) => mph >= 300,
-    template: (mph) => `Hauling around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 200,
-    template: (mph) => `Rolling along about ${mph} mph.`,
-  },
-  {
-    test: () => true,
-    template: (mph) => `Keeping the widebody moving roughly ${mph} mph.`,
-  },
-];
-
-const largeSpeedTemplates = [
-  {
-    test: (mph) => mph >= 280,
-    template: (mph) => `Making a brisk pass around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 200,
-    template: (mph) => `Keeping the cadence about ${mph} mph.`,
-  },
-  { test: () => true, template: (mph) => `Rolling by roughly ${mph} mph.` },
-];
-
-const lightSpeedTemplates = [
-  {
-    test: (mph) => mph >= 200,
-    template: (mph) => `Scooting around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 120,
-    template: (mph) => `Skipping about ${mph} mph.`,
-  },
-  { test: (mph) => mph >= 60, template: (mph) => `Gliding around ${mph} mph.` },
-  { test: () => true, template: (mph) => `Loitering roughly ${mph} mph.` },
-];
-
-const smallSpeedTemplates = [
-  { test: (mph) => mph >= 200, template: (mph) => `Pacing at ${mph} mph.` },
-  {
-    test: (mph) => mph >= 120,
-    template: (mph) => `Scooting around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 60,
-    template: (mph) => `Easy pass about ${mph} mph.`,
-  },
-  { test: () => true, template: (mph) => `Loitering roughly ${mph} mph.` },
-];
 
 const SPEED_TEMPLATES = {
   rotorcraft: rotorcraftSpeedTemplates,
@@ -123,111 +43,7 @@ const SPEED_TEMPLATES = {
   small: smallSpeedTemplates,
 };
 
-const DEFAULT_SPEED_TEMPLATES = [
-  {
-    test: (mph) => mph >= 300,
-    template: (mph) => `Bolting along around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 200,
-    template: (mph) => `Cruising about ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 120,
-    template: (mph) => `Making good time around ${mph} mph.`,
-  },
-  {
-    test: (mph) => mph >= 60,
-    template: (mph) => `Taking a leisurely pass roughly ${mph} mph.`,
-  },
-  { test: () => true, template: (mph) => `Drifting by roughly ${mph} mph.` },
-];
-
-const formatFeet = (value) => Math.round(value).toLocaleString();
-
-const rotorcraftAltitudeTemplates = [
-  {
-    test: (alt) => alt <= 1200,
-    template: (alt) => `Skimming the skyline at about ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: () => true,
-    template: (alt) => `Holding above town around ${formatFeet(alt)} ft.`,
-  },
-];
-
-const heavyAltitudeTemplates = [
-  {
-    test: (alt) => alt >= 30000,
-    template: (alt) => `Stacked way up around ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 20000,
-    template: (alt) => `Cruising that big frame up at ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 10000,
-    template: (alt) => `Looming overhead roughly ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: () => true,
-    template: (alt) => `Low at about ${formatFeet(alt)} ft.`,
-  },
-];
-
-const highPerfAltitudeTemplates = [
-  {
-    test: (alt) => alt >= 20000,
-    template: (alt) => `Knifing through around ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 10000,
-    template: (alt) => `Slicing the sky at about ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: () => true,
-    template: (alt) => `Darting by roughly ${formatFeet(alt)} ft.`,
-  },
-];
-
-const lightAltitudeTemplates = [
-  {
-    test: (alt) => alt >= 10000,
-    template: (alt) => `High up at ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 5000,
-    template: (alt) => `Mid around ${formatFeet(alt)} ft.`,
-  },
-  { test: () => true, template: (alt) => `Low about ${formatFeet(alt)} ft.` },
-];
-
-const smallAltitudeTemplates = [
-  {
-    test: (alt) => alt >= 10000,
-    template: (alt) => `Steady at ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 5000,
-    template: (alt) => `Level around ${formatFeet(alt)} ft.`,
-  },
-  { test: () => true, template: (alt) => `Low about ${formatFeet(alt)} ft.` },
-];
-
-const largeAltitudeTemplates = [
-  {
-    test: (alt) => alt >= 20000,
-    template: (alt) => `Cruising solid at ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 10000,
-    template: (alt) => `Keeping a stately perch around ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: () => true,
-    template: (alt) => `Rolling through roughly ${formatFeet(alt)} ft.`,
-  },
-];
+const DEFAULT_SPEED_TEMPLATES = defaultSpeedTemplates;
 
 const ALTITUDE_TEMPLATES = {
   rotorcraft: rotorcraftAltitudeTemplates,
@@ -239,28 +55,7 @@ const ALTITUDE_TEMPLATES = {
   large: largeAltitudeTemplates,
 };
 
-const DEFAULT_ALTITUDE_TEMPLATES = [
-  {
-    test: (alt) => alt >= 30000,
-    template: (alt) => `Way up around ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 20000,
-    template: (alt) => `Cruising high at about ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 10000,
-    template: (alt) => `Gliding along roughly ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: (alt) => alt >= 5000,
-    template: (alt) => `Keeping a comfy perch around ${formatFeet(alt)} ft.`,
-  },
-  {
-    test: () => true,
-    template: (alt) => `Keeping it low about ${formatFeet(alt)} ft.`,
-  },
-];
+const DEFAULT_ALTITUDE_TEMPLATES = defaultAltitudeTemplates;
 
 const INTRO_VARIANTS = [
   'Can you see it?',
@@ -330,7 +125,7 @@ export const summarizeSightings = (timestamps = [], now = Date.now()) => {
   };
 };
 
-const formatSpeed = (mph, categoryInfo) => {
+const formatSpeed = (mph, categoryInfo, pickApproxWord) => {
   if (!Number.isFinite(mph) || mph <= 0) {
     return null;
   }
@@ -339,12 +134,15 @@ const formatSpeed = (mph, categoryInfo) => {
     ? categoryInfo.shortLabel.toLowerCase()
     : null;
   const categoryMessage = category
-    ? matchTemplate(mph, SPEED_TEMPLATES[category])
+    ? matchTemplate(mph, SPEED_TEMPLATES[category], pickApproxWord)
     : null;
-  return categoryMessage ?? matchTemplate(mph, DEFAULT_SPEED_TEMPLATES);
+  return (
+    categoryMessage ??
+    matchTemplate(mph, DEFAULT_SPEED_TEMPLATES, pickApproxWord)
+  );
 };
 
-const formatAltitude = (altitude, categoryInfo) => {
+const formatAltitude = (altitude, categoryInfo, pickApproxWord) => {
   if (!Number.isFinite(altitude) || altitude <= 0) {
     return null;
   }
@@ -353,9 +151,12 @@ const formatAltitude = (altitude, categoryInfo) => {
     ? categoryInfo.shortLabel.toLowerCase()
     : null;
   const categoryMessage = category
-    ? matchTemplate(altitude, ALTITUDE_TEMPLATES[category])
+    ? matchTemplate(altitude, ALTITUDE_TEMPLATES[category], pickApproxWord)
     : null;
-  return categoryMessage ?? matchTemplate(altitude, DEFAULT_ALTITUDE_TEMPLATES);
+  return (
+    categoryMessage ??
+    matchTemplate(altitude, DEFAULT_ALTITUDE_TEMPLATES, pickApproxWord)
+  );
 };
 
 const frequencyMessage = (stats) => {
@@ -463,8 +264,17 @@ export const composeNotificationMessage = (
   const interestingSentence = isInteresting ? '🕵️ Interesting traffic.' : null;
   const operatorSentence = operatorName ? `Operated by ${operatorName}.` : null;
 
-  const speedPhrase = formatSpeed(resolveSpeedMph(plane), categoryInfo);
-  const altitudePhrase = formatAltitude(resolveAltitudeFt(plane), categoryInfo);
+  const pickApproxWord = createApproxWordPicker();
+  const speedPhrase = formatSpeed(
+    resolveSpeedMph(plane),
+    categoryInfo,
+    pickApproxWord,
+  );
+  const altitudePhrase = formatAltitude(
+    resolveAltitudeFt(plane),
+    categoryInfo,
+    pickApproxWord,
+  );
   const directionPhrase = directionMessage(plane);
   const frequencySentence = frequencyMessage(stats);
 

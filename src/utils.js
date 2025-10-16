@@ -67,7 +67,59 @@ export const clampBearing = (value) => {
   return cardinalDirections[index];
 };
 
+const APPROXIMATION_WORDS = ['around', 'near', 'about', 'roughly'];
 const KNOTS_TO_MPH = 1.15078;
+
+export const createApproxWordPicker = () => {
+  const used = new Set();
+  return (preferred) => {
+    const candidates =
+      Array.isArray(preferred) && preferred.length
+        ? preferred
+        : APPROXIMATION_WORDS;
+
+    for (const candidate of candidates) {
+      if (!used.has(candidate)) {
+        used.add(candidate);
+        return candidate;
+      }
+    }
+
+    for (const fallback of APPROXIMATION_WORDS) {
+      if (!used.has(fallback)) {
+        used.add(fallback);
+        return fallback;
+      }
+    }
+
+    return candidates[0] ?? APPROXIMATION_WORDS[0];
+  };
+};
+
+export const resolveApproxWord = (picker, preferred) => {
+  if (typeof picker !== 'function') {
+    const candidates =
+      Array.isArray(preferred) && preferred.length
+        ? preferred
+        : APPROXIMATION_WORDS;
+    return candidates[0] ?? APPROXIMATION_WORDS[0];
+  }
+  return picker(preferred);
+};
+
+export const matchTemplate = (value, templates, pickApproxWord) => {
+  if (!Array.isArray(templates)) {
+    return null;
+  }
+  for (const { test, template } of templates) {
+    if (test(value)) {
+      return template(value, pickApproxWord);
+    }
+  }
+  return null;
+};
+
+export const formatFeet = (value) => Math.round(value).toLocaleString();
 
 /**
  * Convert reported ground speed (usually knots) to mph.
@@ -281,15 +333,19 @@ export const isAboveConfiguredCeiling = (altitudeFt, ceilingFt) => {
 };
 
 export default {
+  createApproxWordPicker,
   CATEGORY_SUMMARIES,
   clampBearing,
+  formatFeet,
   formatAircraftDescription,
   formatSegment,
   getCategoryInfo,
   isAboveConfiguredCeiling,
   isGrounded,
+  matchTemplate,
   lowercaseFirst,
   normalizeWord,
+  resolveApproxWord,
   resolveAltitudeFt,
   resolveSpeedMph,
   stripTrailingPunctuation,
