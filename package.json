@@ -1,7 +1,7 @@
 {
   "name": "above-cville",
   "version": "2.0.0",
-  "description": "Self-hosted aircraft spotter that polls airplanes.live and sends Apprise notifications.",
+  "description": "Self-hosted aircraft spotter that polls airplanes.live and posts Bluesky updates.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
@@ -12,13 +12,14 @@
   "keywords": [
     "adsb",
     "airplanes",
-    "apprise",
+    "bluesky",
     "self-hosted",
     "notifications"
   ],
   "author": "Brian Hurst",
   "license": "MIT",
   "dependencies": {
+    "@atproto/api": "file:vendor/atproto-api",
     "dotenv": "^16.4.5",
     "lowdb": "^6.0.1",
     "node-cron": "^3.0.3",

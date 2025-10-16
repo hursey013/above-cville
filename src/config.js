@@ -38,10 +38,10 @@ export const config = {
     'https://globe.airplanes.live/?icao=',
   showDetailsLink:
     parseString(process.env.SHOW_DETAILS_LINK).toLowerCase() !== 'false',
-  apprise: {
-    apiUrl: process.env.APPRISE_API_URL ?? 'http://apprise:8000/notify',
-    urls: parseStringList(process.env.APPRISE_URLS),
-    configKey: parseString(process.env.APPRISE_CONFIG_KEY),
+  bluesky: {
+    service: parseString(process.env.BLUESKY_SERVICE) || 'https://bsky.social',
+    handle: parseString(process.env.BLUESKY_HANDLE),
+    appPassword: parseString(process.env.BLUESKY_APP_PASSWORD),
   },
   dataFile: process.env.DATA_FILE ?? 'data/db.json',
 };

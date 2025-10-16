@@ -9,7 +9,7 @@ Above Cville keeps an eye on the [airplanes.live](https://airplanes.live/api-gui
 - 🔁 **Real-time sweeps** – Polls airplanes.live on a tight schedule (configurable) and filters out repeat sightings with a cooldown timer.
 - 🚫 **Carrier filter** – Skip the commercial heavy hitters by listing their ICAO codes directly in the compose snippet. Want only corporate jets and medevacs? Done.
 - 🗣️ **Cheerful alerts** – Notifications read like a Bluesky post: speed, altitude, direction, and a quick note about how often the plane pops by.
-- 🖼️ **Photo flair** – If FlightAware has a shot of the aircraft, the link is attached so your Apprise target (Pushover, Discord, etc.) can grab it.
+- 🖼️ **Photo flair** – If FlightAware has a shot of the aircraft, the Bluesky post links it so readers can jump straight to the gallery.
 - 🪶 **Featherweight** – Plain Node.js + [lowdb](https://github.com/typicode/lowdb) JSON storage. No external database, no message queues, no drama.
 - 🐳 **Docker native** – Ships with a battle-tested compose file so you can drop it onto Synology, Portainer, or whatever box you call “the lab.”
 
@@ -19,8 +19,7 @@ Above Cville keeps an eye on the [airplanes.live](https://airplanes.live/api-gui
 
 - A place to run containers (Synology Container Manager, Portainer, Unraid, etc.).
 - Access to the public airplanes.live API.
-- An [Apprise](https://github.com/caronc/apprise) endpoint (self-hosted or bundled with the compose file).
-- A target inside Apprise (Pushover/Discord/email/etc.) so the alerts land somewhere fun.
+- A Bluesky handle with an [app password](https://bsky.app/settings/app-passwords) that has posting access.
 
 ---
 
@@ -28,7 +27,7 @@ Above Cville keeps an eye on the [airplanes.live](https://airplanes.live/api-gui
 
 1. Open your container UI and choose **Create stack / Project → Create** (the option that accepts Docker Compose).
 2. Paste the snippet below into the editor.
-3. Adjust the environment values inline (lat/lon, Apprise URL, timezone, ignored carriers, etc.).
+3. Adjust the environment values inline (lat/lon, Bluesky credentials, timezone, ignored carriers, etc.).
 4. Launch the stack. That’s it—no shell access needed.
 
 <details open>
@@ -54,35 +53,18 @@ services:
       # --- Storage path for sightings ---
       DATA_FILE: "data/db.json"
 
-      # --- Apprise connection ---
-      APPRISE_API_URL: "http://apprise:8000/notify"
-      APPRISE_CONFIG_KEY: "" # Provide if your Apprise API uses keyed endpoints
-      APPRISE_URLS: "" # Stateless mode: comma-separated target URLs
+      # --- Bluesky connection ---
+      BLUESKY_HANDLE: "your-handle.bsky.social"
+      BLUESKY_APP_PASSWORD: "xxxx-xxxx-xxxx-xxxx"
+      BLUESKY_SERVICE: "https://bsky.social" # Optional override for self-hosted PDS
 
       # --- Aircraft detail link ---
       AIRCRAFT_LINK_BASE: "https://globe.airplanes.live/?icao=" # Link prefix appended with the ICAO hex
-
-      # --- Formatting options ---
-      SUPPRESS_TITLES: "false" # Set to "true" when your destination (e.g., Bluesky) ignores notification titles
 
       # --- Timezone for logs & cron output ---
       TZ: "America/New_York"
     volumes:
       - ./data:/app/data
-    depends_on:
-      - apprise
-
-  apprise:
-    image: lscr.io/linuxserver/apprise-api:latest
-    restart: unless-stopped
-    environment:
-      PUID: "1026" # adjust to match your user
-      PGID: "100"
-      TZ: America/New_York
-    volumes:
-      - ./apprise-config:/config
-    ports:
-      - "8000:8000"
 ```
 
 </details>
@@ -93,7 +75,7 @@ When you open the stack’s log viewer you should see a line like:
 Watching 38.0375, -78.4863 within 5 NM (cooldown: 10 minutes)
 ```
 
-Each time a plane clears the filters you’ll get `[notify] <callsign>` followed by the friendly message in your configured Apprise destinations.
+Each time a plane clears the filters you’ll get `[notify] <callsign>` followed by the friendly text that will be posted to Bluesky.
 
 ---
 
@@ -101,16 +83,15 @@ Each time a plane clears the filters you’ll get `[notify] <callsign>` followed
 
 - **Carrier skips are optional.** Leave `IGNORE_CARRIERS` empty to watch everything.
 - **Bluesky-ready tone.** Modify `composeNotificationMessage` in `src/messages.js` if you want to tweak phrasing or drop the emoji vibe.
-- **FlightAware attachments.** The notification includes the most recent FlightAware photo link when available.
+- **FlightAware attachments.** The post includes the most recent FlightAware photo link as an external embed when available.
 - **Details link.** Each alert ends with a tracker URL (defaults to globe.airplanes.live); change `AIRCRAFT_LINK_BASE` to point at your favourite viewer.
 - **Restart-safe storage.** Sightings live in `data/db.json`. Delete the file if you want to reset history.
-- **Timezones & cron.** Adjust `TZ` in Docker and your system timezone so log timestamps and Apprise attachments make sense.
-- **Suppress titles.** Use `SUPPRESS_TITLES=true` for destinations (like Bluesky) that only care about the message body.
+- **Timezones & cron.** Adjust `TZ` in Docker and your system timezone so log timestamps and notification timing make sense.
 
 ---
 
 ## Development notes
 
 - Node 18+ is required for native `fetch`, top-level `await`, and the Node test runner.
-- Run `npm test` to exercise helpers (message composer, Apprise client, carrier filters, FlightAware scraper, utility functions).
+- Run `npm test` to exercise helpers (message composer, Bluesky client, carrier filters, FlightAware scraper, utility functions).
 - Run `npm run lint` for ESLint + Prettier (same setup as balance-bot) before opening a PR.

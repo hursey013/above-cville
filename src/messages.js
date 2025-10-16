@@ -471,7 +471,7 @@ export const composeNotificationMessage = (
     frequencySentence,
   ].filter(Boolean);
 
-  const limit = 280;
+  const limit = 300;
   const linkLine = includeDetailsLink ? detailsUrl : null;
 
   const infoText = infoSentences.join(' ');

@@ -3,7 +3,7 @@ import cron from 'node-cron';
 import config from './config.js';
 import db from './db.js';
 import logger from './logger.js';
-import { sendAppriseNotification } from './apprise.js';
+import { publishBlueskyPost } from './bluesky.js';
 import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhotoUrl } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
@@ -90,7 +90,7 @@ const pollAirplanes = async () => {
       if (shouldNotify) {
         const messageTimestamps = [...timestamps, now];
         try {
-          const { title, body } = composeNotificationMessage(
+          const { body } = composeNotificationMessage(
             plane,
             messageTimestamps,
             now,
@@ -103,7 +103,7 @@ const pollAirplanes = async () => {
               attachments = [photoUrl];
             }
           }
-          await sendAppriseNotification({ title, body, attachments });
+          await publishBlueskyPost({ text: body, attachments });
           logger.info(
             {
               callsign: plane.flight?.trim() || null,
@@ -112,12 +112,12 @@ const pollAirplanes = async () => {
               attachments,
               plane,
             },
-            'Notification dispatched',
+            'Bluesky update published',
           );
         } catch (error) {
           logger.error(
             { err: error, hex, plane },
-            'Failed to send Apprise notification',
+            'Failed to publish Bluesky update',
           );
         }
         if (!sightingEntry) {

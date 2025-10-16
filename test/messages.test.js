@@ -98,7 +98,7 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
     category: 'A5',
   };
   const { body } = composeNotificationMessage(plane, [now], now);
-  assert.ok(body.length <= 280);
+  assert.ok(body.length <= 300);
   assert.match(body, /…/);
   assert.match(body, /N777LF \(/);
   assert.match(body, /\n\nhttps:\/\/globe\.airplanes\.live\/\?icao=long1$/);
