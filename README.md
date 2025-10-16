@@ -27,15 +27,11 @@ above-cville keeps a friendly watch on the [airplanes.live](https://airplanes.li
 - 🪖 **Spot the cool stuff** – Military and “interesting” tags from airplanes.live bubble up with their own little flourish.
 - 🖼️ **Photo flair** – If FlightAware has a current shot, above-cville will automatically embed it with the post.
 
----
-
 ## What you need
 
 - A place to run containers (Synology Container Manager, Portainer, Unraid, etc.).
 - Access to the public airplanes.live API.
 - A Bluesky handle with an [app password](https://bsky.app/settings/app-passwords) that has posting access.
-
----
 
 ## Getting airborne fast
 
