@@ -18,7 +18,7 @@
 
 ## Say hello to above-cville
 
-above-cville keeps a friendly watch on the [airplanes.live](https://airplanes.live) feed over Charlottesville, pinging Bluesky every time something fun zips by.
+above-cville keeps a friendly watch on the [airplanes.live](https://airplanes.live) feed over Charlottesville, pinging [Bluesky](https://bsky.app/profile/abovecville.bsky.social) every time something fun zips by.
 
 ## What it does
 
