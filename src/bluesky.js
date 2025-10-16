@@ -1,8 +1,16 @@
+import { Buffer } from 'node:buffer';
 import { BskyAgent, RichText } from '@atproto/api';
 
 import config from './config.js';
 
 const MAX_BSKY_CHARS = 300;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const IMAGE_FETCH_HEADERS = {
+  Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+  'User-Agent':
+    'above-cville/2.0.0 (+https://github.com/hursey013/above-cville)',
+};
+const IMAGE_ALT_TEXT = 'Recent aircraft photo';
 
 const sanitizeUrl = (value) => {
   if (typeof value !== 'string') {
@@ -23,21 +31,102 @@ const sanitizeUrl = (value) => {
   }
 };
 
-const buildEmbed = (attachments) => {
+const parseMimeType = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const [primary] = value.split(';');
+  const trimmed = primary.trim().toLowerCase();
+  return trimmed || null;
+};
+
+const downloadImage = async (url) => {
+  try {
+    const response = await fetch(url, {
+      headers: IMAGE_FETCH_HEADERS,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const mimeType = parseMimeType(response.headers?.get?.('content-type'));
+    if (!mimeType || !mimeType.startsWith('image/')) {
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    if (!arrayBuffer || !arrayBuffer.byteLength) {
+      return null;
+    }
+
+    if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+      return null;
+    }
+
+    const bytes = Buffer.from(arrayBuffer);
+    return { bytes, mimeType };
+  } catch (error) {
+    console.warn(`Failed to download attachment from ${url}`, error);
+    return null;
+  }
+};
+
+const createExternalEmbed = (url) => ({
+  $type: 'app.bsky.embed.external',
+  external: {
+    uri: url,
+    title: 'FlightAware photo',
+    description: 'Latest photo for this aircraft.',
+  },
+});
+
+const createImageEmbed = async (agent, url) => {
+  if (typeof agent?.uploadBlob !== 'function') {
+    return null;
+  }
+
+  const image = await downloadImage(url);
+  if (!image) {
+    return null;
+  }
+
+  try {
+    const upload = await agent.uploadBlob(image.bytes, {
+      encoding: image.mimeType,
+    });
+    const blob = upload?.data?.blob ?? upload?.blob ?? null;
+    if (!blob) {
+      return null;
+    }
+
+    return {
+      $type: 'app.bsky.embed.images',
+      images: [
+        {
+          image: blob,
+          alt: IMAGE_ALT_TEXT,
+        },
+      ],
+    };
+  } catch (error) {
+    console.warn(`Failed to upload Bluesky image for ${url}`, error);
+    return null;
+  }
+};
+
+const buildEmbed = async (agent, attachments) => {
   if (!Array.isArray(attachments)) {
     return undefined;
   }
   for (const attachment of attachments) {
     const url = sanitizeUrl(attachment);
     if (url) {
-      return {
-        $type: 'app.bsky.embed.external',
-        external: {
-          uri: url,
-          title: 'FlightAware photo',
-          description: 'Latest photo for this aircraft.',
-        },
-      };
+      const imageEmbed = await createImageEmbed(agent, url);
+      if (imageEmbed) {
+        return imageEmbed;
+      }
+      return createExternalEmbed(url);
     }
   }
   return undefined;
@@ -85,7 +174,7 @@ export const createPoster = ({
       throw new Error('Bluesky post exceeds the 300 character limit.');
     }
 
-    const embed = buildEmbed(attachments);
+    const embed = await buildEmbed(agent, attachments);
 
     await agent.post({
       text: richText.text,

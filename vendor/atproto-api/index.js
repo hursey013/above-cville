@@ -146,6 +146,50 @@ export class BskyAgent {
     return this.#createRecord({ repo: this.session.did }, record);
   }
 
+  async uploadBlob(data, { encoding } = {}) {
+    if (!this.session) {
+      throw new Error('Must login before uploading Bluesky blobs.');
+    }
+
+    const contentType =
+      typeof encoding === 'string' && encoding.trim()
+        ? encoding.trim()
+        : 'application/octet-stream';
+
+    let body = null;
+    if (data instanceof Uint8Array) {
+      body = data;
+    } else if (data instanceof ArrayBuffer) {
+      body = new Uint8Array(data);
+    } else if (ArrayBuffer.isView(data)) {
+      body = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    } else {
+      throw new Error('Unsupported blob data type.');
+    }
+
+    const response = await fetch(
+      `${this.service}/xrpc/com.atproto.repo.uploadBlob`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.session.accessJwt}`,
+          'Content-Type': contentType,
+        },
+        body,
+      },
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(
+        `Failed to upload Bluesky blob (${response.status}): ${text}`,
+      );
+    }
+
+    const payload = await response.json();
+    return { data: payload };
+  }
+
   async #createRecord(params, record) {
     if (!this.session) {
       throw new Error('Must login before creating Bluesky records.');

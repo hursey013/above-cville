@@ -67,3 +67,67 @@ test('publish enforces Bluesky character limit', async () => {
     /300 character limit/i,
   );
 });
+
+test('publish uses image embeds when blob uploads are supported', async () => {
+  const calls = [];
+  const uploads = [];
+  const imageBytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xd9]);
+  const originalFetch = global.fetch;
+
+  global.fetch = async () => ({
+    ok: true,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === 'content-type'
+          ? 'image/jpeg; charset=UTF-8'
+          : null;
+      },
+    },
+    arrayBuffer: async () => imageBytes.buffer,
+  });
+
+  const poster = createPoster({
+    identifier: 'image@example.com',
+    appPassword: 'pass-1234',
+    agentFactory: () => ({
+      async login() {},
+      async uploadBlob(data, { encoding }) {
+        uploads.push({ data, encoding });
+        return {
+          data: {
+            blob: {
+              $type: 'blob',
+              ref: { $link: 'uploaded' },
+              mimeType: encoding,
+              size: data.length ?? data.byteLength ?? 0,
+            },
+          },
+        };
+      },
+      async post(payload) {
+        calls.push(payload);
+      },
+    }),
+  });
+
+  try {
+    await poster.publish({
+      text: 'Look at this plane!',
+      attachments: ['https://photos.example.com/image.jpg'],
+    });
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+
+  assert.equal(uploads.length, 1);
+  assert.ok(uploads[0].data instanceof Uint8Array);
+  assert.equal(uploads[0].encoding, 'image/jpeg');
+  assert.equal(calls.length, 1);
+  assert.ok(Array.isArray(calls[0].embed.images));
+  assert.equal(calls[0].embed.images.length, 1);
+  assert.equal(calls[0].embed.images[0].alt, 'Recent aircraft photo');
+});
