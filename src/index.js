@@ -106,17 +106,14 @@ const pollAirplanes = async () => {
           await publishBlueskyPost({ text: body, attachments });
           logger.info(
             {
-              callsign: plane.flight?.trim() || null,
-              hex,
-              altitudeFt,
+              ...plane,
               attachments,
-              plane,
             },
             'Bluesky update published',
           );
         } catch (error) {
           logger.error(
-            { err: error, hex, plane },
+            { err: error, ...plane },
             'Failed to publish Bluesky update',
           );
         }
