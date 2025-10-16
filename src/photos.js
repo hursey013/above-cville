@@ -16,8 +16,12 @@ const PLANESPOTTERS_PUBLIC_BASE = 'https://api.planespotters.net/pub/photos';
 const PLANESPOTTERS_API_BASE = 'https://api.planespotters.net/v1/photos';
 const PLANESPOTTERS_PAGE_BASE = 'https://www.planespotters.net/photos/reg';
 
+// -- FlightAware helpers ----------------------------------------------------
+
 /** Cache of raw FlightAware scrapes keyed by registration. */
 const flightAwareCache = new Map();
+// -- Planespotters helpers --------------------------------------------------
+
 /** Cache of Planespotters API responses keyed by `${type}:${value}`. */
 const planespottersCache = new Map();
 /** Cache of the aggregated photo result, keyed by registration and/or hex. */
@@ -163,6 +167,11 @@ const resolvePlanespottersPhoto = (payload, registration) => {
   return null;
 };
 
+/**
+ * Build the canonical Planespotters gallery URL for a registration.
+ * @param {string|null} registration
+ * @returns {string|null}
+ */
 const buildPlanespottersPhotoPageUrl = (registration) => {
   const normalized = normalizeRegistration(registration);
   if (!normalized) {
@@ -255,6 +264,11 @@ const fetchPlanespottersPhoto = async ({ hex, registration }) => {
   return photo;
 };
 
+/**
+ * Store a resolved photo result under each relevant cache key.
+ * @param {string[]} keys
+ * @param {{imageUrl:string,pageUrl:string,source:string}|null} value
+ */
 const cacheResult = (keys, value) => {
   keys.forEach((key) => {
     photoResultCache.set(key, value ?? null);

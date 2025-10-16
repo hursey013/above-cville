@@ -11,12 +11,18 @@ import {
   resolveAltitudeFt,
   isGrounded,
   isAboveConfiguredCeiling,
+  normalizeHex,
+  normalizeRegistration,
 } from './utils.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
 let isPolling = false;
 
+/**
+ * Poll airplanes.live for the configured lat/lon window, write any new
+ * sightings, and post Bluesky updates when the cooldown allows.
+ */
 const pollAirplanes = async () => {
   if (isPolling) {
     return;
@@ -54,7 +60,7 @@ const pollAirplanes = async () => {
     const now = Date.now();
 
     for (const plane of aircraft) {
-      const hex = plane.hex?.toLowerCase();
+      const hex = normalizeHex(plane.hex);
       if (!hex) {
         continue;
       }
@@ -92,9 +98,11 @@ const pollAirplanes = async () => {
         try {
           let attachments = undefined;
           let photoPageUrl = null;
+          const registration =
+            normalizeRegistration(plane.registration ?? plane.r) || null;
           const photo = await fetchPlanePhoto({
             hex,
-            registration: plane.registration ?? plane.r,
+            registration,
           });
           if (photo?.imageUrl) {
             attachments = [photo.imageUrl];

@@ -71,17 +71,82 @@ const APPROXIMATION_WORDS = ['around', 'near', 'about', 'roughly'];
 const normalizeString = (value) =>
   value?.toString?.().trim?.() ?? '';
 
+/**
+ * Parse a numeric environment variable, falling back when parsing fails.
+ * @param {unknown} value
+ * @param {number} fallback
+ * @returns {number}
+ */
+export const parseNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+/**
+ * Extract a trimmed string or return an empty string.
+ * @param {unknown} value
+ * @returns {string}
+ */
+export const parseString = (value) =>
+  typeof value === 'string' ? value.trim() : '';
+
+/**
+ * Split a comma/newline separated list into individual trimmed items.
+ * @param {unknown} value
+ * @returns {string[]}
+ */
+export const parseStringList = (value) =>
+  (value ?? '')
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+/**
+ * Uppercase each entry in a list, applying a fallback string when nothing is
+ * provided.
+ * @param {unknown} value
+ * @param {string} fallback
+ * @returns {string[]}
+ */
+export const parseUpperStringList = (value, fallback) =>
+  parseStringList(value ?? fallback).map((item) => item.toUpperCase());
+
+/**
+ * Clamp a poll interval to a positive integer number of seconds.
+ * @param {unknown} value
+ * @returns {number}
+ */
+export const clampSeconds = (value) => {
+  const seconds = Math.round(value);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : 1;
+};
+
+/**
+ * Normalise aircraft registrations to uppercase without surrounding whitespace.
+ * @param {unknown} value
+ * @returns {string}
+ */
 export const normalizeRegistration = (value) => {
   const normalized = normalizeString(value);
   return normalized ? normalized.toUpperCase() : '';
 };
 
+/**
+ * Normalise ICAO hex identifiers to lowercase without surrounding whitespace.
+ * @param {unknown} value
+ * @returns {string}
+ */
 export const normalizeHex = (value) => {
   const normalized = normalizeString(value);
   return normalized ? normalized.toLowerCase() : '';
 };
 const KNOTS_TO_MPH = 1.15078;
 
+/**
+ * Create a helper that chooses varied approximation words while avoiding
+ * repetition inside a single message.
+ * @returns {(preferred?:string[]|string)=>string}
+ */
 export const createApproxWordPicker = () => {
   const used = new Set();
   return (preferred) => {
@@ -108,6 +173,13 @@ export const createApproxWordPicker = () => {
   };
 };
 
+/**
+ * Choose an approximation word using the provided picker, falling back to a
+ * sensible default when the picker cannot be called.
+ * @param {(preferred?:string[]|string)=>string} [picker]
+ * @param {string[]|string} [preferred]
+ * @returns {string}
+ */
 export const resolveApproxWord = (picker, preferred) => {
   if (typeof picker !== 'function') {
     const candidates =
@@ -119,6 +191,13 @@ export const resolveApproxWord = (picker, preferred) => {
   return picker(preferred);
 };
 
+/**
+ * Evaluate a list of template descriptors and return the first matching string.
+ * @param {number} value
+ * @param {{test:(value:number)=>boolean,template:(value:number, pick:(preferred?:string[]|string)=>string)=>string}[]} templates
+ * @param {(preferred?:string[]|string)=>string} [pickApproxWord]
+ * @returns {string|null}
+ */
 export const matchTemplate = (value, templates, pickApproxWord) => {
   if (!Array.isArray(templates)) {
     return null;
@@ -131,6 +210,11 @@ export const matchTemplate = (value, templates, pickApproxWord) => {
   return null;
 };
 
+/**
+ * Format a numeric altitude in feet with locale-aware thousands separators.
+ * @param {number} value
+ * @returns {string}
+ */
 export const formatFeet = (value) => Math.round(value).toLocaleString();
 
 /**

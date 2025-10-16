@@ -147,6 +147,9 @@ const buildEmbed = async (agent, attachments) => {
   return undefined;
 };
 
+/**
+ * Lazily authenticate against Bluesky and provide a simple `publish` helper.
+ */
 export const createPoster = ({
   service,
   identifier,
@@ -225,6 +228,11 @@ try {
   console.warn(`Bluesky posting disabled: ${error.message}`);
 }
 
+/**
+ * Publish a Bluesky post using the singleton poster configured at startup.
+ * No-op when credentials are missing.
+ * @param {{text:string,attachments?:string[]}} payload
+ */
 export const publishBlueskyPost = async (payload) => {
   if (!poster) {
     return;

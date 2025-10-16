@@ -1,28 +1,22 @@
+/**
+ * Application configuration loader. Values are normalised from the process
+ * environment with sensible defaults so the rest of the codebase can assume
+ * consistent types.
+ */
 import dotenv from 'dotenv';
+
+import {
+  clampSeconds,
+  parseNumber,
+  parseString,
+  parseUpperStringList,
+} from './utils.js';
 
 dotenv.config();
 
-const parseNumber = (value, fallback) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const parseString = (value) => (typeof value === 'string' ? value.trim() : '');
-
-const parseStringList = (value) =>
-  (value ?? '')
-    .split(/[\n,]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-const parseUpperStringList = (value, fallback) =>
-  parseStringList(value ?? fallback).map((item) => item.toUpperCase());
-
-const clampSeconds = (value) => {
-  const seconds = Math.round(value);
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : 1;
-};
-
+/**
+ * Fully resolved configuration used by the running application.
+ */
 export const config = {
   latitude: parseNumber(process.env.AIRPLANES_LAT, 38.0375),
   longitude: parseNumber(process.env.AIRPLANES_LON, -78.4863),

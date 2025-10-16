@@ -7,6 +7,9 @@ import config from './config.js';
 
 const dataFilePath = resolve(process.cwd(), config.dataFile);
 
+/**
+ * Ensure the JSON backing file exists before lowdb tries to read from it.
+ */
 const ensureStorage = async () => {
   const dir = dirname(dataFilePath);
   await fs.mkdir(dir, { recursive: true });

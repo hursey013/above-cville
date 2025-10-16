@@ -126,6 +126,13 @@ export const summarizeSightings = (timestamps = [], now = Date.now()) => {
   };
 };
 
+/**
+ * Build a speed phrase matched to the aircraft category.
+ * @param {number|null} mph
+ * @param {{shortLabel?:string}|undefined} categoryInfo
+ * @param {(preferred?:string[]|string)=>string} pickApproxWord
+ * @returns {string|null}
+ */
 const formatSpeed = (mph, categoryInfo, pickApproxWord) => {
   if (!Number.isFinite(mph) || mph <= 0) {
     return null;
@@ -143,6 +150,13 @@ const formatSpeed = (mph, categoryInfo, pickApproxWord) => {
   );
 };
 
+/**
+ * Build an altitude phrase matched to the aircraft category.
+ * @param {number|null} altitude
+ * @param {{shortLabel?:string}|undefined} categoryInfo
+ * @param {(preferred?:string[]|string)=>string} pickApproxWord
+ * @returns {string|null}
+ */
 const formatAltitude = (altitude, categoryInfo, pickApproxWord) => {
   if (!Number.isFinite(altitude) || altitude <= 0) {
     return null;
@@ -160,6 +174,11 @@ const formatAltitude = (altitude, categoryInfo, pickApproxWord) => {
   );
 };
 
+/**
+ * Describe how frequently we've seen the aircraft recently.
+ * @param {{total:number,lastHour:number,lastDay:number,lastWeek:number,lastSeen:number|null,firstSeen:number|null,averageIntervalMs:number|null}} stats
+ * @returns {string}
+ */
 const frequencyMessage = (stats) => {
   if (stats.total <= 1) {
     return "First time we've spotted this one. 👋";
@@ -192,6 +211,11 @@ const frequencyMessage = (stats) => {
   return `Seen ${stats.total} times so far.`;
 };
 
+/**
+ * Translate numeric headings into human-friendly cardinal directions.
+ * @param {Record<string, any>} plane
+ * @returns {string|null}
+ */
 const directionMessage = (plane) => {
   const directionCandidates = [
     plane.track,
@@ -215,6 +239,7 @@ const directionMessage = (plane) => {
  * @param {Record<string, any>} plane - Raw plane object from airplanes.live.
  * @param {number[]} timestamps - Historical notification timestamps for this plane.
  * @param {number} [now=Date.now()] - Reference timestamp.
+ * @param {{photoPageUrl?:string|null}} [options] - Extra rendering options.
  * @returns {{title: string|undefined, body: string}}
  */
 export const composeNotificationMessage = (
