@@ -60,6 +60,9 @@ services:
       BLUESKY_APP_PASSWORD: 'xxxx-xxxx-xxxx-xxxx'
       BLUESKY_SERVICE: 'https://bsky.social' # Optional override for self-hosted PDS
 
+      # --- Photo sources ---
+      PLANESPOTTERS_API_KEY: '' # Optional
+
       # --- Details link ---
       AIRCRAFT_LINK_BASE: 'https://globe.airplanes.live/?icao=' # Link prefix appended with the ICAO hex
       SHOW_DETAILS_LINK: 'true'
