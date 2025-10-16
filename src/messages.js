@@ -369,7 +369,12 @@ export const composeNotificationMessage = (
   }
   const text = textSegments.join(' ');
 
-  const linkBlock = linkSegments.length ? linkSegments.join('\n') : null;
+  const linkBlock =
+    linkSegments.length === 1
+      ? linkSegments[0]
+      : linkSegments.length > 1
+        ? linkSegments.join('\n')
+        : null;
   const body = linkBlock ? `${text}\n\n${linkBlock}` : text;
 
   return {

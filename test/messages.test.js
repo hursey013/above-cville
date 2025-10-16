@@ -55,7 +55,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.match(body, /Operated by United States Air Force/);
   assert.match(
     body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=abc123( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N100CV)?$/,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=abc123(\n📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N100CV)?$/,
   );
 });
 
@@ -88,7 +88,7 @@ test('composeNotificationMessage references frequent visitors', () => {
   assert.match(body, /pings/i);
   assert.match(
     body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=def456( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N200CV)?$/,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=def456(\n📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N200CV)?$/,
   );
 });
 
@@ -109,7 +109,7 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
   assert.match(body, /N777LF \(/);
   assert.match(
     body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N777LF)?$/,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1(\n📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N777LF)?$/,
   );
 });
 
@@ -135,7 +135,7 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
   );
   assert.match(
     body,
-    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001( 📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N45H)?$/,
+    /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001(\n📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N45H)?$/,
   );
 });
 
