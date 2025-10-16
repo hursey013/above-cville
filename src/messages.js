@@ -42,7 +42,7 @@ const rotorcraftSpeedTemplates = [
     test: (mph) => mph >= 80,
     template: (mph) => `Cruising the pattern around ${mph} mph.`,
   },
-  { test: () => true, template: (mph) => `Hovering roughly ${mph} mph.` },
+  { test: () => true, template: (mph) => `Hovering around ${mph} mph.` },
 ];
 
 const highPerfSpeedTemplates = [
