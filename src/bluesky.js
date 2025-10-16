@@ -12,6 +12,18 @@ const IMAGE_FETCH_HEADERS = {
 };
 const IMAGE_ALT_TEXT = 'Recent aircraft photo';
 
+const isExpiredTokenError = (error) => {
+  const responseData = error?.response?.data;
+  const code =
+    responseData?.error ?? error?.data?.error ?? error?.error ?? null;
+  if (code === 'ExpiredToken') {
+    return true;
+  }
+  const message =
+    responseData?.message ?? error?.message ?? error?.toString?.() ?? '';
+  return typeof message === 'string' && message.includes('ExpiredToken');
+};
+
 const sanitizeUrl = (value) => {
   if (typeof value !== 'string') {
     return null;
@@ -110,6 +122,9 @@ const createImageEmbed = async (agent, url) => {
       ],
     };
   } catch (error) {
+    if (isExpiredTokenError(error)) {
+      throw error;
+    }
     console.warn(`Failed to upload Bluesky image for ${url}`, error);
     return null;
   }
@@ -164,23 +179,35 @@ export const createPoster = ({
       throw new Error('Bluesky post text is required.');
     }
 
-    const agent = await resolveAgent();
+    const attemptPublish = async (attempt = 0) => {
+      const agent = await resolveAgent();
+      const trimmed = text.trim();
+      const richText = new RichText({ text: trimmed });
 
-    const trimmed = text.trim();
-    const richText = new RichText({ text: trimmed });
-    await richText.detectFacets(agent);
+      try {
+        await richText.detectFacets(agent);
 
-    if (richText.graphemeLength > MAX_BSKY_CHARS) {
-      throw new Error('Bluesky post exceeds the 300 character limit.');
-    }
+        if (richText.graphemeLength > MAX_BSKY_CHARS) {
+          throw new Error('Bluesky post exceeds the 300 character limit.');
+        }
 
-    const embed = await buildEmbed(agent, attachments);
+        const embed = await buildEmbed(agent, attachments);
 
-    await agent.post({
-      text: richText.text,
-      facets: richText.facets,
-      embed,
-    });
+        await agent.post({
+          text: richText.text,
+          facets: richText.facets,
+          embed,
+        });
+      } catch (error) {
+        if (attempt === 0 && isExpiredTokenError(error)) {
+          agentPromise = null;
+          return attemptPublish(attempt + 1);
+        }
+        throw error;
+      }
+    };
+
+    await attemptPublish();
   };
 
   return { publish };

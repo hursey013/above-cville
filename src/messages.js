@@ -36,36 +36,42 @@ const matchTemplate = (value, templates) => {
 const rotorcraftSpeedTemplates = [
   {
     test: (mph) => mph >= 130,
-    template: (mph) => `Chopping through at about ${mph} mph.`,
+    template: (mph) => `Chopping through about ${mph} mph.`,
   },
   {
     test: (mph) => mph >= 80,
     template: (mph) => `Cruising the pattern around ${mph} mph.`,
   },
-  { test: () => true, template: (mph) => `Hovering around ${mph} mph.` },
+  { test: () => true, template: (mph) => `Hovering roughly ${mph} mph.` },
 ];
 
 const highPerfSpeedTemplates = [
   {
     test: (mph) => mph >= 300,
-    template: (mph) => `Ripping along near ${mph} mph.`,
+    template: (mph) => `Ripping along around ${mph} mph.`,
   },
   {
     test: (mph) => mph >= 200,
-    template: (mph) => `Keeping the throttle up around ${mph} mph.`,
+    template: (mph) => `Keeping the throttle up at about ${mph} mph.`,
   },
   {
     test: () => true,
-    template: (mph) => `Loosening the reins near ${mph} mph.`,
+    template: (mph) => `Loosening the reins roughly ${mph} mph.`,
   },
 ];
 
 const heavySpeedTemplates = [
-  { test: (mph) => mph >= 300, template: (mph) => `Hauling near ${mph} mph.` },
-  { test: (mph) => mph >= 200, template: (mph) => `Rolling near ${mph} mph.` },
+  {
+    test: (mph) => mph >= 300,
+    template: (mph) => `Hauling around ${mph} mph.`,
+  },
+  {
+    test: (mph) => mph >= 200,
+    template: (mph) => `Rolling along about ${mph} mph.`,
+  },
   {
     test: () => true,
-    template: (mph) => `Keeping the widebody moving near ${mph} mph.`,
+    template: (mph) => `Keeping the widebody moving roughly ${mph} mph.`,
   },
 ];
 
@@ -76,23 +82,35 @@ const largeSpeedTemplates = [
   },
   {
     test: (mph) => mph >= 200,
-    template: (mph) => `Keeping the cadence near ${mph} mph.`,
+    template: (mph) => `Keeping the cadence about ${mph} mph.`,
   },
-  { test: () => true, template: (mph) => `Rolling by around ${mph} mph.` },
+  { test: () => true, template: (mph) => `Rolling by roughly ${mph} mph.` },
 ];
 
 const lightSpeedTemplates = [
-  { test: (mph) => mph >= 200, template: (mph) => `Scooting near ${mph} mph.` },
-  { test: (mph) => mph >= 120, template: (mph) => `Skipping near ${mph} mph.` },
-  { test: (mph) => mph >= 60, template: (mph) => `Gliding near ${mph} mph.` },
-  { test: () => true, template: (mph) => `Loitering near ${mph} mph.` },
+  {
+    test: (mph) => mph >= 200,
+    template: (mph) => `Scooting around ${mph} mph.`,
+  },
+  {
+    test: (mph) => mph >= 120,
+    template: (mph) => `Skipping about ${mph} mph.`,
+  },
+  { test: (mph) => mph >= 60, template: (mph) => `Gliding around ${mph} mph.` },
+  { test: () => true, template: (mph) => `Loitering roughly ${mph} mph.` },
 ];
 
 const smallSpeedTemplates = [
-  { test: (mph) => mph >= 200, template: (mph) => `Pacing near ${mph} mph.` },
-  { test: (mph) => mph >= 120, template: (mph) => `Scooting near ${mph} mph.` },
-  { test: (mph) => mph >= 60, template: (mph) => `Easy pass near ${mph} mph.` },
-  { test: () => true, template: (mph) => `Loitering near ${mph} mph.` },
+  { test: (mph) => mph >= 200, template: (mph) => `Pacing at ${mph} mph.` },
+  {
+    test: (mph) => mph >= 120,
+    template: (mph) => `Scooting around ${mph} mph.`,
+  },
+  {
+    test: (mph) => mph >= 60,
+    template: (mph) => `Easy pass about ${mph} mph.`,
+  },
+  { test: () => true, template: (mph) => `Loitering roughly ${mph} mph.` },
 ];
 
 const SPEED_TEMPLATES = {
@@ -108,18 +126,21 @@ const SPEED_TEMPLATES = {
 const DEFAULT_SPEED_TEMPLATES = [
   {
     test: (mph) => mph >= 300,
-    template: (mph) => `Bolting along near ${mph} mph.`,
+    template: (mph) => `Bolting along around ${mph} mph.`,
   },
-  { test: (mph) => mph >= 200, template: (mph) => `Cruising near ${mph} mph.` },
+  {
+    test: (mph) => mph >= 200,
+    template: (mph) => `Cruising about ${mph} mph.`,
+  },
   {
     test: (mph) => mph >= 120,
     template: (mph) => `Making good time around ${mph} mph.`,
   },
   {
     test: (mph) => mph >= 60,
-    template: (mph) => `Taking a leisurely pass around ${mph} mph.`,
+    template: (mph) => `Taking a leisurely pass roughly ${mph} mph.`,
   },
-  { test: () => true, template: (mph) => `Drifting by around ${mph} mph.` },
+  { test: () => true, template: (mph) => `Drifting by roughly ${mph} mph.` },
 ];
 
 const formatFeet = (value) => Math.round(value).toLocaleString();
@@ -127,7 +148,7 @@ const formatFeet = (value) => Math.round(value).toLocaleString();
 const rotorcraftAltitudeTemplates = [
   {
     test: (alt) => alt <= 1200,
-    template: (alt) => `Skimming the skyline near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Skimming the skyline at about ${formatFeet(alt)} ft.`,
   },
   {
     test: () => true,
@@ -138,17 +159,20 @@ const rotorcraftAltitudeTemplates = [
 const heavyAltitudeTemplates = [
   {
     test: (alt) => alt >= 30000,
-    template: (alt) => `Stacked way up near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Stacked way up around ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 20000,
-    template: (alt) => `Cruising that big frame near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Cruising that big frame up at ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 10000,
-    template: (alt) => `Looming overhead around ${formatFeet(alt)} ft.`,
+    template: (alt) => `Looming overhead roughly ${formatFeet(alt)} ft.`,
   },
-  { test: () => true, template: (alt) => `Low around ${formatFeet(alt)} ft.` },
+  {
+    test: () => true,
+    template: (alt) => `Low at about ${formatFeet(alt)} ft.`,
+  },
 ];
 
 const highPerfAltitudeTemplates = [
@@ -158,50 +182,50 @@ const highPerfAltitudeTemplates = [
   },
   {
     test: (alt) => alt >= 10000,
-    template: (alt) => `Slicing the sky near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Slicing the sky at about ${formatFeet(alt)} ft.`,
   },
   {
     test: () => true,
-    template: (alt) => `Darting by around ${formatFeet(alt)} ft.`,
+    template: (alt) => `Darting by roughly ${formatFeet(alt)} ft.`,
   },
 ];
 
 const lightAltitudeTemplates = [
   {
     test: (alt) => alt >= 10000,
-    template: (alt) => `High near ${formatFeet(alt)} ft.`,
+    template: (alt) => `High up at ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 5000,
-    template: (alt) => `Mid near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Mid around ${formatFeet(alt)} ft.`,
   },
-  { test: () => true, template: (alt) => `Low near ${formatFeet(alt)} ft.` },
+  { test: () => true, template: (alt) => `Low about ${formatFeet(alt)} ft.` },
 ];
 
 const smallAltitudeTemplates = [
   {
     test: (alt) => alt >= 10000,
-    template: (alt) => `Steady near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Steady at ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 5000,
-    template: (alt) => `Level near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Level around ${formatFeet(alt)} ft.`,
   },
-  { test: () => true, template: (alt) => `Low near ${formatFeet(alt)} ft.` },
+  { test: () => true, template: (alt) => `Low about ${formatFeet(alt)} ft.` },
 ];
 
 const largeAltitudeTemplates = [
   {
     test: (alt) => alt >= 20000,
-    template: (alt) => `Cruising solid near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Cruising solid at ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 10000,
-    template: (alt) => `Keeping a stately perch near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Keeping a stately perch around ${formatFeet(alt)} ft.`,
   },
   {
     test: () => true,
-    template: (alt) => `Rolling through around ${formatFeet(alt)} ft.`,
+    template: (alt) => `Rolling through roughly ${formatFeet(alt)} ft.`,
   },
 ];
 
@@ -222,19 +246,19 @@ const DEFAULT_ALTITUDE_TEMPLATES = [
   },
   {
     test: (alt) => alt >= 20000,
-    template: (alt) => `Cruising high near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Cruising high at about ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 10000,
-    template: (alt) => `Gliding along around ${formatFeet(alt)} ft.`,
+    template: (alt) => `Gliding along roughly ${formatFeet(alt)} ft.`,
   },
   {
     test: (alt) => alt >= 5000,
-    template: (alt) => `Keeping a comfy perch near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Keeping a comfy perch around ${formatFeet(alt)} ft.`,
   },
   {
     test: () => true,
-    template: (alt) => `Keeping it low near ${formatFeet(alt)} ft.`,
+    template: (alt) => `Keeping it low about ${formatFeet(alt)} ft.`,
   },
 ];
 
