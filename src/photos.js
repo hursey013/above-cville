@@ -6,6 +6,7 @@
  */
 
 import config from './config.js';
+import logger from './logger.js';
 import { normalizeHex, normalizeRegistration } from './utils.js';
 
 const FLIGHTAWARE_BASE = 'https://www.flightaware.com/photos/aircraft';
@@ -26,6 +27,21 @@ const flightAwareCache = new Map();
 const planespottersCache = new Map();
 /** Cache of the aggregated photo result, keyed by registration and/or hex. */
 const photoResultCache = new Map();
+
+const sanitizeUrlForLogs = (rawUrl) => {
+  if (!rawUrl) {
+    return rawUrl;
+  }
+  try {
+    const url = new URL(rawUrl);
+    if (url.searchParams.has('api_key')) {
+      url.searchParams.set('api_key', '<redacted>');
+    }
+    return url.toString();
+  } catch {
+    return rawUrl;
+  }
+};
 
 /**
  * Build the canonical FlightAware gallery URL for a registration.
@@ -88,6 +104,11 @@ const fetchFlightAwarePhoto = async (registration) => {
     registration,
   )}${FLIGHTAWARE_SORT_SUFFIX}`;
 
+  logger.info(
+    { source: 'flightaware', registration, url: pageUrl },
+    'Requesting FlightAware photo',
+  );
+
   try {
     const response = await fetch(pageUrl, {
       headers: {
@@ -96,18 +117,43 @@ const fetchFlightAwarePhoto = async (registration) => {
     });
 
     if (!response.ok) {
+      logger.warn(
+        {
+          source: 'flightaware',
+          registration,
+          status: response.status,
+          url: pageUrl,
+        },
+        'FlightAware photo request failed',
+      );
       flightAwareCache.set(registration, null);
       return null;
     }
 
     const html = await response.text();
     const imageUrl = extractOgImage(html);
+    logger.info(
+      {
+        source: 'flightaware',
+        registration,
+        status: response.status,
+        url: pageUrl,
+        foundImage: Boolean(imageUrl),
+        htmlPreview: html.slice(0, 200),
+      },
+      'FlightAware photo response received',
+    );
     flightAwareCache.set(registration, imageUrl ?? null);
     return imageUrl ?? null;
   } catch (error) {
-    console.warn(
-      `Failed to fetch FlightAware photo for ${registration}`,
-      error,
+    logger.warn(
+      {
+        source: 'flightaware',
+        registration,
+        url: pageUrl,
+        err: error,
+      },
+      'Failed to fetch FlightAware photo',
     );
     flightAwareCache.set(registration, null);
     return null;
@@ -214,23 +260,67 @@ const fetchPlanespottersBy = async (
     if (hasApiKey) {
       url.searchParams.set('api_key', apiKey);
     }
+    logger.info(
+      {
+        source: 'planespotters',
+        mode: type,
+        value,
+        url: sanitizeUrlForLogs(url.toString()),
+      },
+      'Requesting Planespotters photo',
+    );
     const response = await fetch(url.toString(), {
       headers: {
         Accept: 'application/json',
       },
     });
     if (!response.ok) {
+      logger.warn(
+        {
+          source: 'planespotters',
+          mode: type,
+          value,
+          status: response.status,
+          url: sanitizeUrlForLogs(url.toString()),
+        },
+        'Planespotters request failed',
+      );
       planespottersCache.set(cacheKey, null);
       return null;
     }
     const payload = await response.json();
+    logger.info(
+      {
+        source: 'planespotters',
+        mode: type,
+        value,
+        status: response.status,
+        url: sanitizeUrlForLogs(url.toString()),
+        payload,
+      },
+      'Planespotters response received',
+    );
     const photo = resolvePlanespottersPhoto(payload, registrationForLink);
+    logger.info(
+      {
+        source: 'planespotters',
+        mode: type,
+        value,
+        photo,
+      },
+      'Planespotters photo resolved',
+    );
     planespottersCache.set(cacheKey, photo ?? null);
     return photo ?? null;
   } catch (error) {
-    console.warn(
-      `Failed to fetch Planespotters photo for ${type} ${value}`,
-      error,
+    logger.warn(
+      {
+        source: 'planespotters',
+        mode: type,
+        value,
+        err: error,
+      },
+      'Failed to fetch Planespotters photo',
     );
     planespottersCache.set(cacheKey, null);
     return null;
@@ -305,6 +395,13 @@ export const fetchPlanePhoto = async ({ hex, registration } = {}) => {
   let result = null;
 
   if (normalizedRegistration) {
+    logger.info(
+      {
+        action: 'fetchFlightAwarePhoto',
+        registration: normalizedRegistration,
+      },
+      'Attempting FlightAware lookup',
+    );
     const imageUrl = await fetchFlightAwarePhoto(normalizedRegistration);
     if (imageUrl) {
       result = {
@@ -316,6 +413,14 @@ export const fetchPlanePhoto = async ({ hex, registration } = {}) => {
   }
 
   if (!result) {
+    logger.info(
+      {
+        action: 'fetchPlanespottersPhoto',
+        hex: normalizedHex,
+        registration: normalizedRegistration,
+      },
+      'Attempting Planespotters lookup',
+    );
     const planespottersPhoto = await fetchPlanespottersPhoto({
       hex: normalizedHex,
       registration: normalizedRegistration,
@@ -332,6 +437,16 @@ export const fetchPlanePhoto = async ({ hex, registration } = {}) => {
   if (cacheKeys.length) {
     cacheResult(cacheKeys, result);
   }
+
+  logger.info(
+    {
+      action: 'fetchPlanePhoto',
+      hex: normalizedHex,
+      registration: normalizedRegistration,
+      result: result ?? null,
+    },
+    'Resolved plane photo',
+  );
 
   return result;
 };

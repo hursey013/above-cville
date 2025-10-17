@@ -49,7 +49,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.match(body, /first time/i);
   assert.match(body, /\(Cirrus SR22\)/);
   assert.doesNotMatch(body, /\(Light\)/);
-  assert.match(body, /N100CV/);
+  assert.match(body, /#N100CV/);
   assert.match(body, /west/i);
   assert.match(body, /Military traffic/);
   assert.match(body, /Operated by United States Air Force/);
@@ -84,7 +84,7 @@ test('composeNotificationMessage references frequent visitors', () => {
   assert.doesNotMatch(body, /Military traffic/);
   assert.match(body, /Interesting traffic/);
   assert.match(body, /Operated by Delta Air Lines/);
-  assert.match(body, /N200CV \(Cessna 172 Skyhawk\)/);
+  assert.match(body, /#N200CV \(Cessna 172 Skyhawk\)/);
   assert.match(body, /pings/i);
   assert.match(
     body,
@@ -106,7 +106,7 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
   const { body } = composeNotificationMessage(plane, [now], now);
   assert.ok(body.length <= 300);
   assert.match(body, /…/);
-  assert.match(body, /N777LF \(/);
+  assert.match(body, /#N777LF \(/);
   assert.match(
     body,
     /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=long1(\n📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N777LF)?$/,
@@ -127,7 +127,7 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     ownOp: 'ANYTOWN NEWS',
   };
   const { body } = composeNotificationMessage(plane, [now], now);
-  assert.match(body, /N45H \(Bell 206\)/);
+  assert.match(body, /#N45H \(Bell 206\)/);
   assert.doesNotMatch(body, /\(Rotorcraft\)/);
   assert.match(
     body,
@@ -155,7 +155,7 @@ test('composeNotificationMessage can hide details link when disabled', () => {
   const { body } = composeNotificationMessage(plane, [now], now);
   assert.match(
     body,
-    /\[N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/,
+    /\[#N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/,
   );
   assert.doesNotMatch(body, /\n\n📡 </);
 

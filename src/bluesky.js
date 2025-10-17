@@ -10,7 +10,7 @@ const IMAGE_FETCH_HEADERS = {
   'User-Agent':
     'above-cville/2.0.0 (+https://github.com/hursey013/above-cville)',
 };
-const IMAGE_ALT_TEXT = 'Recent aircraft photo';
+const DEFAULT_IMAGE_ALT_TEXT = 'Recent aircraft photo';
 
 const isExpiredTokenError = (error) => {
   const responseData = error?.response?.data;
@@ -50,6 +50,36 @@ const parseMimeType = (value) => {
   const [primary] = value.split(';');
   const trimmed = primary.trim().toLowerCase();
   return trimmed || null;
+};
+
+const normalizeAttachment = (attachment) => {
+  if (typeof attachment === 'string') {
+    const url = sanitizeUrl(attachment);
+    return url ? { url, altText: null } : null;
+  }
+
+  if (attachment && typeof attachment === 'object') {
+    const urlCandidate =
+      attachment.url ??
+      attachment.href ??
+      attachment.src ??
+      attachment.imageUrl ??
+      null;
+    const url = sanitizeUrl(urlCandidate);
+    if (!url) {
+      return null;
+    }
+    const rawAlt =
+      typeof attachment.altText === 'string'
+        ? attachment.altText
+        : typeof attachment.alt === 'string'
+          ? attachment.alt
+          : null;
+    const altText = rawAlt?.trim?.() ? rawAlt.trim() : null;
+    return { url, altText };
+  }
+
+  return null;
 };
 
 const downloadImage = async (url) => {
@@ -93,8 +123,13 @@ const createExternalEmbed = (url) => ({
   },
 });
 
-const createImageEmbed = async (agent, url) => {
+const createImageEmbed = async (agent, attachment) => {
   if (typeof agent?.uploadBlob !== 'function') {
+    return null;
+  }
+
+  const url = attachment?.url;
+  if (!url) {
     return null;
   }
 
@@ -117,7 +152,7 @@ const createImageEmbed = async (agent, url) => {
       images: [
         {
           image: blob,
-          alt: IMAGE_ALT_TEXT,
+          alt: attachment?.altText || DEFAULT_IMAGE_ALT_TEXT,
         },
       ],
     };
@@ -135,13 +170,13 @@ const buildEmbed = async (agent, attachments) => {
     return undefined;
   }
   for (const attachment of attachments) {
-    const url = sanitizeUrl(attachment);
-    if (url) {
-      const imageEmbed = await createImageEmbed(agent, url);
+    const normalized = normalizeAttachment(attachment);
+    if (normalized?.url) {
+      const imageEmbed = await createImageEmbed(agent, normalized);
       if (imageEmbed) {
         return imageEmbed;
       }
-      return createExternalEmbed(url);
+      return createExternalEmbed(normalized.url);
     }
   }
   return undefined;
@@ -231,7 +266,7 @@ try {
 /**
  * Publish a Bluesky post using the singleton poster configured at startup.
  * No-op when credentials are missing.
- * @param {{text:string,attachments?:string[]}} payload
+ * @param {{text:string,attachments?:({url:string,altText?:string}|string)[]}} payload
  */
 export const publishBlueskyPost = async (payload) => {
   if (!poster) {

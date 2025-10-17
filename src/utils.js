@@ -131,6 +131,31 @@ export const normalizeRegistration = (value) => {
 };
 
 /**
+ * Convert an identifier into a hashtag suitable for Bluesky posts.
+ * Non-alphanumeric characters are stripped, and short results are ignored.
+ * @param {unknown} value
+ * @returns {string|null}
+ */
+export const buildIdentityHashtag = (value) => {
+  const raw = value?.toString?.();
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const cleaned = trimmed.replace(/[^0-9a-z]/gi, '');
+  if (cleaned.length < 2) {
+    return null;
+  }
+
+  return `#${cleaned.toUpperCase()}`;
+};
+
+/**
  * Normalise ICAO hex identifiers to lowercase without surrounding whitespace.
  * @param {unknown} value
  * @returns {string}
@@ -436,6 +461,7 @@ export default {
   formatAircraftDescription,
   formatSegment,
   getCategoryInfo,
+  buildIdentityHashtag,
   isAboveConfiguredCeiling,
   isGrounded,
   matchTemplate,

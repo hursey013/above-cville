@@ -13,11 +13,66 @@ import {
   isAboveConfiguredCeiling,
   normalizeHex,
   normalizeRegistration,
+  formatAircraftDescription,
+  buildIdentityHashtag,
 } from './utils.js';
 
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
 let isPolling = false;
+
+/**
+ * Choose the best identifier to convert into a hashtag for the aircraft.
+ * Prefers the registration, then flight number, then ICAO hex.
+ * @param {Record<string, any>} plane
+ * @param {string|null} registration
+ * @returns {string|null}
+ */
+const resolvePlaneIdentityTag = (plane, registration) => {
+  const registrationTag = registration
+    ? buildIdentityHashtag(registration)
+    : null;
+  if (registrationTag) {
+    return registrationTag;
+  }
+
+  const flight = typeof plane.flight === 'string' ? plane.flight.trim() : '';
+  if (flight) {
+    const flightTag = buildIdentityHashtag(flight);
+    if (flightTag) {
+      return flightTag;
+    }
+  }
+
+  const hex =
+    typeof plane.hex === 'string' ? plane.hex.trim().toUpperCase() : '';
+  if (hex) {
+    const hexTag = buildIdentityHashtag(hex);
+    if (hexTag) {
+      return hexTag;
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Build alt text for plane imagery, incorporating available context.
+ * @param {{identityTag:string|null,description:string|null}} params
+ * @returns {string|null}
+ */
+const buildPhotoAltText = ({ identityTag, description }) => {
+  if (identityTag && description) {
+    return `Recent photo of ${identityTag} — ${description}.`;
+  }
+  if (identityTag) {
+    return `Recent photo of ${identityTag}.`;
+  }
+  if (description) {
+    return `Recent aircraft photo: ${description}.`;
+  }
+  return null;
+};
 
 /**
  * Poll airplanes.live for the configured lat/lon window, write any new
@@ -98,6 +153,7 @@ const pollAirplanes = async () => {
         try {
           let attachments = undefined;
           let photoPageUrl = null;
+          const planeDescription = formatAircraftDescription(plane.desc);
           const registration =
             normalizeRegistration(plane.registration ?? plane.r) || null;
           const photo = await fetchPlanePhoto({
@@ -105,8 +161,20 @@ const pollAirplanes = async () => {
             registration,
           });
           if (photo?.imageUrl) {
-            attachments = [photo.imageUrl];
+            const identityTag = resolvePlaneIdentityTag(plane, registration);
+            const altText = buildPhotoAltText({
+              identityTag,
+              description: planeDescription,
+            });
             photoPageUrl = photo.pageUrl ?? null;
+            attachments = [
+              altText
+                ? {
+                    url: photo.imageUrl,
+                    altText,
+                  }
+                : photo.imageUrl,
+            ];
           }
           const { body } = composeNotificationMessage(
             plane,

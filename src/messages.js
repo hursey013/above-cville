@@ -4,7 +4,9 @@ import {
   clampBearing,
   formatAircraftDescription,
   getCategoryInfo,
+  buildIdentityHashtag,
   lowercaseFirst,
+  normalizeRegistration,
   resolveAltitudeFt,
   resolveSpeedMph,
   stripTrailingPunctuation,
@@ -248,10 +250,11 @@ export const composeNotificationMessage = (
   now = Date.now(),
   options = {},
 ) => {
+  const registration =
+    normalizeRegistration(plane.registration ?? plane.r) || null;
   const identity =
     plane.flight?.trim() ||
-    plane.registration ||
-    plane.r ||
+    registration ||
     plane.hex?.toUpperCase() ||
     'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);
@@ -259,9 +262,17 @@ export const composeNotificationMessage = (
   const linkBase = config.aircraftLinkBase;
   const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
   const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
-  const linkedIdentity = detailsUrl ? `[${identity}](${detailsUrl})` : identity;
+  const identityHashtag =
+    (registration ? buildIdentityHashtag(registration) : null) ||
+    (/^[\w-]+$/iu.test(identity) ? buildIdentityHashtag(identity) : null);
+  const identityDisplay = identityHashtag ?? identity;
+  const linkedIdentity = detailsUrl
+    ? `[${identityDisplay}](${detailsUrl})`
+    : identityDisplay;
   const includeDetailsLink = Boolean(detailsUrl) && config.showDetailsLink;
-  const descriptiveIdentity = includeDetailsLink ? identity : linkedIdentity;
+  const descriptiveIdentity = includeDetailsLink
+    ? identityDisplay
+    : linkedIdentity;
   const description = formatAircraftDescription(plane.desc);
   const subjectIdentity = description
     ? `${descriptiveIdentity} (${description})`
