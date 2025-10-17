@@ -27,21 +27,6 @@ const planespottersCache = new Map();
 /** Cache of the aggregated photo result, keyed by registration and/or hex. */
 const photoResultCache = new Map();
 
-const sanitizeUrlForLogs = (rawUrl) => {
-  if (!rawUrl) {
-    return rawUrl;
-  }
-  try {
-    const url = new URL(rawUrl);
-    if (url.searchParams.has('api_key')) {
-      url.searchParams.set('api_key', '<redacted>');
-    }
-    return url.toString();
-  } catch {
-    return rawUrl;
-  }
-};
-
 /**
  * Build the canonical FlightAware gallery URL for a registration.
  * @param {string|undefined|null} registration
@@ -251,7 +236,6 @@ const fetchPlanespottersByHex = async ({
   const url = new URL(
     `${PLANESPOTTERS_API_BASE}/hex/${encodeURIComponent(identifier)}`,
   );
-  url.searchParams.set('api_key', apiKey);
   if (registration) {
     url.searchParams.set('reg', registration);
   }
@@ -262,13 +246,14 @@ const fetchPlanespottersByHex = async ({
         source: 'planespotters',
         identifier,
         registration,
-        url: sanitizeUrlForLogs(url.toString()),
+        url: url.toString(),
       },
       'Requesting Planespotters photo',
     );
     const response = await fetch(url.toString(), {
       headers: {
         Accept: 'application/json',
+        'x-auth-token': apiKey,
       },
     });
     if (!response.ok) {
@@ -278,7 +263,7 @@ const fetchPlanespottersByHex = async ({
           identifier,
           registration,
           status: response.status,
-          url: sanitizeUrlForLogs(url.toString()),
+          url: url.toString(),
         },
         'Planespotters request failed',
       );
@@ -293,7 +278,7 @@ const fetchPlanespottersByHex = async ({
         identifier,
         registration,
         status: response.status,
-        url: sanitizeUrlForLogs(url.toString()),
+        url: url.toString(),
         payload,
       },
       'Planespotters response received',
