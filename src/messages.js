@@ -342,15 +342,15 @@ export const composeNotificationMessage = (
     movementSentence = `${descriptiveIdentity} is overhead.`;
   }
 
-const movementSegment = (() => {
-  if (!movementSentence) {
-    return null;
-  }
-  if (militarySentence || interestingSentence) {
-    return `${categoryEmoji} ${movementSentence}`.trim();
-  }
-  return movementSentence;
-})();
+  const movementSegment = (() => {
+    if (!movementSentence) {
+      return null;
+    }
+    if (militarySentence || interestingSentence) {
+      return `${categoryEmoji} ${movementSentence}`.trim();
+    }
+    return movementSentence;
+  })();
 
   const infoSentences = [
     militarySentence,
