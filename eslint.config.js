@@ -21,7 +21,7 @@ export default [
       prettier: prettierPlugin,
     },
     rules: {
-      'prettier/prettier': 'warn',
+      'prettier/prettier': 'error',
       'no-console': 'off',
     },
   },

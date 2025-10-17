@@ -9,6 +9,7 @@
     "test": "node --test",
     "test:watch": "node --test --watch",
     "test:coverage": "node --test --experimental-test-coverage",
+    "prepare": "husky",
     "lint": "npm run lint:prettier && npm run lint:eslint",
     "lint:prettier": "prettier --log-level warn --check \"src/**/*.{js,mjs}\" \"test/**/*.js\"",
     "lint:prettier:fix": "prettier --log-level warn --write \"src/**/*.{js,mjs}\" \"test/**/*.js\"",
@@ -38,6 +39,18 @@
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^15.15.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
     "prettier": "^3.6.2"
+  },
+  "lint-staged": {
+    "src/**/*.{js,mjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0 --fix"
+    ],
+    "test/**/*.js": [
+      "prettier --write",
+      "eslint --max-warnings=0 --fix"
+    ]
   }
 }
