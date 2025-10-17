@@ -2,7 +2,7 @@
  * Utilities to locate aircraft imagery from external providers, with caching and
  * graceful fallbacks. The fetch order is:
  *   1. FlightAware (registration-based HTML scrape)
- *   2. Planespotters (JSON API; hex first, registration fallback when API key available)
+ *   2. Planespotters (authenticated JSON API; hex first, registration fallback)
  */
 
 import config from './config.js';
@@ -13,7 +13,6 @@ const FLIGHTAWARE_BASE = 'https://www.flightaware.com/photos/aircraft';
 const FLIGHTAWARE_SORT_SUFFIX = '/sort/date';
 const DEFAULT_IMAGE = 'https://www.flightaware.com/images/og_default_image.png';
 
-const PLANESPOTTERS_PUBLIC_BASE = 'https://api.planespotters.net/pub/photos';
 const PLANESPOTTERS_API_BASE = 'https://api.planespotters.net/v1/photos';
 const PLANESPOTTERS_PAGE_BASE = 'https://www.planespotters.net/photos/reg';
 
@@ -23,7 +22,7 @@ const PLANESPOTTERS_PAGE_BASE = 'https://www.planespotters.net/photos/reg';
 const flightAwareCache = new Map();
 // -- Planespotters helpers --------------------------------------------------
 
-/** Cache of Planespotters API responses keyed by `${type}:${value}`. */
+/** Cache of Planespotters API responses keyed by `${identifier}:${registration}`. */
 const planespottersCache = new Map();
 /** Cache of the aggregated photo result, keyed by registration and/or hex. */
 const photoResultCache = new Map();
@@ -231,40 +230,38 @@ const buildPlanespottersPhotoPageUrl = (registration) => {
 };
 
 /**
- * Query the Planespotters API using either `hex` or `registration` mode.
- * @param {'hex'|'registration'} type
- * @param {string|null} value
- * @param {string|undefined} apiKey
- * @param {string|null} registrationForLink
+ * Query the authenticated Planespotters API using the `/hex` endpoint.
+ * @param {{identifier:string,registration:string|null,apiKey:string}} params
  * @returns {Promise<{imageUrl:string,pageUrl:string|null}|null>}
  */
-const fetchPlanespottersBy = async (
-  type,
-  value,
+const fetchPlanespottersByHex = async ({
+  identifier,
+  registration,
   apiKey,
-  registrationForLink,
-) => {
-  if (!value) {
+}) => {
+  if (!identifier || !apiKey) {
     return null;
   }
 
-  const cacheKey = `${type}:${value}`;
+  const cacheKey = `${identifier}:${registration ?? ''}`;
   if (planespottersCache.has(cacheKey)) {
     return planespottersCache.get(cacheKey);
   }
 
+  const url = new URL(
+    `${PLANESPOTTERS_API_BASE}/hex/${encodeURIComponent(identifier)}`,
+  );
+  url.searchParams.set('api_key', apiKey);
+  if (registration) {
+    url.searchParams.set('reg', registration);
+  }
+
   try {
-    const hasApiKey = Boolean(apiKey);
-    const base = hasApiKey ? PLANESPOTTERS_API_BASE : PLANESPOTTERS_PUBLIC_BASE;
-    const url = new URL(`${base}/${type}/${encodeURIComponent(value)}`);
-    if (hasApiKey) {
-      url.searchParams.set('api_key', apiKey);
-    }
     logger.info(
       {
         source: 'planespotters',
-        mode: type,
-        value,
+        identifier,
+        registration,
         url: sanitizeUrlForLogs(url.toString()),
       },
       'Requesting Planespotters photo',
@@ -278,8 +275,8 @@ const fetchPlanespottersBy = async (
       logger.warn(
         {
           source: 'planespotters',
-          mode: type,
-          value,
+          identifier,
+          registration,
           status: response.status,
           url: sanitizeUrlForLogs(url.toString()),
         },
@@ -288,36 +285,39 @@ const fetchPlanespottersBy = async (
       planespottersCache.set(cacheKey, null);
       return null;
     }
+
     const payload = await response.json();
     logger.info(
       {
         source: 'planespotters',
-        mode: type,
-        value,
+        identifier,
+        registration,
         status: response.status,
         url: sanitizeUrlForLogs(url.toString()),
         payload,
       },
       'Planespotters response received',
     );
-    const photo = resolvePlanespottersPhoto(payload, registrationForLink);
+
+    const photo = resolvePlanespottersPhoto(payload, registration);
     logger.info(
       {
         source: 'planespotters',
-        mode: type,
-        value,
+        identifier,
+        registration,
         photo,
       },
       'Planespotters photo resolved',
     );
+
     planespottersCache.set(cacheKey, photo ?? null);
     return photo ?? null;
   } catch (error) {
     logger.warn(
       {
         source: 'planespotters',
-        mode: type,
-        value,
+        identifier,
+        registration,
         err: error,
       },
       'Failed to fetch Planespotters photo',
@@ -334,25 +334,33 @@ const fetchPlanespottersBy = async (
  */
 const fetchPlanespottersPhoto = async ({ hex, registration }) => {
   const apiKey = config?.planespotters?.apiKey || '';
-  const hasApiKey = Boolean(apiKey);
+  if (!apiKey) {
+    logger.info(
+      {
+        source: 'planespotters',
+        reason: 'missingApiKey',
+      },
+      'Skipping Planespotters lookup (API key not configured)',
+    );
+    return null;
+  }
+
   let photo = null;
 
   if (hex) {
-    photo = await fetchPlanespottersBy(
-      'hex',
-      hex,
-      apiKey || undefined,
-      registration,
-    );
-  }
-
-  if (!photo && hasApiKey && registration) {
-    photo = await fetchPlanespottersBy(
-      'registration',
+    photo = await fetchPlanespottersByHex({
+      identifier: hex,
       registration,
       apiKey,
+    });
+  }
+
+  if (!photo && registration) {
+    photo = await fetchPlanespottersByHex({
+      identifier: registration,
       registration,
-    );
+      apiKey,
+    });
   }
 
   return photo;
