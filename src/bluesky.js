@@ -11,6 +11,8 @@ const IMAGE_FETCH_HEADERS = {
     'above-cville/2.0.0 (+https://github.com/hursey013/above-cville)',
 };
 const DEFAULT_IMAGE_ALT_TEXT = 'Recent aircraft photo';
+const textEncoder = new TextEncoder();
+const HASHTAG_PATTERN = /#[\p{L}\p{N}_]+/gu;
 
 const isExpiredTokenError = (error) => {
   const responseData = error?.response?.data;
@@ -50,6 +52,55 @@ const parseMimeType = (value) => {
   const [primary] = value.split(';');
   const trimmed = primary.trim().toLowerCase();
   return trimmed || null;
+};
+
+const toByteLength = (value) => textEncoder.encode(value).length;
+
+const appendHashtagFacets = (richText) => {
+  if (!richText || typeof richText.text !== 'string') {
+    return;
+  }
+
+  const text = richText.text;
+  const existingFacets = Array.isArray(richText.facets) ? richText.facets : [];
+  const seenRanges = new Set(
+    existingFacets
+      .map((facet) =>
+        facet?.index ? `${facet.index.byteStart}:${facet.index.byteEnd}` : null,
+      )
+      .filter(Boolean),
+  );
+
+  for (const match of text.matchAll(HASHTAG_PATTERN)) {
+    const hashtag = match[0];
+    if (!hashtag || match.index == null) {
+      continue;
+    }
+    const tag = hashtag.slice(1);
+    if (!tag) {
+      continue;
+    }
+
+    const byteStart = toByteLength(text.slice(0, match.index));
+    const byteEnd = byteStart + toByteLength(hashtag);
+    const rangeKey = `${byteStart}:${byteEnd}`;
+    if (seenRanges.has(rangeKey)) {
+      continue;
+    }
+
+    existingFacets.push({
+      index: { byteStart, byteEnd },
+      features: [
+        {
+          $type: 'app.bsky.richtext.facet#tag',
+          tag,
+        },
+      ],
+    });
+    seenRanges.add(rangeKey);
+  }
+
+  richText.facets = existingFacets;
 };
 
 const normalizeAttachment = (attachment) => {
@@ -224,6 +275,7 @@ export const createPoster = ({
 
       try {
         await richText.detectFacets(agent);
+        appendHashtagFacets(richText);
 
         if (richText.graphemeLength > MAX_BSKY_CHARS) {
           throw new Error('Bluesky post exceeds the 300 character limit.');

@@ -344,7 +344,7 @@ export const composeNotificationMessage = (
     } else if (clauses.length === 1) {
       combined = `${clauses[0]} and ${lastClause}`;
     } else {
-      combined = `${clauses.join(', ')}, and ${lastClause}`;
+      combined = `${clauses.join(', ')} and ${lastClause}`;
     }
     movementSentence = `${subjectIdentity} is ${combined}.`;
   } else if (description) {

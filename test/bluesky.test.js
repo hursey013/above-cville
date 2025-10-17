@@ -10,7 +10,7 @@ test('createPoster requires credentials', () => {
   );
 });
 
-test('publish posts rich text with link facets and embeds first attachment', async () => {
+test('publish posts rich text with link and hashtag facets and embeds first attachment', async () => {
   const calls = [];
   let logins = 0;
   const fakeAgent = {
@@ -29,18 +29,33 @@ test('publish posts rich text with link facets and embeds first attachment', asy
   });
 
   await poster.publish({
-    text: 'Check this out https://example.com/track',
+    text: 'Check this out #N100CV https://example.com/track',
     attachments: ['not-a-url', 'https://photos.example.com/image.jpg'],
   });
 
   assert.equal(logins, 1);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].text, 'Check this out https://example.com/track');
+  assert.equal(
+    calls[0].text,
+    'Check this out #N100CV https://example.com/track',
+  );
   assert.ok(Array.isArray(calls[0].facets));
-  assert.equal(calls[0].facets.length, 1);
-  assert.deepEqual(calls[0].facets[0].features[0], {
+  assert.equal(calls[0].facets.length, 2);
+  const linkFacet = calls[0].facets.find(
+    (facet) => facet.features?.[0]?.$type === 'app.bsky.richtext.facet#link',
+  );
+  const hashtagFacet = calls[0].facets.find(
+    (facet) => facet.features?.[0]?.$type === 'app.bsky.richtext.facet#tag',
+  );
+  assert.ok(linkFacet);
+  assert.ok(hashtagFacet);
+  assert.deepEqual(linkFacet.features[0], {
     $type: 'app.bsky.richtext.facet#link',
     uri: 'https://example.com/track',
+  });
+  assert.deepEqual(hashtagFacet.features[0], {
+    $type: 'app.bsky.richtext.facet#tag',
+    tag: 'N100CV',
   });
   assert.equal(
     calls[0].embed.external.uri,
