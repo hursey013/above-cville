@@ -2,7 +2,7 @@
  * Utilities to locate aircraft imagery from external providers, with caching and
  * graceful fallbacks. The fetch order is:
  *   1. FlightAware (registration-based HTML scrape)
- *   2. Planespotters (authenticated JSON API; hex first, registration fallback)
+ *   2. Planespotters (authenticated JSON API; hex)
  */
 
 import config from './config.js';
@@ -330,25 +330,15 @@ const fetchPlanespottersPhoto = async ({ hex, registration }) => {
     return null;
   }
 
-  let photo = null;
-
-  if (hex) {
-    photo = await fetchPlanespottersByHex({
-      identifier: hex,
-      registration,
-      apiKey,
-    });
+  if (!hex) {
+    return null;
   }
 
-  if (!photo && registration) {
-    photo = await fetchPlanespottersByHex({
-      identifier: registration,
-      registration,
-      apiKey,
-    });
-  }
-
-  return photo;
+  return fetchPlanespottersByHex({
+    identifier: hex,
+    registration,
+    apiKey,
+  });
 };
 
 /**
