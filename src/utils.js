@@ -68,8 +68,7 @@ export const clampBearing = (value) => {
 };
 
 const APPROXIMATION_WORDS = ['around', 'near', 'about', 'roughly'];
-const normalizeString = (value) =>
-  value?.toString?.().trim?.() ?? '';
+const normalizeString = (value) => value?.toString?.().trim?.() ?? '';
 
 /**
  * Parse a numeric environment variable, falling back when parsing fails.
