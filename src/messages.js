@@ -306,9 +306,9 @@ export const composeNotificationMessage = (
       ? formatAircraftDescription(plane.ownOp)
       : null;
   const militarySentence = isMilitary
-    ? '🪖 Military traffic on the scope.'
+    ? '🪖 #Military traffic on the scope.'
     : null;
-  const interestingSentence = isInteresting ? '🕵️ Interesting traffic.' : null;
+  const interestingSentence = isInteresting ? '🕵️ #Interesting traffic.' : null;
   const operatorSentence = operatorName ? `Operated by ${operatorName}.` : null;
 
   const pickApproxWord = createApproxWordPicker();

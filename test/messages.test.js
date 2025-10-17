@@ -51,7 +51,7 @@ test('composeNotificationMessage highlights first-time sightings', () => {
   assert.doesNotMatch(body, /\(Light\)/);
   assert.match(body, /#N100CV/);
   assert.match(body, /west/i);
-  assert.match(body, /Military traffic/);
+  assert.match(body, /#Military traffic/);
   assert.match(body, /Operated by United States Air Force/);
   assert.match(
     body,
@@ -82,7 +82,7 @@ test('composeNotificationMessage references frequent visitors', () => {
   assert.match(body, /\(Cessna 172 Skyhawk\)/);
   assert.doesNotMatch(body, /\(Small\)/);
   assert.doesNotMatch(body, /Military traffic/);
-  assert.match(body, /Interesting traffic/);
+  assert.match(body, /#Interesting traffic/);
   assert.match(body, /Operated by Delta Air Lines/);
   assert.match(body, /#N200CV \(Cessna 172 Skyhawk\)/);
   assert.match(body, /pings/i);
