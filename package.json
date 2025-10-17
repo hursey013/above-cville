@@ -7,7 +7,14 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test",
-    "lint": "prettier --log-level warn --write \"src/**/*.{js,mjs}\" \"test/**/*.js\" && eslint src test --max-warnings=0 --fix"
+    "test:watch": "node --test --watch",
+    "test:coverage": "node --test --coverage",
+    "lint": "npm run lint:prettier && npm run lint:eslint",
+    "lint:prettier": "prettier --log-level warn --check \"src/**/*.{js,mjs}\" \"test/**/*.js\"",
+    "lint:prettier:fix": "prettier --log-level warn --write \"src/**/*.{js,mjs}\" \"test/**/*.js\"",
+    "lint:eslint": "eslint src test --max-warnings=0",
+    "lint:eslint:fix": "eslint src test --max-warnings=0 --fix",
+    "lint:fix": "npm run lint:prettier:fix && npm run lint:eslint:fix"
   },
   "keywords": [
     "adsb",

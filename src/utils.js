@@ -429,6 +429,7 @@ export const isAboveConfiguredCeiling = (altitudeFt, ceilingFt) => {
 };
 
 export default {
+  clampSeconds,
   createApproxWordPicker,
   CATEGORY_SUMMARIES,
   clampBearing,
@@ -443,6 +444,10 @@ export default {
   normalizeRegistration,
   normalizeHex,
   normalizeWord,
+  parseNumber,
+  parseString,
+  parseStringList,
+  parseUpperStringList,
   resolveApproxWord,
   resolveAltitudeFt,
   resolveSpeedMph,
