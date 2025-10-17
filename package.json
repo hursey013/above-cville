@@ -9,7 +9,7 @@
     "test": "node --test",
     "test:watch": "node --test --watch",
     "test:coverage": "node --test --experimental-test-coverage",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "lint": "npm run lint:prettier && npm run lint:eslint",
     "lint:prettier": "prettier --log-level warn --check \"src/**/*.{js,mjs}\" \"test/**/*.js\"",
     "lint:prettier:fix": "prettier --log-level warn --write \"src/**/*.{js,mjs}\" \"test/**/*.js\"",
