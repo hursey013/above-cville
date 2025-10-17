@@ -342,10 +342,20 @@ export const composeNotificationMessage = (
     movementSentence = `${descriptiveIdentity} is overhead.`;
   }
 
+const movementSegment = (() => {
+  if (!movementSentence) {
+    return null;
+  }
+  if (militarySentence || interestingSentence) {
+    return `${categoryEmoji} ${movementSentence}`.trim();
+  }
+  return movementSentence;
+})();
+
   const infoSentences = [
     militarySentence,
     interestingSentence,
-    movementSentence,
+    movementSegment,
     operatorSentence,
     frequencySentence,
   ].filter(Boolean);

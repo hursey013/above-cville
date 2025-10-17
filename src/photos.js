@@ -136,33 +136,37 @@ const resolvePlanespottersPhoto = (payload, registration) => {
         ? normalizeRegistration(registrationCandidate)
         : null;
     }
-    const imageCandidate =
-      typeof photo.thumbnail_large === 'string' && photo.thumbnail_large.trim()
-        ? photo.thumbnail_large.trim()
-        : typeof photo.thumbnail === 'string' && photo.thumbnail.trim()
-          ? photo.thumbnail.trim()
-          : null;
+
+    const imageCandidate = (() => {
+      const large = photo?.thumbnail_large;
+      if (large && typeof large === 'object' && typeof large.src === 'string') {
+        const trimmed = large.src.trim();
+        if (trimmed) {
+          return trimmed;
+        }
+      }
+      const thumb = photo?.thumbnail;
+      if (thumb && typeof thumb === 'object' && typeof thumb.src === 'string') {
+        const trimmed = thumb.src.trim();
+        if (trimmed) {
+          return trimmed;
+        }
+      }
+      return null;
+    })();
+
     if (!imageCandidate) {
       continue;
     }
 
-    const fallbackLink =
-      typeof photo.link === 'string' && photo.link.trim()
-        ? photo.link.trim()
-        : typeof photo.photo_link === 'string' && photo.photo_link.trim()
-          ? photo.photo_link.trim()
-          : null;
-
     const pageUrl = resolvedRegistration
       ? buildPlanespottersPhotoPageUrl(resolvedRegistration)
-      : fallbackLink;
+      : null;
 
-    if (pageUrl) {
-      return {
-        imageUrl: imageCandidate,
-        pageUrl,
-      };
-    }
+    return {
+      imageUrl: imageCandidate,
+      pageUrl,
+    };
   }
   return null;
 };
