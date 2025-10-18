@@ -272,6 +272,24 @@ const fetchPlanespottersByHex = async ({
     }
 
     const payload = await response.json();
+    const payloadError =
+      typeof payload?.error === 'string' && payload.error.trim()
+        ? payload.error.trim()
+        : null;
+    if (payloadError) {
+      logger.warn(
+        {
+          source: 'planespotters',
+          identifier,
+          registration,
+          error: payloadError,
+          url: url.toString(),
+        },
+        'Planespotters returned an error',
+      );
+      planespottersCache.set(cacheKey, null);
+      return null;
+    }
     logger.info(
       {
         source: 'planespotters',
