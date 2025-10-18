@@ -26,6 +26,7 @@ above-cville keeps a watch on the [airplanes.live](https://airplanes.live) feed 
 - 🗣️ **Readable chatter** – 300-character Bluesky posts call out altitude, speed, direction, and how often we’ve seen the plane lately.
 - 🪖 **Spot the cool stuff** – Military and “interesting” tags from airplanes.live bubble up with their own little flourish.
 - 🖼️ **Photo flair** – If FlightAware or Planespotters.net has a current shot, above-cville will automatically embed it with the post.
+- 📟 **Heartbeat-friendly** – Optionally pings Healthchecks.io at the start/end of each poll so you know the bot is still alive.
 
 ## What you need
 
@@ -63,6 +64,9 @@ services:
       # --- Photo sources ---
       PLANESPOTTERS_API_KEY: '' # Optional
 
+      # --- Healthchecks.io heartbeat (optional) ---
+      HEALTHCHECKS_PING_URL: '' # e.g. https://hc-ping.com/your-uuid
+
       # --- Details link ---
       AIRCRAFT_LINK_BASE: 'https://globe.airplanes.live/?icao=' # Link prefix appended with the ICAO hex
       SHOW_DETAILS_LINK: 'true'
@@ -77,7 +81,7 @@ When you open the stack’s log viewer you’ll see JSON logs from Pino. A healt
 
 ```json
 {
-  "level": 30,
+  "level": "info",
   "time": 1713811200000,
   "msg": "Watching location",
   "latitude": 38.0375,

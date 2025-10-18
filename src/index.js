@@ -8,6 +8,11 @@ import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhoto } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
 import {
+  notifyHealthcheckStart,
+  notifyHealthcheckSuccess,
+  notifyHealthcheckFailure,
+} from './healthchecks.js';
+import {
   resolveAltitudeFt,
   isGrounded,
   isAboveConfiguredCeiling,
@@ -86,6 +91,10 @@ const pollAirplanes = async () => {
   isPolling = true;
   let hasChanges = false;
   const startedAt = Date.now();
+  let encounteredError = false;
+  let lastError = null;
+
+  await notifyHealthcheckStart();
 
   try {
     const url = `${endpointBase}/point/${config.latitude}/${config.longitude}/${config.radius}`;
@@ -102,6 +111,8 @@ const pollAirplanes = async () => {
         { status: response.status, url },
         'airplanes.live responded with non-success status',
       );
+      encounteredError = true;
+      lastError = `airplanes.live responded with status ${response.status}`;
       return;
     }
 
@@ -196,6 +207,8 @@ const pollAirplanes = async () => {
             { err: error, ...plane },
             'Failed to publish Bluesky update',
           );
+          encounteredError = true;
+          lastError = error;
         }
         if (!sightingEntry) {
           sightingEntry = { hex, timestamps: [] };
@@ -210,6 +223,8 @@ const pollAirplanes = async () => {
     }
   } catch (error) {
     logger.error({ err: error }, 'Failed to poll airplanes.live');
+    encounteredError = true;
+    lastError = error;
   } finally {
     if (hasChanges) {
       await db.write();
@@ -218,6 +233,27 @@ const pollAirplanes = async () => {
     isPolling = false;
     const elapsed = Date.now() - startedAt;
     logger.debug({ elapsedMs: elapsed }, 'Poll cycle completed');
+
+    const healthcheckPayload = {
+      elapsedMs: elapsed,
+      hasChanges,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (encounteredError) {
+      const errorMessage =
+        lastError instanceof Error
+          ? lastError.message
+          : typeof lastError === 'string'
+            ? lastError
+            : 'Unknown error';
+      await notifyHealthcheckFailure({
+        ...healthcheckPayload,
+        error: errorMessage,
+      });
+    } else {
+      await notifyHealthcheckSuccess(healthcheckPayload);
+    }
   }
 };
 

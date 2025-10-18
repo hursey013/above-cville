@@ -35,6 +35,9 @@ export const config = {
   planespotters: {
     apiKey: parseString(process.env.PLANESPOTTERS_API_KEY),
   },
+  healthchecks: {
+    pingUrl: parseString(process.env.HEALTHCHECKS_PING_URL),
+  },
   bluesky: {
     service: parseString(process.env.BLUESKY_SERVICE) || 'https://bsky.social',
     handle: parseString(process.env.BLUESKY_HANDLE),
