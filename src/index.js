@@ -8,7 +8,6 @@ import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhoto } from './photos.js';
 import { shouldIgnoreCarrier } from './filters.js';
 import {
-  notifyHealthcheckStart,
   notifyHealthcheckSuccess,
   notifyHealthcheckFailure,
 } from './healthchecks.js';
@@ -159,7 +158,6 @@ const pollAirplanes = async () => {
     { pollStartedAt: new Date(startedAt).toISOString() },
     'Poll cycle started',
   );
-  await notifyHealthcheckStart();
 
   try {
     const url = `${endpointBase}/point/${config.latitude}/${config.longitude}/${config.radius}`;
