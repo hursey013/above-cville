@@ -79,6 +79,21 @@ const buildPhotoAltText = ({ identityTag, description }) => {
   return null;
 };
 
+const logFilterRejection = (plane, reason, details = {}) => {
+  logger.info(
+    {
+      reason,
+      hex: plane?.hex ?? null,
+      flight: plane?.flight ?? null,
+      registration: plane?.registration ?? plane?.r ?? null,
+      altitude: plane?.alt_baro ?? null,
+      ...details,
+      plane,
+    },
+    'Plane rejected by filter',
+  );
+};
+
 /**
  * Poll airplanes.live for the configured lat/lon window, write any new
  * sightings, and post Bluesky updates when the cooldown allows.
@@ -93,7 +108,15 @@ const pollAirplanes = async () => {
   const startedAt = Date.now();
   let encounteredError = false;
   let lastError = null;
+  let inspectedCount = 0;
+  let notifiedCount = 0;
+  let rejectedCount = 0;
+  let aircraftCount = 0;
 
+  logger.info(
+    { pollStartedAt: new Date(startedAt).toISOString() },
+    'Poll cycle started',
+  );
   await notifyHealthcheckStart();
 
   try {
@@ -118,8 +141,17 @@ const pollAirplanes = async () => {
 
     const payload = await response.json();
     const aircraft = Array.isArray(payload.ac) ? payload.ac : [];
+    aircraftCount = aircraft.length;
+
+    logger.info(
+      {
+        aircraftCount,
+      },
+      'Poll response received',
+    );
 
     if (!aircraft.length) {
+      logger.info('No aircraft detected during poll');
       return;
     }
 
@@ -127,20 +159,34 @@ const pollAirplanes = async () => {
 
     for (const plane of aircraft) {
       const hex = normalizeHex(plane.hex);
+      inspectedCount += 1;
       if (!hex) {
+        rejectedCount += 1;
+        logFilterRejection(plane, 'invalidHex');
         continue;
       }
 
       if (shouldIgnoreCarrier(plane.flight, config.ignoredCarrierCodes)) {
+        rejectedCount += 1;
+        logFilterRejection(plane, 'ignoredCarrier', {
+          ignoredCarrierCodes: config.ignoredCarrierCodes,
+        });
         continue;
       }
 
       if (isGrounded(plane)) {
+        rejectedCount += 1;
+        logFilterRejection(plane, 'grounded');
         continue;
       }
 
       const altitudeFt = resolveAltitudeFt(plane);
       if (isAboveConfiguredCeiling(altitudeFt, config.maxAltitudeFt)) {
+        rejectedCount += 1;
+        logFilterRejection(plane, 'aboveConfiguredCeiling', {
+          altitudeFt,
+          maxAltitudeFt: config.maxAltitudeFt,
+        });
         continue;
       }
 
@@ -202,6 +248,7 @@ const pollAirplanes = async () => {
             },
             'Bluesky update published',
           );
+          notifiedCount += 1;
         } catch (error) {
           logger.error(
             { err: error, ...plane },
@@ -232,7 +279,22 @@ const pollAirplanes = async () => {
 
     isPolling = false;
     const elapsed = Date.now() - startedAt;
-    logger.debug({ elapsedMs: elapsed }, 'Poll cycle completed');
+    const trackingCount = Array.isArray(db.data?.sightings)
+      ? db.data.sightings.filter(
+          (entry) => Array.isArray(entry.timestamps) && entry.timestamps.length,
+        ).length
+      : 0;
+    logger.info(
+      {
+        elapsedMs: elapsed,
+        aircraftCount,
+        inspectedCount,
+        notifiedCount,
+        rejectedCount,
+        trackingCount,
+      },
+      'Poll cycle completed',
+    );
 
     const healthcheckPayload = {
       elapsedMs: elapsed,
