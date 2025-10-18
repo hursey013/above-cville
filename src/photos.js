@@ -193,9 +193,15 @@ const resolvePlanespottersPhoto = (payload, registration) => {
       ? buildPlanespottersPhotoPageUrl(resolvedRegistration)
       : null;
 
+    const photographer =
+      typeof photo.photographer === 'string' && photo.photographer.trim()
+        ? photo.photographer.trim()
+        : null;
+
     return {
       imageUrl: imageCandidate,
       pageUrl,
+      photographer,
     };
   }
   return null;
@@ -431,6 +437,7 @@ export const fetchPlanePhoto = async ({ hex, registration } = {}) => {
         imageUrl: planespottersPhoto.imageUrl,
         pageUrl: planespottersPhoto.pageUrl,
         source: 'planespotters',
+        photographer: planespottersPhoto.photographer ?? null,
       };
     }
   }

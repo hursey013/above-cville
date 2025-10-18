@@ -61,22 +61,64 @@ const resolvePlaneIdentityTag = (plane, registration) => {
   return null;
 };
 
+const SOURCE_LABELS = {
+  flightaware: 'FlightAware',
+  planespotters: 'Planespotters.net',
+};
+
+const resolveSourceLabel = (source) => {
+  if (typeof source !== 'string') {
+    return null;
+  }
+  const normalized = source.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  if (SOURCE_LABELS[normalized]) {
+    return SOURCE_LABELS[normalized];
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 /**
  * Build alt text for plane imagery, incorporating available context.
- * @param {{identityTag:string|null,description:string|null}} params
+ * @param {{identityTag:string|null,description:string|null,photographer:string|null,source:string|null}} params
  * @returns {string|null}
  */
-const buildPhotoAltText = ({ identityTag, description }) => {
+const buildPhotoAltText = ({
+  identityTag,
+  description,
+  photographer,
+  source,
+}) => {
+  let base = null;
   if (identityTag && description) {
-    return `Recent photo of ${identityTag} — ${description}.`;
+    base = `Recent photo of ${identityTag} — ${description}.`;
+  } else if (identityTag) {
+    base = `Recent photo of ${identityTag}.`;
+  } else if (description) {
+    base = `Recent aircraft photo: ${description}.`;
   }
-  if (identityTag) {
-    return `Recent photo of ${identityTag}.`;
+
+  const trimmedPhotographer =
+    typeof photographer === 'string' && photographer.trim()
+      ? photographer.trim()
+      : null;
+
+  if (trimmedPhotographer) {
+    const copyright = trimmedPhotographer.startsWith('©')
+      ? trimmedPhotographer
+      : `© ${trimmedPhotographer}`;
+    base = base ? `${base} ${copyright}` : copyright;
+  } else {
+    const sourceLabel = resolveSourceLabel(source);
+    if (sourceLabel) {
+      const courtesy = `Photo courtesy of ${sourceLabel}.`;
+      base = base ? `${base} ${courtesy}` : courtesy;
+    }
   }
-  if (description) {
-    return `Recent aircraft photo: ${description}.`;
-  }
-  return null;
+
+  return base;
 };
 
 const logFilterRejection = (plane, reason, details = {}) => {
@@ -222,6 +264,8 @@ const pollAirplanes = async () => {
             const altText = buildPhotoAltText({
               identityTag,
               description: planeDescription,
+              photographer: photo?.photographer ?? null,
+              source: photo?.source ?? null,
             });
             photoPageUrl = photo.pageUrl ?? null;
             attachments = [
