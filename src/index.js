@@ -155,7 +155,7 @@ const pollAirplanes = async () => {
   let rejectedCount = 0;
   let aircraftCount = 0;
 
-  logger.info(
+  logger.debug(
     { pollStartedAt: new Date(startedAt).toISOString() },
     'Poll cycle started',
   );
@@ -185,7 +185,7 @@ const pollAirplanes = async () => {
     const aircraft = Array.isArray(payload.ac) ? payload.ac : [];
     aircraftCount = aircraft.length;
 
-    logger.info(
+    logger.debug(
       {
         aircraftCount,
       },
@@ -193,7 +193,7 @@ const pollAirplanes = async () => {
     );
 
     if (!aircraft.length) {
-      logger.info('No aircraft detected during poll');
+      logger.debug('No aircraft detected during poll');
       return;
     }
 
@@ -328,7 +328,7 @@ const pollAirplanes = async () => {
           (entry) => Array.isArray(entry.timestamps) && entry.timestamps.length,
         ).length
       : 0;
-    logger.info(
+    logger.debug(
       {
         elapsedMs: elapsed,
         aircraftCount,
