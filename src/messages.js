@@ -328,7 +328,11 @@ export const composeNotificationMessage = (
   const intro =
     INTRO_VARIANTS[variantIndex(identity, stats, INTRO_VARIANTS.length)];
   const categoryEmoji = categoryInfo?.emoji ?? '✈️';
-  const primaryLine = `${intro} ${categoryEmoji}`;
+  const primarySegments = [intro];
+  if (!militarySentence && !interestingSentence) {
+    primarySegments.push(categoryEmoji);
+  }
+  const primaryLine = primarySegments.join(' ');
 
   const movementClauses = [speedPhrase, altitudePhrase, directionPhrase]
     .map((clause) => stripTrailingPunctuation(clause ?? ''))
