@@ -308,6 +308,20 @@ const pollAirplanes = async () => {
         }
         sightingEntry.timestamps.push(now);
         hasChanges = true;
+      } else {
+        rejectedCount += 1;
+        const cooldownSeconds = config.cooldownMinutes * 60;
+        const secondsSinceLastRounded = Number.isFinite(secondsSinceLast)
+          ? Math.round(secondsSinceLast)
+          : null;
+        const secondsUntilNext = Number.isFinite(secondsSinceLast)
+          ? Math.max(0, Math.round(cooldownSeconds - secondsSinceLast))
+          : null;
+        logFilterRejection(plane, 'cooldownActive', {
+          cooldownSeconds,
+          secondsSinceLast: secondsSinceLastRounded,
+          secondsUntilNext,
+        });
       }
     }
   } catch (error) {
