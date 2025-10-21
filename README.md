@@ -12,6 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/hursey013/above-cville/actions"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/hursey013/above-cville/ci.yml?label=CI&logo=github"></a>
+  <img src="https://healthchecks.io/b/2/a2827968-aa65-423c-b341-aaaf3479ec97.svg" alt="above-cville">
   <a href="https://github.com/hursey013/above-cville/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-0EA5E9"></a>
   <a href="https://ghcr.io/hursey013/above-cville"><img alt="Image" src="https://img.shields.io/badge/ghcr-image-blue"></a>
 </p>
