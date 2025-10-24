@@ -87,7 +87,7 @@ When you open the stack’s log viewer you’ll see JSON logs from Pino. A healt
   "msg": "Watching location",
   "latitude": 38.0375,
   "longitude": -78.4863,
-  "radiusNm": 2.5,
+  "radiusNm": 5,
   "cooldownMinutes": 10,
   "pollIntervalSeconds": 5
 }

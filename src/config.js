@@ -20,7 +20,7 @@ dotenv.config();
 export const config = {
   latitude: parseNumber(process.env.AIRPLANES_LAT, 38.0375),
   longitude: parseNumber(process.env.AIRPLANES_LON, -78.4863),
-  radius: parseNumber(process.env.AIRPLANES_RADIUS, 2.5),
+  radius: parseNumber(process.env.AIRPLANES_RADIUS, 5),
   pollIntervalSeconds: clampSeconds(
     parseNumber(process.env.POLL_INTERVAL_SECONDS, 5),
   ),
