@@ -6,7 +6,7 @@ import logger from './logger.js';
 import { publishBlueskyPost } from './bluesky.js';
 import { composeNotificationMessage } from './messages.js';
 import { fetchPlanePhoto } from './photos.js';
-import { shouldIgnoreCarrier } from './filters.js';
+import { getCarrierCode, shouldIgnoreCarrier } from './filters.js';
 import {
   notifyHealthcheckSuccess,
   notifyHealthcheckFailure,
@@ -24,6 +24,47 @@ import {
 const endpointBase = 'https://api.airplanes.live/v2';
 const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
 let isPolling = false;
+const missingCallsignFirstSeen = new Map();
+const CARRIER_CALLSIGN_GRACE_MS = 45 * 1000;
+const MISSING_CALLSIGN_STALE_MS = 5 * 60 * 1000;
+
+const shouldAwaitCarrierCallsign = (hex, carrierCode, now) => {
+  if (
+    !Array.isArray(config.ignoredCarrierCodes) ||
+    config.ignoredCarrierCodes.length === 0
+  ) {
+    missingCallsignFirstSeen.delete(hex);
+    return null;
+  }
+
+  if (carrierCode) {
+    missingCallsignFirstSeen.delete(hex);
+    return null;
+  }
+
+  const firstSeen = missingCallsignFirstSeen.get(hex);
+  if (typeof firstSeen === 'number' && Number.isFinite(firstSeen)) {
+    if (now - firstSeen < CARRIER_CALLSIGN_GRACE_MS) {
+      return firstSeen;
+    }
+    missingCallsignFirstSeen.delete(hex);
+    return null;
+  }
+
+  missingCallsignFirstSeen.set(hex, now);
+  return now;
+};
+
+const pruneMissingCallsigns = (now) => {
+  for (const [hex, firstSeen] of missingCallsignFirstSeen.entries()) {
+    if (
+      typeof firstSeen !== 'number' ||
+      now - firstSeen > MISSING_CALLSIGN_STALE_MS
+    ) {
+      missingCallsignFirstSeen.delete(hex);
+    }
+  }
+};
 
 /**
  * Choose the best identifier to convert into a hashtag for the aircraft.
@@ -196,6 +237,7 @@ const pollAirplanes = async () => {
     }
 
     const now = Date.now();
+    pruneMissingCallsigns(now);
 
     for (const plane of aircraft) {
       const hex = normalizeHex(plane.hex);
@@ -203,6 +245,21 @@ const pollAirplanes = async () => {
       if (!hex) {
         rejectedCount += 1;
         logFilterRejection(plane, 'invalidHex');
+        continue;
+      }
+
+      const carrierCode = getCarrierCode(plane.flight);
+      const carrierHoldStart = shouldAwaitCarrierCallsign(
+        hex,
+        carrierCode,
+        now,
+      );
+      if (typeof carrierHoldStart === 'number') {
+        rejectedCount += 1;
+        logFilterRejection(plane, 'awaitingCallsign', {
+          gracePeriodMs: CARRIER_CALLSIGN_GRACE_MS,
+          waitMs: now - carrierHoldStart,
+        });
         continue;
       }
 
