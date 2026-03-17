@@ -1,4 +1,3 @@
-import config from './config.js';
 import logger from './logger.js';
 import {
   clampBearing,
@@ -241,7 +240,7 @@ const directionMessage = (plane) => {
  * @param {Record<string, any>} plane - Raw plane object from airplanes.live.
  * @param {number[]} timestamps - Historical notification timestamps for this plane.
  * @param {number} [now=Date.now()] - Reference timestamp.
- * @param {{photoPageUrl?:string|null}} [options] - Extra rendering options.
+ * @param {{photoPageUrl?:string|null,aircraftLinkBase?:string|null,showDetailsLink?:boolean}} [options] - Extra rendering options.
  * @returns {{title: string|undefined, body: string}}
  */
 export const composeNotificationMessage = (
@@ -259,7 +258,10 @@ export const composeNotificationMessage = (
     'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);
 
-  const linkBase = config.aircraftLinkBase;
+  const linkBase =
+    typeof options?.aircraftLinkBase === 'string'
+      ? options.aircraftLinkBase
+      : 'https://globe.airplanes.live/?icao=';
   const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
   const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
   const identityHashtag =
@@ -269,7 +271,8 @@ export const composeNotificationMessage = (
   const linkedIdentity = detailsUrl
     ? `[${identityDisplay}](${detailsUrl})`
     : identityDisplay;
-  const includeDetailsLink = Boolean(detailsUrl) && config.showDetailsLink;
+  const includeDetailsLink =
+    Boolean(detailsUrl) && options?.showDetailsLink !== false;
   const descriptiveIdentity = includeDetailsLink
     ? identityDisplay
     : linkedIdentity;

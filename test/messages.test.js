@@ -1,13 +1,17 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
-import config from '../src/config.js';
 import {
   composeNotificationMessage,
   summarizeSightings,
 } from '../src/messages.js';
 
 const buildTimestamps = (now, offsets) => offsets.map((offset) => now - offset);
+
+const defaultMessageOptions = {
+  aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
+  showDetailsLink: true,
+};
 
 test('summarizeSightings tallies recent activity windows', () => {
   const now = Date.now();
@@ -39,7 +43,12 @@ test('composeNotificationMessage highlights first-time sightings', () => {
     dbFlags: 1,
     ownOp: 'UNITED STATES AIR FORCE',
   };
-  const { title, body } = composeNotificationMessage(plane, [now], now);
+  const { title, body } = composeNotificationMessage(
+    plane,
+    [now],
+    now,
+    defaultMessageOptions,
+  );
   assert.equal(title, undefined);
   assert.match(
     body,
@@ -77,7 +86,12 @@ test('composeNotificationMessage references frequent visitors', () => {
     dbFlags: 2,
     ownOp: 'DELTA AIR LINES',
   };
-  const { body } = composeNotificationMessage(plane, timestamps, now);
+  const { body } = composeNotificationMessage(
+    plane,
+    timestamps,
+    now,
+    defaultMessageOptions,
+  );
   assert.match(body, /north/i);
   assert.match(body, /\(Cessna 172 Skyhawk\)/);
   assert.doesNotMatch(body, /\(Small\)/);
@@ -103,7 +117,12 @@ test('composeNotificationMessage truncates long bodies to Bluesky limits', () =>
     desc: Array(40).fill('GULFSTREAM G650').join(' '),
     category: 'A5',
   };
-  const { body } = composeNotificationMessage(plane, [now], now);
+  const { body } = composeNotificationMessage(
+    plane,
+    [now],
+    now,
+    defaultMessageOptions,
+  );
   assert.ok(body.length <= 300);
   assert.match(body, /…/);
   assert.match(body, /#N777LF \(/);
@@ -126,7 +145,12 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     dbFlags: '01',
     ownOp: 'ANYTOWN NEWS',
   };
-  const { body } = composeNotificationMessage(plane, [now], now);
+  const { body } = composeNotificationMessage(
+    plane,
+    [now],
+    now,
+    defaultMessageOptions,
+  );
   assert.match(body, /#N45H \(Bell 206\)/);
   assert.doesNotMatch(body, /\(Rotorcraft\)/);
   assert.match(
@@ -149,15 +173,13 @@ test('composeNotificationMessage can hide details link when disabled', () => {
     track: 10,
   };
 
-  const previous = config.showDetailsLink;
-  config.showDetailsLink = false;
-
-  const { body } = composeNotificationMessage(plane, [now], now);
+  const { body } = composeNotificationMessage(plane, [now], now, {
+    aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
+    showDetailsLink: false,
+  });
   assert.match(
     body,
     /\[#N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/,
   );
   assert.doesNotMatch(body, /\n\n📡 </);
-
-  config.showDetailsLink = previous;
 });

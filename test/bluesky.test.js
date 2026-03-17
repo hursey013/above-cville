@@ -10,6 +10,31 @@ test('createPoster requires credentials', () => {
   );
 });
 
+test('createPoster dry run logs instead of posting and does not require credentials', async () => {
+  const payloads = [];
+
+  const poster = createPoster({
+    dryRun: true,
+    onDryRun: async (payload) => {
+      payloads.push(payload);
+    },
+  });
+
+  await poster.publish({
+    text: 'Check this out #N100CV',
+    attachments: ['https://photos.example.com/image.jpg'],
+  });
+
+  assert.equal(payloads.length, 1);
+  assert.equal(payloads[0].text, 'Check this out #N100CV');
+  assert.deepEqual(payloads[0].attachments, [
+    {
+      url: 'https://photos.example.com/image.jpg',
+      altText: null,
+    },
+  ]);
+});
+
 test('publish posts rich text with link and hashtag facets and embeds first attachment', async () => {
   const calls = [];
   let logins = 0;

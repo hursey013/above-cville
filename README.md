@@ -19,20 +19,20 @@
 
 ## Say hello to above-cville
 
-above-cville keeps a watch on the [airplanes.live](https://airplanes.live) feed over Charlottesville, pinging [@abovecville](https://bsky.app/profile/abovecville.bsky.social) every time something fun zips by.
+above-cville keeps a watch on aircraft traffic over Charlottesville, pinging [@abovecville](https://bsky.app/profile/abovecville.bsky.social) every time something fun zips by.
 
 ## What it does
 
-- 🔁 **Real-time sweeps** – Polls airplanes.live on a configurable schedule and filters out repeat sightings with a cooldown timer.
+- 🔁 **Real-time sweeps** – Polls either [airplanes.live](https://airplanes.live) or a local `readsb --net-api-port` endpoint on a configurable schedule and filters out repeat sightings with a cooldown timer.
 - 🗣️ **Readable chatter** – 300-character Bluesky posts call out altitude, speed, direction, and how often we’ve seen the plane lately.
-- 🪖 **Spot the cool stuff** – Military and “interesting” tags from airplanes.live bubble up with their own little flourish.
+- 🪖 **Spot the cool stuff** – Military and “interesting” tags bubble up with their own little flourish when the upstream data includes them.
 - 🖼️ **Photo flair** – If FlightAware or Planespotters.net has a current shot, above-cville will automatically embed it with the post.
 - 📟 **Heartbeat-friendly** – Optionally pings Healthchecks.io at the start/end of each poll so you know the bot is still alive.
 
 ## What you need
 
 - A place to run containers (Synology Container Manager, Portainer, Unraid, etc.).
-- Access to the public airplanes.live API.
+- Access to either the public airplanes.live API or a local feeder exposing `readsb --net-api-port`.
 - A Bluesky handle with an [app password](https://bsky.app/settings/app-passwords) that has posting access.
 
 ## Getting airborne fast
@@ -47,7 +47,9 @@ services:
       AIRPLANES_LAT: '38.0375' # Latitude to monitor
       AIRPLANES_LON: '-78.4863' # Longitude to monitor
       AIRPLANES_RADIUS: '5' # Radius in nautical miles
-      POLL_INTERVAL_SECONDS: '5' # How often to poll airplanes.live (minimum 1)
+      AIRCRAFT_API_SOURCE: 'airplanes.live' # or 'readsb'
+      AIRCRAFT_API_BASE: 'https://api.airplanes.live/v2' # e.g. http://feeder.local:30152 for readsb
+      POLL_INTERVAL_SECONDS: '5' # How often to poll the aircraft API (minimum 1)
       COOLDOWN_MINUTES: '10' # Minimum minutes between alerts per aircraft
       MAX_ALTITUDE_FT: '25000' # Ignore anything higher (set <=0 to disable)
 

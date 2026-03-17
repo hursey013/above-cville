@@ -1,8 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { BskyAgent, RichText } from '@atproto/api';
 
-import config from './config.js';
-
 const MAX_BSKY_CHARS = 300;
 const MAX_IMAGE_BYTES = 976 * 1024; // Bluesky image uploads must stay under ~1 MB
 const IMAGE_FETCH_HEADERS = {
@@ -240,13 +238,15 @@ export const createPoster = ({
   service,
   identifier,
   appPassword,
+  dryRun = false,
+  onDryRun = null,
   agentFactory = (serviceUrl) => new BskyAgent({ service: serviceUrl }),
 } = {}) => {
   const handle = typeof identifier === 'string' ? identifier.trim() : '';
   const password = typeof appPassword === 'string' ? appPassword.trim() : '';
   const serviceUrl = typeof service === 'string' ? service.trim() : '';
 
-  if (!handle || !password) {
+  if (!dryRun && (!handle || !password)) {
     throw new Error('Bluesky handle and app password are required.');
   }
 
@@ -268,9 +268,34 @@ export const createPoster = ({
       throw new Error('Bluesky post text is required.');
     }
 
+    const trimmed = text.trim();
+
+    if (dryRun) {
+      const richText = new RichText({ text: trimmed });
+      appendHashtagFacets(richText);
+
+      if (richText.graphemeLength > MAX_BSKY_CHARS) {
+        throw new Error('Bluesky post exceeds the 300 character limit.');
+      }
+
+      const normalizedAttachments = Array.isArray(attachments)
+        ? attachments.map(normalizeAttachment).filter(Boolean)
+        : [];
+
+      const payload = {
+        text: richText.text,
+        attachments: normalizedAttachments,
+      };
+
+      if (typeof onDryRun === 'function') {
+        await onDryRun(payload);
+      }
+
+      return;
+    }
+
     const attemptPublish = async (attempt = 0) => {
       const agent = await resolveAgent();
-      const trimmed = text.trim();
       const richText = new RichText({ text: trimmed });
 
       try {
@@ -300,35 +325,12 @@ export const createPoster = ({
     await attemptPublish();
   };
 
-  return { publish };
-};
-
-let poster = null;
-
-try {
-  poster = createPoster({
-    service: config.bluesky.service,
-    identifier: config.bluesky.handle,
-    appPassword: config.bluesky.appPassword,
-  });
-} catch (error) {
-  console.warn(`Bluesky posting disabled: ${error.message}`);
-}
-
-/**
- * Publish a Bluesky post using the singleton poster configured at startup.
- * No-op when credentials are missing.
- * @param {{text:string,attachments?:({url:string,altText?:string}|string)[]}} payload
- */
-export const publishBlueskyPost = async (payload) => {
-  if (!poster) {
-    return;
-  }
-
-  await poster.publish(payload);
+  return {
+    isDryRun: dryRun,
+    publish,
+  };
 };
 
 export default {
   createPoster,
-  publish: publishBlueskyPost,
 };

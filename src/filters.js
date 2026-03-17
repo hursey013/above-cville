@@ -7,25 +7,6 @@
  */
 
 /**
- * Extract the three-letter carrier code from a flight callsign (e.g. "UAL123").
- *
- * @param {unknown} flightRaw - Raw flight string from the API.
- * @returns {string|null} Uppercase carrier code or null when the callsign is unusable.
- */
-export const getCarrierCode = (flightRaw) => {
-  if (typeof flightRaw !== 'string') {
-    return null;
-  }
-
-  const callsign = flightRaw.trim();
-  if (callsign.length < 3) {
-    return null;
-  }
-
-  return callsign.slice(0, 3).toUpperCase();
-};
-
-/**
  * Determine whether a plane should be ignored based on its callsign prefix.
  *
  * @param {unknown} flightRaw - Raw flight string from the API.
@@ -37,15 +18,18 @@ export const shouldIgnoreCarrier = (flightRaw, ignoredCarrierCodes = []) => {
     return false;
   }
 
-  const carrierCode = getCarrierCode(flightRaw);
-  if (!carrierCode) {
+  if (typeof flightRaw !== 'string') {
     return false;
   }
 
-  return ignoredCarrierCodes.includes(carrierCode);
+  const callsign = flightRaw.trim().toUpperCase();
+  if (!callsign) {
+    return false;
+  }
+
+  return ignoredCarrierCodes.some((code) => callsign.startsWith(code));
 };
 
 export default {
-  getCarrierCode,
   shouldIgnoreCarrier,
 };
