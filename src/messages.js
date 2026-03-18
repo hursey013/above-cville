@@ -66,6 +66,23 @@ const INTRO_VARIANTS = [
   'Up above!',
 ];
 
+const DB_FLAG_MILITARY = 1;
+const DB_FLAG_INTERESTING = 2;
+const KNOWN_DB_FLAG_MASK = 1 | 2 | 4 | 8;
+
+const parseDbFlags = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
 /**
  * Produce aggregate stats about previous sightings for a plane.
  * @param {number[]} timestamps - Epoch milliseconds of sightings/notifications.
@@ -284,26 +301,17 @@ export const composeNotificationMessage = (
   const categoryInfo =
     getCategoryInfo(plane.category ?? plane.cat) ?? undefined;
 
-  const rawDbFlags = plane.dbFlags;
-  let dbFlag = null;
-  if (typeof rawDbFlags === 'number' && Number.isFinite(rawDbFlags)) {
-    dbFlag = rawDbFlags;
-  } else if (typeof rawDbFlags === 'string') {
-    const parsed = Number(rawDbFlags.trim());
-    if (Number.isFinite(parsed)) {
-      dbFlag = parsed;
-    }
-  }
+  const dbFlag = parseDbFlags(plane.dbFlags);
 
-  if (dbFlag !== null && dbFlag !== 1 && dbFlag !== 2) {
+  if (dbFlag !== null && (dbFlag < 0 || (dbFlag & ~KNOWN_DB_FLAG_MASK) !== 0)) {
     logger.warn(
       { dbFlag, plane },
       'Unexpected dbFlags value from airplanes.live payload',
     );
   }
 
-  const isMilitary = dbFlag === 1;
-  const isInteresting = dbFlag === 2;
+  const isMilitary = (dbFlag & DB_FLAG_MILITARY) === DB_FLAG_MILITARY;
+  const isInteresting = (dbFlag & DB_FLAG_INTERESTING) === DB_FLAG_INTERESTING;
   const operatorName =
     plane.ownOp && (isMilitary || isInteresting)
       ? formatAircraftDescription(plane.ownOp)

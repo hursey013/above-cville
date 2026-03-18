@@ -74,10 +74,41 @@ const resolveService = (service) => {
   return service.trim().replace(/\/$/, '');
 };
 
+const resolveServiceEndpoint = (value) => {
+  const sanitized = sanitizeUrl(value);
+  return sanitized ? sanitized.replace(/\/$/, '') : null;
+};
+
+const resolvePdsEndpoint = (payload) => {
+  const serviceEntries = Array.isArray(payload?.didDoc?.service)
+    ? payload.didDoc.service
+    : [];
+
+  for (const entry of serviceEntries) {
+    const type = typeof entry?.type === 'string' ? entry.type : '';
+    const id = typeof entry?.id === 'string' ? entry.id : '';
+    if (
+      type === 'AtprotoPersonalDataServer' ||
+      id === '#atproto_pds' ||
+      id.endsWith('#atproto_pds')
+    ) {
+      const endpoint = resolveServiceEndpoint(
+        entry.serviceEndpoint ?? entry.endpoint,
+      );
+      if (endpoint) {
+        return endpoint;
+      }
+    }
+  }
+
+  return resolveServiceEndpoint(payload?.didDoc?.serviceEndpoint);
+};
+
 export class BskyAgent {
   constructor({ service } = {}) {
     this.service = resolveService(service);
     this.session = null;
+    this.pdsService = this.service;
 
     this.app = {
       bsky: {
@@ -123,7 +154,9 @@ export class BskyAgent {
       handle: payload.handle,
       accessJwt: payload.accessJwt,
       refreshJwt: payload.refreshJwt,
+      didDoc: payload.didDoc ?? null,
     };
+    this.pdsService = resolvePdsEndpoint(payload) ?? this.service;
     return this.session;
   }
 
@@ -168,7 +201,7 @@ export class BskyAgent {
     }
 
     const response = await fetch(
-      `${this.service}/xrpc/com.atproto.repo.uploadBlob`,
+      `${this.pdsService}/xrpc/com.atproto.repo.uploadBlob`,
       {
         method: 'POST',
         headers: {
@@ -202,7 +235,7 @@ export class BskyAgent {
     };
 
     const response = await fetch(
-      `${this.service}/xrpc/com.atproto.repo.createRecord`,
+      `${this.pdsService}/xrpc/com.atproto.repo.createRecord`,
       {
         method: 'POST',
         headers: {

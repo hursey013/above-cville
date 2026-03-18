@@ -5,6 +5,7 @@ import {
   composeNotificationMessage,
   summarizeSightings,
 } from '../src/messages.js';
+import logger from '../src/logger.js';
 
 const buildTimestamps = (now, offsets) => offsets.map((offset) => now - offset);
 
@@ -161,6 +162,39 @@ test('composeNotificationMessage keeps rotorcraft phrasing friendly', () => {
     body,
     /\n\n📡 https:\/\/globe\.airplanes\.live\/\?icao=rot001(\n📷 https:\/\/www\.flightaware\.com\/photos\/aircraft\/N45H)?$/,
   );
+});
+
+test('composeNotificationMessage accepts newer airplanes.live dbFlags bitmasks', () => {
+  const now = Date.now();
+  const warnings = [];
+  const originalWarn = logger.warn;
+  logger.warn = (payload, message) => {
+    warnings.push({ payload, message });
+  };
+
+  try {
+    const { body } = composeNotificationMessage(
+      {
+        hex: 'mask08',
+        registration: 'N473TA',
+        gs: 86,
+        alt_baro: 1250,
+        track: 205,
+        desc: 'PIPER PA-28-140/150/160/180',
+        category: 'A1',
+        dbFlags: 8,
+        ownOp: 'ATP TAA LLC',
+      },
+      [now],
+      now,
+      defaultMessageOptions,
+    );
+
+    assert.match(body, /#N473TA/);
+    assert.equal(warnings.length, 0);
+  } finally {
+    logger.warn = originalWarn;
+  }
 });
 
 test('composeNotificationMessage can hide details link when disabled', () => {

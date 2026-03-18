@@ -43,6 +43,26 @@ const sanitizeUrl = (value) => {
   }
 };
 
+const normalizeServiceUrl = (value) => {
+  const sanitized = sanitizeUrl(value);
+  if (!sanitized) {
+    return '';
+  }
+
+  try {
+    const url = new URL(sanitized);
+    if (url.hostname === 'bsky.app' || url.hostname === 'www.bsky.app') {
+      return 'https://bsky.social';
+    }
+    url.hash = '';
+    url.search = '';
+    url.pathname = url.pathname.replace(/\/$/, '') || '/';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+};
+
 const parseMimeType = (value) => {
   if (typeof value !== 'string') {
     return null;
@@ -244,7 +264,7 @@ export const createPoster = ({
 } = {}) => {
   const handle = typeof identifier === 'string' ? identifier.trim() : '';
   const password = typeof appPassword === 'string' ? appPassword.trim() : '';
-  const serviceUrl = typeof service === 'string' ? service.trim() : '';
+  const serviceUrl = normalizeServiceUrl(service);
 
   if (!dryRun && (!handle || !password)) {
     throw new Error('Bluesky handle and app password are required.');
