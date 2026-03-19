@@ -107,7 +107,6 @@ export const prepareNotification = async ({
   timestamps,
   now,
   aircraftLinkBase,
-  showDetailsLink,
 }) => {
   let attachments = undefined;
   let photoPageUrl = null;
@@ -141,7 +140,6 @@ export const prepareNotification = async ({
 
   const { body } = composeNotificationMessage(plane, timestamps, now, {
     aircraftLinkBase,
-    showDetailsLink,
     photoPageUrl,
   });
 

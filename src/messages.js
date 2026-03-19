@@ -257,7 +257,7 @@ const directionMessage = (plane) => {
  * @param {Record<string, any>} plane - Raw plane object from airplanes.live.
  * @param {number[]} timestamps - Historical notification timestamps for this plane.
  * @param {number} [now=Date.now()] - Reference timestamp.
- * @param {{photoPageUrl?:string|null,aircraftLinkBase?:string|null,showDetailsLink?:boolean}} [options] - Extra rendering options.
+ * @param {{photoPageUrl?:string|null,aircraftLinkBase?:string|null}} [options] - Extra rendering options.
  * @returns {{title: string|undefined, body: string}}
  */
 export const composeNotificationMessage = (
@@ -287,14 +287,7 @@ export const composeNotificationMessage = (
     (registration ? buildIdentityHashtag(registration) : null) ||
     (/^[\w-]+$/iu.test(identity) ? buildIdentityHashtag(identity) : null);
   const identityDisplay = identityHashtag ?? identity;
-  const linkedIdentity = detailsUrl
-    ? `[${identityDisplay}](${detailsUrl})`
-    : identityDisplay;
-  const includeDetailsLink =
-    Boolean(detailsUrl) && options?.showDetailsLink !== false;
-  const descriptiveIdentity = includeDetailsLink
-    ? identityDisplay
-    : linkedIdentity;
+  const descriptiveIdentity = identityDisplay;
   const description = formatAircraftDescription(plane.desc);
   const subjectIdentity = description
     ? `${descriptiveIdentity} (${description})`
@@ -389,7 +382,7 @@ export const composeNotificationMessage = (
   ].filter(Boolean);
 
   const limit = 300;
-  const linkLine = includeDetailsLink ? detailsUrl : null;
+  const linkLine = detailsUrl;
   const linkText = linkLine ? `📡 ${linkLine}` : null;
   const photoPageUrlRaw = options?.photoPageUrl;
   const photoPageUrl =

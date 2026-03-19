@@ -86,7 +86,6 @@ test('readsb planes are filtered after enrichment fills an ignored carrier calls
         maxAltitudeFt: 25000,
         ignoredCarrierCodes: ['PDT'],
         aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
-        showDetailsLink: true,
       },
       db: createDb(),
       publisher: {

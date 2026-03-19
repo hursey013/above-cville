@@ -214,7 +214,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
             timestamps: messageTimestamps,
             now,
             aircraftLinkBase: config.aircraftLinkBase,
-            showDetailsLink: config.showDetailsLink,
           });
           await publisher.publish({
             text: notification.text,

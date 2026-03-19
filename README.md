@@ -72,8 +72,6 @@ services:
 
       # --- Details link ---
       AIRCRAFT_LINK_BASE: 'https://globe.airplanes.live/?icao=' # Link prefix appended with the ICAO hex
-      SHOW_DETAILS_LINK: 'true'
-
       # --- Timezone for logs & cron output ---
       TZ: 'America/New_York'
     volumes:

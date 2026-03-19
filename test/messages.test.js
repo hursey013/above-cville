@@ -11,7 +11,6 @@ const buildTimestamps = (now, offsets) => offsets.map((offset) => now - offset);
 
 const defaultMessageOptions = {
   aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
-  showDetailsLink: true,
 };
 
 test('summarizeSightings tallies recent activity windows', () => {
@@ -195,27 +194,6 @@ test('composeNotificationMessage accepts newer airplanes.live dbFlags bitmasks',
   } finally {
     logger.warn = originalWarn;
   }
-});
-
-test('composeNotificationMessage can hide details link when disabled', () => {
-  const now = Date.now();
-  const plane = {
-    hex: 'hide01',
-    registration: 'N12AB',
-    gs: 150,
-    alt_baro: 2500,
-    track: 10,
-  };
-
-  const { body } = composeNotificationMessage(plane, [now], now, {
-    aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
-    showDetailsLink: false,
-  });
-  assert.match(
-    body,
-    /\[#N12AB\]\(https:\/\/globe\.airplanes\.live\/\?icao=hide01\)/,
-  );
-  assert.doesNotMatch(body, /\n\n📡 </);
 });
 
 test('composeNotificationMessage prefers trimmed callsign over registration', () => {
