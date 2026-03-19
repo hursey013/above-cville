@@ -40,6 +40,27 @@ export const buildPlanePhotoPageUrl = (registration) => {
   return `${FLIGHTAWARE_BASE}/${encodeURIComponent(normalized)}`;
 };
 
+const resolveFlightAwareUrl = (pathOrUrl) => {
+  if (typeof pathOrUrl !== 'string') {
+    return null;
+  }
+
+  const trimmed = pathOrUrl.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return `https://www.flightaware.com${trimmed}`;
+  }
+
+  return null;
+};
+
 /**
  * Extract the OpenGraph image reference from a FlightAware gallery page.
  * @param {string} html
@@ -68,6 +89,30 @@ const extractOgImage = (html) => {
   }
 
   return url;
+};
+
+const extractFirstPhotoDetailUrl = (html) => {
+  if (typeof html !== 'string' || !html) {
+    return null;
+  }
+
+  const match = html.match(/href=["']([^"']*\/photos\/view\/[^"']+)["']/i);
+  return resolveFlightAwareUrl(match?.[1] ?? null);
+};
+
+const extractSizedImage = (html, size) => {
+  if (typeof html !== 'string' || !html || !size) {
+    return null;
+  }
+
+  const escapedSize = size.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matcher = new RegExp(
+    `<a[^>]*data-size=['"]${escapedSize}['"][^>]*data-imgsrc=['"]([^'"]+)['"][^>]*>|<a[^>]*data-imgsrc=['"]([^'"]+)['"][^>]*data-size=['"]${escapedSize}['"][^>]*>`,
+    'i',
+  );
+  const match = html.match(matcher);
+  const candidate = match?.[1] ?? match?.[2] ?? null;
+  return resolveFlightAwareUrl(candidate);
 };
 
 /**
@@ -106,6 +151,12 @@ const extractRetrieverImage = (html) => {
 
 const extractFlightAwareImage = (html) =>
   extractOgImage(html) ?? extractRetrieverImage(html);
+
+const extractFlightAwareDetailImage = (html) =>
+  extractSizedImage(html, 'fullsize') ??
+  extractSizedImage(html, 'xga') ??
+  extractOgImage(html) ??
+  extractRetrieverImage(html);
 
 /**
  * Resolve the most recent FlightAware photo URL for a registration.
@@ -152,13 +203,55 @@ const fetchFlightAwarePhoto = async (registration) => {
     }
 
     const html = await response.text();
-    const imageUrl = extractFlightAwareImage(html);
+    let imageUrl = null;
+    const detailUrl = extractFirstPhotoDetailUrl(html);
+
+    if (detailUrl) {
+      try {
+        const detailResponse = await fetch(detailUrl, {
+          headers: {
+            Accept: 'text/html,application/xhtml+xml',
+          },
+        });
+
+        if (detailResponse.ok) {
+          const detailHtml = await detailResponse.text();
+          imageUrl = extractFlightAwareDetailImage(detailHtml);
+        } else {
+          logger.warn(
+            {
+              source: 'flightaware',
+              registration,
+              status: detailResponse.status,
+              url: detailUrl,
+            },
+            'FlightAware detail photo request failed',
+          );
+        }
+      } catch (error) {
+        logger.warn(
+          {
+            source: 'flightaware',
+            registration,
+            url: detailUrl,
+            err: error,
+          },
+          'Failed to fetch FlightAware detail photo page',
+        );
+      }
+    }
+
+    if (!imageUrl) {
+      imageUrl = extractFlightAwareImage(html);
+    }
+
     logger.info(
       {
         source: 'flightaware',
         registration,
         status: response.status,
         url: pageUrl,
+        detailUrl: detailUrl ?? null,
         foundImage: Boolean(imageUrl),
         htmlPreview: html.slice(0, 200),
       },

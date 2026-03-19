@@ -61,6 +61,64 @@ test('fetchPlanePhotoUrl extracts og:image when present', async () => {
   }
 });
 
+test('fetchPlanePhotoUrl follows first FlightAware detail page and prefers fullsize image', async () => {
+  const galleryHtml = `
+    <html>
+      <head>${defaultMeta}</head>
+      <body>
+        <a href="/photos/view/744217-abcdef/aircraft/N3275F/sort/votes/page/1">
+          First photo
+        </a>
+      </body>
+    </html>
+  `;
+
+  const detailHtml = `
+    <html>
+      <head>
+        <meta property="og:image" content="https://photos.flightaware.com/photos/retriever/LARGEIMAGE123">
+      </head>
+      <body>
+        <span id="photo_size_selectors">
+          <a data-size="xga" data-imgsrc="https://photos.flightaware.com/photos/retriever/LARGEIMAGE123">large</a>
+          <a data-size="fullsize" data-imgsrc="https://photos.flightaware.com/photos/retriever/FULLSIZE456">full</a>
+        </span>
+      </body>
+    </html>
+  `;
+
+  const calls = [];
+  global.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes('/photos/aircraft/N3275F/sort/date')) {
+      return createOkResponse(galleryHtml);
+    }
+    if (
+      String(url).includes(
+        '/photos/view/744217-abcdef/aircraft/N3275F/sort/votes/page/1',
+      )
+    ) {
+      return createOkResponse(detailHtml);
+    }
+    throw new Error(`Unexpected URL: ${url}`);
+  };
+
+  try {
+    const result = await fetchPlanePhotoUrl('N3275F');
+    assert.equal(
+      result,
+      'https://photos.flightaware.com/photos/retriever/FULLSIZE456',
+    );
+    assert.equal(calls.length, 2);
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+});
+
 test('fetchPlanePhotoUrl ignores default image', async () => {
   global.fetch = async () => createOkResponse(`<head>${defaultMeta}</head>`);
 
