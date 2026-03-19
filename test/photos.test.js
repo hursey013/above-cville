@@ -75,3 +75,30 @@ test('fetchPlanePhotoUrl ignores default image', async () => {
     }
   }
 });
+
+test('fetchPlanePhotoUrl falls back to FlightAware retriever image in page body', async () => {
+  const html = `
+    <html>
+      <head>${defaultMeta}</head>
+      <body>
+        <img src="https://photos.flightaware.com/photos/retriever/c6f7998e365471484d1959581a36fca03281f150">
+      </body>
+    </html>
+  `;
+
+  global.fetch = async () => createOkResponse(html);
+
+  try {
+    const result = await fetchPlanePhotoUrl('N729CD');
+    assert.equal(
+      result,
+      'https://photos.flightaware.com/photos/retriever/c6f7998e365471484d1959581a36fca03281f150',
+    );
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+});

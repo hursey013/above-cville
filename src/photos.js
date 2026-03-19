@@ -71,6 +71,36 @@ const extractOgImage = (html) => {
 };
 
 /**
+ * FlightAware gallery pages do not always expose the aircraft image through
+ * OpenGraph metadata, but the photo retriever URL is still present in the body.
+ * Fall back to the first retriever image when og:image is generic or missing.
+ * @param {string} html
+ * @returns {string|null}
+ */
+const extractRetrieverImage = (html) => {
+  if (typeof html !== 'string' || !html) {
+    return null;
+  }
+
+  const absoluteMatch = html.match(
+    /https:\/\/photos\.flightaware\.com\/photos\/retriever\/[A-Za-z0-9]+/i,
+  );
+  if (absoluteMatch?.[0]) {
+    return absoluteMatch[0];
+  }
+
+  const relativeMatch = html.match(/\/photos\/retriever\/[A-Za-z0-9]+/i);
+  if (relativeMatch?.[0]) {
+    return `https://photos.flightaware.com${relativeMatch[0]}`;
+  }
+
+  return null;
+};
+
+const extractFlightAwareImage = (html) =>
+  extractOgImage(html) ?? extractRetrieverImage(html);
+
+/**
  * Resolve the most recent FlightAware photo URL for a registration.
  * @param {string|null} registration - Uppercase registration identifier.
  * @returns {Promise<string|null>}
@@ -115,7 +145,7 @@ const fetchFlightAwarePhoto = async (registration) => {
     }
 
     const html = await response.text();
-    const imageUrl = extractOgImage(html);
+    const imageUrl = extractFlightAwareImage(html);
     logger.info(
       {
         source: 'flightaware',
