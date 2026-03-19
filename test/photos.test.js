@@ -102,3 +102,33 @@ test('fetchPlanePhotoUrl falls back to FlightAware retriever image in page body'
     }
   }
 });
+
+test('fetchPlanePhotoUrl ignores retriever images inside noscript', async () => {
+  const html = `
+    <html>
+      <head>${defaultMeta}</head>
+      <body>
+        <noscript>
+          <img src="https://photos.flightaware.com/photos/retriever/LOWQUALITY123">
+        </noscript>
+        <img src="https://photos.flightaware.com/photos/retriever/HIGHQUALITY456">
+      </body>
+    </html>
+  `;
+
+  global.fetch = async () => createOkResponse(html);
+
+  try {
+    const result = await fetchPlanePhotoUrl('N730CD');
+    assert.equal(
+      result,
+      'https://photos.flightaware.com/photos/retriever/HIGHQUALITY456',
+    );
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+});

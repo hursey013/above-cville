@@ -82,14 +82,21 @@ const extractRetrieverImage = (html) => {
     return null;
   }
 
-  const absoluteMatch = html.match(
+  const withoutNoscript = html.replace(
+    /<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi,
+    ' ',
+  );
+
+  const absoluteMatch = withoutNoscript.match(
     /https:\/\/photos\.flightaware\.com\/photos\/retriever\/[A-Za-z0-9]+/i,
   );
   if (absoluteMatch?.[0]) {
     return absoluteMatch[0];
   }
 
-  const relativeMatch = html.match(/\/photos\/retriever\/[A-Za-z0-9]+/i);
+  const relativeMatch = withoutNoscript.match(
+    /\/photos\/retriever\/[A-Za-z0-9]+/i,
+  );
   if (relativeMatch?.[0]) {
     return `https://photos.flightaware.com${relativeMatch[0]}`;
   }
