@@ -129,14 +129,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
           continue;
         }
 
-        if (shouldIgnoreCarrier(plane.flight, config.ignoredCarrierCodes)) {
-          rejectedCount += 1;
-          logFilterRejection(logger, plane, 'ignoredCarrier', {
-            ignoredCarrierCodes: config.ignoredCarrierCodes,
-          });
-          continue;
-        }
-
         let planeRecord = plane;
         if (snapshot.source === LOCAL_READSB_SOURCE) {
           // Only local feeds need enrichment. airplanes.live already carries
@@ -163,6 +155,16 @@ export const createPoller = ({ config, db, publisher, logger }) => {
             db.setEnrichment(hex, enrichmentResult.cacheEntry);
             hasChanges = true;
           }
+        }
+
+        if (
+          shouldIgnoreCarrier(planeRecord.flight, config.ignoredCarrierCodes)
+        ) {
+          rejectedCount += 1;
+          logFilterRejection(logger, planeRecord, 'ignoredCarrier', {
+            ignoredCarrierCodes: config.ignoredCarrierCodes,
+          });
+          continue;
         }
 
         if (isGrounded(planeRecord)) {
