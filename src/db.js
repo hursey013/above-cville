@@ -27,76 +27,15 @@ const normalizeRecord = (value) => {
         : null,
   };
 };
-
-const mergeRecord = (target, source) => {
-  const sourceRecord = normalizeRecord(source);
-  const mergedTimestamps = [
-    ...target.timestamps,
-    ...sourceRecord.timestamps,
-  ].sort((a, b) => a - b);
-
-  return {
-    timestamps: mergedTimestamps,
-    enrichment: sourceRecord.enrichment ?? target.enrichment ?? null,
-  };
-};
-
-// Keep the on-disk format forgiving. Older installs may still have enrichment
-// data nested under apiDiagnostics from an earlier iteration of the feature.
 const normalizeData = (data = {}) => {
   const normalized = {};
 
-  if (isPlainObject(data)) {
-    for (const [key, value] of Object.entries(data)) {
-      if (
-        key === 'sightings' ||
-        key === 'enrichmentCache' ||
-        key === 'apiDiagnostics'
-      ) {
-        continue;
-      }
-
-      const hex = normalizeHex(key);
-      if (!hex) {
-        continue;
-      }
-
-      normalized[hex] = normalizeRecord(value);
-    }
-  }
-
-  const sightings = Array.isArray(data.sightings) ? data.sightings : [];
-  for (const sighting of sightings) {
-    const hex = normalizeHex(sighting?.hex);
-    if (!hex) {
-      continue;
-    }
-
-    const existing = normalized[hex] ?? normalizeRecord(null);
-    normalized[hex] = mergeRecord(existing, {
-      timestamps: sighting?.timestamps,
-    });
-  }
-
-  let enrichmentCache = isPlainObject(data.enrichmentCache)
-    ? data.enrichmentCache
-    : null;
-
-  if (!enrichmentCache) {
-    const legacyCache = data.apiDiagnostics?.enrichmentCache;
-    enrichmentCache = isPlainObject(legacyCache) ? legacyCache : null;
-  }
-
-  for (const [key, value] of Object.entries(enrichmentCache ?? {})) {
+  for (const [key, value] of Object.entries(data)) {
     const hex = normalizeHex(key);
     if (!hex) {
       continue;
     }
-
-    const existing = normalized[hex] ?? normalizeRecord(null);
-    normalized[hex] = mergeRecord(existing, {
-      enrichment: value,
-    });
+    normalized[hex] = normalizeRecord(value);
   }
 
   return normalized;
@@ -142,10 +81,6 @@ export const createDb = async ({ dataFile }) => {
 
     if (!Array.isArray(record.timestamps)) {
       record.timestamps = [];
-    }
-
-    if (record.enrichment !== null && typeof record.enrichment !== 'object') {
-      record.enrichment = null;
     }
 
     return record;

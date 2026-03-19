@@ -13,16 +13,11 @@ const createTempDataFile = async (name, payload) => {
   return file;
 };
 
-test('createDb migrates legacy split sightings and enrichment cache by hex', async () => {
-  const file = await createTempDataFile('legacy-split.json', {
-    sightings: [
-      {
-        hex: 'AD071D',
-        timestamps: [1000, 2000],
-      },
-    ],
-    enrichmentCache: {
-      ad071d: {
+test('createDb reads and writes the per-hex record format', async () => {
+  const file = await createTempDataFile('per-hex-write.json', {
+    ad071d: {
+      timestamps: [1000, 2000],
+      enrichment: {
         flight: 'PDT5973',
         registration: 'N939AE',
       },
@@ -80,27 +75,16 @@ test('createDb reads already-migrated per-hex records safely', async () => {
   assert.equal(db.getTrackingCount(), 1);
 });
 
-test('createDb falls back to legacy apiDiagnostics enrichment cache', async () => {
-  const file = await createTempDataFile('legacy-nested.json', {
-    sightings: [
-      {
-        hex: 'abc123',
-        timestamps: [42],
-      },
-    ],
-    apiDiagnostics: {
-      enrichmentCache: {
-        abc123: {
-          ownOp: 'DELTA AIR LINES',
-        },
-      },
+test('createDb ignores invalid record keys and normalizes malformed values', async () => {
+  const file = await createTempDataFile('per-hex-malformed.json', {
+    abc123: {
+      timestamps: [42, 'bad', Number.NaN],
+      enrichment: 'wrong-shape',
     },
   });
 
   const db = await createDb({ dataFile: file });
 
   assert.deepEqual(db.getSightingTimestamps('abc123'), [42]);
-  assert.deepEqual(db.getEnrichment('abc123'), {
-    ownOp: 'DELTA AIR LINES',
-  });
+  assert.equal(db.getEnrichment('abc123'), null);
 });
