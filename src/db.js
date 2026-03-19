@@ -2,28 +2,101 @@ import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import { dirname, resolve } from 'path';
 import fs from 'fs/promises';
+import { normalizeHex } from './utils.js';
 
-const defaultData = {
-  sightings: [],
-  enrichmentCache: {},
+const defaultData = {};
+
+const isPlainObject = (value) =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeTimestamps = (timestamps) =>
+  Array.isArray(timestamps)
+    ? timestamps.filter(
+        (timestamp) =>
+          typeof timestamp === 'number' && Number.isFinite(timestamp),
+      )
+    : [];
+
+const normalizeRecord = (value) => {
+  const record = isPlainObject(value) ? value : {};
+  return {
+    timestamps: normalizeTimestamps(record.timestamps),
+    enrichment:
+      record.enrichment && typeof record.enrichment === 'object'
+        ? record.enrichment
+        : null,
+  };
+};
+
+const mergeRecord = (target, source) => {
+  const sourceRecord = normalizeRecord(source);
+  const mergedTimestamps = [
+    ...target.timestamps,
+    ...sourceRecord.timestamps,
+  ].sort((a, b) => a - b);
+
+  return {
+    timestamps: mergedTimestamps,
+    enrichment: sourceRecord.enrichment ?? target.enrichment ?? null,
+  };
 };
 
 // Keep the on-disk format forgiving. Older installs may still have enrichment
 // data nested under apiDiagnostics from an earlier iteration of the feature.
 const normalizeData = (data = {}) => {
-  const normalized = {
-    sightings: Array.isArray(data.sightings) ? data.sightings : [],
-    enrichmentCache:
-      data.enrichmentCache && typeof data.enrichmentCache === 'object'
-        ? data.enrichmentCache
-        : {},
-  };
+  const normalized = {};
 
-  if (!Object.keys(normalized.enrichmentCache).length) {
-    const legacyCache = data.apiDiagnostics?.enrichmentCache;
-    if (legacyCache && typeof legacyCache === 'object') {
-      normalized.enrichmentCache = legacyCache;
+  if (isPlainObject(data)) {
+    for (const [key, value] of Object.entries(data)) {
+      if (
+        key === 'sightings' ||
+        key === 'enrichmentCache' ||
+        key === 'apiDiagnostics'
+      ) {
+        continue;
+      }
+
+      const hex = normalizeHex(key);
+      if (!hex) {
+        continue;
+      }
+
+      normalized[hex] = normalizeRecord(value);
     }
+  }
+
+  const sightings = Array.isArray(data.sightings) ? data.sightings : [];
+  for (const sighting of sightings) {
+    const hex = normalizeHex(sighting?.hex);
+    if (!hex) {
+      continue;
+    }
+
+    const existing = normalized[hex] ?? normalizeRecord(null);
+    normalized[hex] = mergeRecord(existing, {
+      timestamps: sighting?.timestamps,
+    });
+  }
+
+  let enrichmentCache = isPlainObject(data.enrichmentCache)
+    ? data.enrichmentCache
+    : null;
+
+  if (!enrichmentCache) {
+    const legacyCache = data.apiDiagnostics?.enrichmentCache;
+    enrichmentCache = isPlainObject(legacyCache) ? legacyCache : null;
+  }
+
+  for (const [key, value] of Object.entries(enrichmentCache ?? {})) {
+    const hex = normalizeHex(key);
+    if (!hex) {
+      continue;
+    }
+
+    const existing = normalized[hex] ?? normalizeRecord(null);
+    normalized[hex] = mergeRecord(existing, {
+      enrichment: value,
+    });
   }
 
   return normalized;
@@ -47,21 +120,35 @@ export const createDb = async ({ dataFile }) => {
   await low.read();
   low.data = normalizeData(low.data ?? defaultData);
 
-  const findSighting = (hex) =>
-    low.data.sightings.find((entry) => entry?.hex === hex) ?? null;
+  const findRecord = (hex) => {
+    const normalizedHex = normalizeHex(hex);
+    if (!normalizedHex) {
+      return null;
+    }
+    return low.data[normalizedHex] ?? null;
+  };
 
-  const ensureSighting = (hex) => {
-    let sighting = findSighting(hex);
-    if (!sighting) {
-      sighting = { hex, timestamps: [] };
-      low.data.sightings.push(sighting);
+  const ensureRecord = (hex) => {
+    const normalizedHex = normalizeHex(hex);
+    if (!normalizedHex) {
+      return null;
     }
 
-    if (!Array.isArray(sighting.timestamps)) {
-      sighting.timestamps = [];
+    let record = findRecord(normalizedHex);
+    if (!record) {
+      record = normalizeRecord(null);
+      low.data[normalizedHex] = record;
     }
 
-    return sighting;
+    if (!Array.isArray(record.timestamps)) {
+      record.timestamps = [];
+    }
+
+    if (record.enrichment !== null && typeof record.enrichment !== 'object') {
+      record.enrichment = null;
+    }
+
+    return record;
   };
 
   return {
@@ -71,23 +158,30 @@ export const createDb = async ({ dataFile }) => {
       await low.write();
     },
     getSightingTimestamps(hex) {
-      const sighting = findSighting(hex);
-      return Array.isArray(sighting?.timestamps) ? sighting.timestamps : [];
+      const record = findRecord(hex);
+      return Array.isArray(record?.timestamps) ? record.timestamps : [];
     },
     recordSighting(hex, timestamp) {
-      const sighting = ensureSighting(hex);
-      sighting.timestamps.push(timestamp);
+      const record = ensureRecord(hex);
+      if (!record) {
+        return;
+      }
+      record.timestamps.push(timestamp);
     },
     getTrackingCount() {
-      return low.data.sightings.filter(
-        (entry) => Array.isArray(entry.timestamps) && entry.timestamps.length,
+      return Object.values(low.data).filter(
+        (entry) => Array.isArray(entry?.timestamps) && entry.timestamps.length,
       ).length;
     },
     getEnrichment(hex) {
-      return low.data.enrichmentCache[hex] ?? null;
+      return findRecord(hex)?.enrichment ?? null;
     },
     setEnrichment(hex, entry) {
-      low.data.enrichmentCache[hex] = entry;
+      const record = ensureRecord(hex);
+      if (!record) {
+        return;
+      }
+      record.enrichment = entry && typeof entry === 'object' ? entry : null;
     },
   };
 };

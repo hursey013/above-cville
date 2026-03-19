@@ -1,0 +1,14 @@
+{
+  "ad071d": {
+    "timestamps": [
+      1000,
+      2000,
+      3000
+    ],
+    "enrichment": {
+      "flight": "PDT5973",
+      "registration": "N939AE",
+      "desc": "EMBRAER ERJ-145"
+    }
+  }
+}

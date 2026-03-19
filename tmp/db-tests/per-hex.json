@@ -1,0 +1,15 @@
+{
+  "ad071d": {
+    "timestamps": [
+      1000
+    ],
+    "enrichment": {
+      "flight": "PDT5973"
+    }
+  },
+  "badkey": {
+    "timestamps": [
+      "oops"
+    ]
+  }
+}
