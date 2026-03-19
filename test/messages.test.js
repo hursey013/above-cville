@@ -217,3 +217,29 @@ test('composeNotificationMessage can hide details link when disabled', () => {
   );
   assert.doesNotMatch(body, /\n\n📡 </);
 });
+
+test('composeNotificationMessage prefers trimmed callsign over registration', () => {
+  const now = Date.now();
+  const plane = {
+    hex: 'a1ee64',
+    flight: 'CXK553  ',
+    registration: 'N223YZ',
+    gs: 127.3,
+    alt_baro: 6725,
+    track: 34.44,
+    desc: 'PIPER PA-46 MALIBU',
+    category: 'A1',
+    dbFlags: 8,
+  };
+
+  const { body } = composeNotificationMessage(
+    plane,
+    [now],
+    now,
+    defaultMessageOptions,
+  );
+
+  assert.match(body, /#CXK553/);
+  assert.doesNotMatch(body, /#N223YZ/);
+  assert.doesNotMatch(body, /CXK553\s{2,}/);
+});

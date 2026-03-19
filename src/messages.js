@@ -268,11 +268,12 @@ export const composeNotificationMessage = (
 ) => {
   const registration =
     normalizeRegistration(plane.registration ?? plane.r) || null;
+  const flight =
+    typeof plane.flight === 'string' && plane.flight.trim()
+      ? plane.flight.trim()
+      : null;
   const identity =
-    plane.flight?.trim() ||
-    registration ||
-    plane.hex?.toUpperCase() ||
-    'Unknown aircraft';
+    flight || registration || plane.hex?.toUpperCase() || 'Unknown aircraft';
   const stats = summarizeSightings(timestamps, now);
 
   const linkBase =
@@ -282,6 +283,7 @@ export const composeNotificationMessage = (
   const hex = plane.hex ? String(plane.hex).toLowerCase() : null;
   const detailsUrl = hex && linkBase ? `${linkBase}${hex}` : null;
   const identityHashtag =
+    (flight ? buildIdentityHashtag(flight) : null) ||
     (registration ? buildIdentityHashtag(registration) : null) ||
     (/^[\w-]+$/iu.test(identity) ? buildIdentityHashtag(identity) : null);
   const identityDisplay = identityHashtag ?? identity;

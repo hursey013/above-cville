@@ -11,22 +11,23 @@ const SOURCE_LABELS = {
   planespotters: 'Planespotters.net',
 };
 
-// Hashtags look best when they map to something a human would recognize first,
-// so prefer registration, then callsign, then ICAO hex as a last resort.
+// Hashtags and alt text read best when they use the identifier most people will
+// recognize in the post itself, so prefer callsign, then registration, then
+// ICAO hex as a last resort.
 const resolvePlaneIdentityTag = (plane, registration) => {
-  const registrationTag = registration
-    ? buildIdentityHashtag(registration)
-    : null;
-  if (registrationTag) {
-    return registrationTag;
-  }
-
   const flight = typeof plane.flight === 'string' ? plane.flight.trim() : '';
   if (flight) {
     const flightTag = buildIdentityHashtag(flight);
     if (flightTag) {
       return flightTag;
     }
+  }
+
+  const registrationTag = registration
+    ? buildIdentityHashtag(registration)
+    : null;
+  if (registrationTag) {
+    return registrationTag;
   }
 
   const hex =
