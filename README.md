@@ -69,6 +69,7 @@ services:
 
       # --- Healthchecks.io heartbeat (optional) ---
       HEALTHCHECKS_PING_URL: '' # e.g. https://hc-ping.com/your-uuid
+      HEALTHCHECKS_SUCCESS_INTERVAL_SECONDS: '60' # Success heartbeat interval, independent of poll rate
 
       # --- Details link ---
       AIRCRAFT_LINK_BASE: 'https://globe.airplanes.live/?icao=' # Link prefix appended with the ICAO hex

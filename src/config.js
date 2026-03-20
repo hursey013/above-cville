@@ -46,6 +46,10 @@ export const config = {
   },
   healthchecks: {
     pingUrl: parseString(process.env.HEALTHCHECKS_PING_URL),
+    successIntervalSeconds: Math.max(
+      0,
+      parseNumber(process.env.HEALTHCHECKS_SUCCESS_INTERVAL_SECONDS, 60),
+    ),
   },
   bluesky: {
     service: parseString(process.env.BLUESKY_SERVICE) || 'https://bsky.social',

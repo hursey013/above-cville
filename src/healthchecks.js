@@ -1,9 +1,7 @@
 import config from './config.js';
 import logger from './logger.js';
 
-const pingUrl = config?.healthchecks?.pingUrl || '';
-
-const buildPingUrl = (variant) => {
+const buildPingUrl = (pingUrl, variant) => {
   if (!pingUrl) {
     return null;
   }
@@ -18,58 +16,93 @@ const buildPingUrl = (variant) => {
   }
 };
 
-const sendPing = async (variant, payload) => {
-  const url = buildPingUrl(variant);
-  if (!url) {
-    return;
-  }
+export const createHealthcheckNotifier = ({
+  pingUrl = '',
+  successIntervalSeconds = 0,
+  fetchImpl = fetch,
+  loggerInstance = logger,
+  now = () => Date.now(),
+} = {}) => {
+  let lastSuccessPingAt = null;
+  const successIntervalMs = Math.max(0, successIntervalSeconds) * 1000;
 
-  const hasPayload =
-    payload && typeof payload === 'object' && Object.keys(payload).length > 0;
-  const options = hasPayload
-    ? {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+  const sendPing = async (variant, payload) => {
+    const currentTime = now();
+
+    if (
+      variant === 'success' &&
+      successIntervalMs > 0 &&
+      lastSuccessPingAt !== null &&
+      currentTime - lastSuccessPingAt < successIntervalMs
+    ) {
+      return;
+    }
+
+    const url = buildPingUrl(pingUrl, variant);
+    if (!url) {
+      return;
+    }
+
+    const hasPayload =
+      payload && typeof payload === 'object' && Object.keys(payload).length > 0;
+    const options = hasPayload
+      ? {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      : {
+          method: 'get',
+        };
+
+    try {
+      const response = await fetchImpl(url, options);
+      if (!response.ok) {
+        loggerInstance.warn(
+          {
+            source: 'healthchecks',
+            status: response.status,
+            variant,
+            url,
+          },
+          'Healthchecks ping failed',
+        );
+        return;
       }
-    : {
-        method: 'get',
-      };
 
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      logger.warn(
+      if (variant === 'success') {
+        lastSuccessPingAt = currentTime;
+      }
+    } catch (error) {
+      loggerInstance.warn(
         {
           source: 'healthchecks',
-          status: response.status,
           variant,
           url,
+          err: error,
         },
-        'Healthchecks ping failed',
+        'Healthchecks ping threw',
       );
     }
-  } catch (error) {
-    logger.warn(
-      {
-        source: 'healthchecks',
-        variant,
-        url,
-        err: error,
-      },
-      'Healthchecks ping threw',
-    );
-  }
+  };
+
+  return {
+    notifyHealthcheckStart: () => sendPing('start'),
+    notifyHealthcheckSuccess: (payload) => sendPing('success', payload),
+    notifyHealthcheckFailure: (payload) => sendPing('fail', payload),
+  };
 };
 
-export const notifyHealthcheckStart = () => sendPing('start');
+const notifier = createHealthcheckNotifier({
+  pingUrl: config?.healthchecks?.pingUrl || '',
+  successIntervalSeconds: config?.healthchecks?.successIntervalSeconds || 0,
+});
 
-export const notifyHealthcheckSuccess = (payload) =>
-  sendPing('success', payload);
-
-export const notifyHealthcheckFailure = (payload) => sendPing('fail', payload);
+export const notifyHealthcheckStart = notifier.notifyHealthcheckStart;
+export const notifyHealthcheckSuccess = notifier.notifyHealthcheckSuccess;
+export const notifyHealthcheckFailure = notifier.notifyHealthcheckFailure;
 
 export default {
   notifyHealthcheckStart,
