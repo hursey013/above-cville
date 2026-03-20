@@ -100,21 +100,6 @@ const extractFirstPhotoDetailUrl = (html) => {
   return resolveFlightAwareUrl(match?.[1] ?? null);
 };
 
-const extractSizedImage = (html, size) => {
-  if (typeof html !== 'string' || !html || !size) {
-    return null;
-  }
-
-  const escapedSize = size.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const matcher = new RegExp(
-    `<a[^>]*data-size=['"]${escapedSize}['"][^>]*data-imgsrc=['"]([^'"]+)['"][^>]*>|<a[^>]*data-imgsrc=['"]([^'"]+)['"][^>]*data-size=['"]${escapedSize}['"][^>]*>`,
-    'i',
-  );
-  const match = html.match(matcher);
-  const candidate = match?.[1] ?? match?.[2] ?? null;
-  return resolveFlightAwareUrl(candidate);
-};
-
 /**
  * FlightAware gallery pages do not always expose the aircraft image through
  * OpenGraph metadata, but the photo retriever URL is still present in the body.
@@ -153,9 +138,7 @@ const extractFlightAwareImage = (html) =>
   extractOgImage(html) ?? extractRetrieverImage(html);
 
 const extractFlightAwareDetailImage = (html) =>
-  extractSizedImage(html, 'xga') ??
-  extractOgImage(html) ??
-  extractRetrieverImage(html);
+  extractOgImage(html) ?? extractRetrieverImage(html);
 
 /**
  * Resolve the most recent FlightAware photo URL for a registration.

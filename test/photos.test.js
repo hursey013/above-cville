@@ -61,7 +61,7 @@ test('fetchPlanePhotoUrl extracts og:image when present', async () => {
   }
 });
 
-test('fetchPlanePhotoUrl follows first FlightAware detail page and prefers xga image', async () => {
+test('fetchPlanePhotoUrl follows first FlightAware detail page and uses og:image', async () => {
   const galleryHtml = `
     <html>
       <head>${defaultMeta}</head>
@@ -78,12 +78,7 @@ test('fetchPlanePhotoUrl follows first FlightAware detail page and prefers xga i
       <head>
         <meta property="og:image" content="https://photos.flightaware.com/photos/retriever/LARGEIMAGE123">
       </head>
-      <body>
-        <span id="photo_size_selectors">
-          <a data-size="xga" data-imgsrc="https://photos.flightaware.com/photos/retriever/LARGEIMAGE123">large</a>
-          <a data-size="fullsize" data-imgsrc="https://photos.flightaware.com/photos/retriever/FULLSIZE456">full</a>
-        </span>
-      </body>
+      <body></body>
     </html>
   `;
 
