@@ -12,7 +12,7 @@ const createLogger = () => ({
   error() {},
 });
 
-const createDb = () => ({
+const createDb = (overrides = {}) => ({
   getEnrichment() {
     return null;
   },
@@ -27,6 +27,7 @@ const createDb = () => ({
   getTrackingCount() {
     return 0;
   },
+  ...overrides,
 });
 
 test('readsb planes are filtered after enrichment fills an ignored carrier callsign', async () => {
@@ -107,4 +108,132 @@ test('readsb planes are filtered after enrichment fills an ignored carrier calls
   }
 
   assert.equal(publishes.length, 0);
+});
+
+test('grounded readsb planes are rejected before enrichment is attempted', async () => {
+  const fetchCalls = [];
+
+  global.fetch = async (url) => {
+    fetchCalls.push(String(url));
+    if (String(url).includes('?circle=')) {
+      return {
+        ok: true,
+        json: async () => ({
+          aircraft: [
+            {
+              hex: 'ad071d',
+              r: 'N939AE',
+              alt_baro: 'ground',
+            },
+          ],
+        }),
+      };
+    }
+
+    throw new Error(`Unexpected URL: ${url}`);
+  };
+
+  try {
+    const poller = createPoller({
+      config: {
+        aircraftApi: {
+          source: 'readsb',
+          baseUrl: 'http://feeder.local:30152',
+          enrichmentTtlMinutes: 60,
+        },
+        latitude: 38.0375,
+        longitude: -78.4863,
+        radius: 5,
+        cooldownMinutes: 10,
+        maxAltitudeFt: 25000,
+        ignoredCarrierCodes: ['PDT'],
+        aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
+      },
+      db: createDb(),
+      publisher: {
+        isDryRun: false,
+        async publish() {
+          throw new Error('publish should not be called for grounded planes');
+        },
+      },
+      logger: createLogger(),
+    });
+
+    await poller.runPoll();
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+
+  assert.equal(fetchCalls.length, 1);
+  assert.match(fetchCalls[0], /\?circle=/);
+});
+
+test('readsb planes inside cooldown are rejected before enrichment is attempted', async () => {
+  const fetchCalls = [];
+
+  global.fetch = async (url) => {
+    fetchCalls.push(String(url));
+    if (String(url).includes('?circle=')) {
+      return {
+        ok: true,
+        json: async () => ({
+          aircraft: [
+            {
+              hex: 'ad071d',
+              r: 'N939AE',
+              alt_baro: 3900,
+            },
+          ],
+        }),
+      };
+    }
+
+    throw new Error(`Unexpected URL: ${url}`);
+  };
+
+  try {
+    const poller = createPoller({
+      config: {
+        aircraftApi: {
+          source: 'readsb',
+          baseUrl: 'http://feeder.local:30152',
+          enrichmentTtlMinutes: 60,
+        },
+        latitude: 38.0375,
+        longitude: -78.4863,
+        radius: 5,
+        cooldownMinutes: 10,
+        maxAltitudeFt: 25000,
+        ignoredCarrierCodes: ['PDT'],
+        aircraftLinkBase: 'https://globe.airplanes.live/?icao=',
+      },
+      db: createDb({
+        getSightingTimestamps() {
+          return [Date.now()];
+        },
+      }),
+      publisher: {
+        isDryRun: false,
+        async publish() {
+          throw new Error('publish should not be called during cooldown');
+        },
+      },
+      logger: createLogger(),
+    });
+
+    await poller.runPoll();
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+
+  assert.equal(fetchCalls.length, 1);
+  assert.match(fetchCalls[0], /\?circle=/);
 });

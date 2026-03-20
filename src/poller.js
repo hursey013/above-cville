@@ -129,6 +129,44 @@ export const createPoller = ({ config, db, publisher, logger }) => {
           continue;
         }
 
+        if (isGrounded(plane)) {
+          rejectedCount += 1;
+          logFilterRejection(logger, plane, 'grounded');
+          continue;
+        }
+
+        const altitudeFt = resolveAltitudeFt(plane);
+        if (isAboveConfiguredCeiling(altitudeFt, config.maxAltitudeFt)) {
+          rejectedCount += 1;
+          logFilterRejection(logger, plane, 'aboveConfiguredCeiling', {
+            altitudeFt,
+            maxAltitudeFt: config.maxAltitudeFt,
+          });
+          continue;
+        }
+
+        const timestamps = db.getSightingTimestamps(hex);
+        const { secondsSinceLast, shouldNotify } = resolveNotificationState(
+          timestamps,
+          now,
+          config.cooldownMinutes,
+        );
+
+        if (!shouldNotify) {
+          rejectedCount += 1;
+          const cooldownSeconds = config.cooldownMinutes * 60;
+          logFilterRejection(logger, plane, 'cooldownActive', {
+            cooldownSeconds,
+            secondsSinceLast: Number.isFinite(secondsSinceLast)
+              ? Math.round(secondsSinceLast)
+              : null,
+            secondsUntilNext: Number.isFinite(secondsSinceLast)
+              ? Math.max(0, Math.round(cooldownSeconds - secondsSinceLast))
+              : null,
+          });
+          continue;
+        }
+
         let planeRecord = plane;
         if (snapshot.source === LOCAL_READSB_SOURCE) {
           // Only local feeds need enrichment. airplanes.live already carries
@@ -163,44 +201,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
           rejectedCount += 1;
           logFilterRejection(logger, planeRecord, 'ignoredCarrier', {
             ignoredCarrierCodes: config.ignoredCarrierCodes,
-          });
-          continue;
-        }
-
-        if (isGrounded(planeRecord)) {
-          rejectedCount += 1;
-          logFilterRejection(logger, planeRecord, 'grounded');
-          continue;
-        }
-
-        const altitudeFt = resolveAltitudeFt(planeRecord);
-        if (isAboveConfiguredCeiling(altitudeFt, config.maxAltitudeFt)) {
-          rejectedCount += 1;
-          logFilterRejection(logger, planeRecord, 'aboveConfiguredCeiling', {
-            altitudeFt,
-            maxAltitudeFt: config.maxAltitudeFt,
-          });
-          continue;
-        }
-
-        const timestamps = db.getSightingTimestamps(hex);
-        const { secondsSinceLast, shouldNotify } = resolveNotificationState(
-          timestamps,
-          now,
-          config.cooldownMinutes,
-        );
-
-        if (!shouldNotify) {
-          rejectedCount += 1;
-          const cooldownSeconds = config.cooldownMinutes * 60;
-          logFilterRejection(logger, planeRecord, 'cooldownActive', {
-            cooldownSeconds,
-            secondsSinceLast: Number.isFinite(secondsSinceLast)
-              ? Math.round(secondsSinceLast)
-              : null,
-            secondsUntilNext: Number.isFinite(secondsSinceLast)
-              ? Math.max(0, Math.round(cooldownSeconds - secondsSinceLast))
-              : null,
           });
           continue;
         }
