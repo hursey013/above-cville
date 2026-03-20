@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { BskyAgent, RichText } from '@atproto/api';
+import logger from './logger.js';
 
 const MAX_BSKY_CHARS = 300;
 const MAX_IMAGE_BYTES = 976 * 1024; // Bluesky image uploads must stay under ~1 MB
@@ -158,28 +159,54 @@ const downloadImage = async (url) => {
     });
 
     if (!response.ok) {
-      return null;
+      return {
+        image: null,
+        reason: 'downloadFailed',
+        details: { status: response.status },
+      };
     }
 
     const mimeType = parseMimeType(response.headers?.get?.('content-type'));
     if (!mimeType || !mimeType.startsWith('image/')) {
-      return null;
+      return {
+        image: null,
+        reason: 'invalidContentType',
+        details: { mimeType },
+      };
     }
 
     const arrayBuffer = await response.arrayBuffer();
     if (!arrayBuffer || !arrayBuffer.byteLength) {
-      return null;
+      return {
+        image: null,
+        reason: 'emptyImage',
+        details: {},
+      };
     }
 
     if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
-      return null;
+      return {
+        image: null,
+        reason: 'imageTooLarge',
+        details: {
+          byteLength: arrayBuffer.byteLength,
+          maxBytes: MAX_IMAGE_BYTES,
+        },
+      };
     }
 
     const bytes = Buffer.from(arrayBuffer);
-    return { bytes, mimeType };
+    return {
+      image: { bytes, mimeType },
+      reason: null,
+      details: { byteLength: arrayBuffer.byteLength },
+    };
   } catch (error) {
-    console.warn(`Failed to download attachment from ${url}`, error);
-    return null;
+    return {
+      image: null,
+      reason: 'downloadError',
+      details: { err: error },
+    };
   }
 };
 
@@ -202,8 +229,17 @@ const createImageEmbed = async (agent, attachment) => {
     return null;
   }
 
-  const image = await downloadImage(url);
+  const download = await downloadImage(url);
+  const image = download.image;
   if (!image) {
+    logger.warn(
+      {
+        url,
+        reason: download.reason,
+        ...download.details,
+      },
+      'Falling back to external Bluesky card for attachment',
+    );
     return null;
   }
 
@@ -229,7 +265,13 @@ const createImageEmbed = async (agent, attachment) => {
     if (isExpiredTokenError(error)) {
       throw error;
     }
-    console.warn(`Failed to upload Bluesky image for ${url}`, error);
+    logger.warn(
+      {
+        url,
+        err: error,
+      },
+      'Failed to upload Bluesky image; falling back to external card',
+    );
     return null;
   }
 };

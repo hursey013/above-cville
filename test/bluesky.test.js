@@ -173,6 +173,52 @@ test('publish uses image embeds when blob uploads are supported', async () => {
   assert.equal(calls[0].embed.images[0].alt, 'Recent aircraft photo');
 });
 
+test('publish falls back to an external card when the image is too large', async () => {
+  const calls = [];
+  const originalFetch = global.fetch;
+
+  global.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === 'content-type' ? 'image/jpeg' : null;
+      },
+    },
+    arrayBuffer: async () => new ArrayBuffer(999425),
+  });
+
+  const poster = createPoster({
+    identifier: 'image@example.com',
+    appPassword: 'pass-1234',
+    agentFactory: () => ({
+      async login() {},
+      async post(payload) {
+        calls.push(payload);
+      },
+    }),
+  });
+
+  try {
+    await poster.publish({
+      text: 'Look at this plane!',
+      attachments: ['https://photos.example.com/image.jpg'],
+    });
+  } finally {
+    if (originalFetch === undefined) {
+      delete global.fetch;
+    } else {
+      global.fetch = originalFetch;
+    }
+  }
+
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].embed.external.uri,
+    'https://photos.example.com/image.jpg',
+  );
+});
+
 test('createPoster normalizes the public Bluesky web host to the API service host', async () => {
   let receivedService = null;
   let logins = 0;

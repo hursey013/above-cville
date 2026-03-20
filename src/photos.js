@@ -153,7 +153,6 @@ const extractFlightAwareImage = (html) =>
   extractOgImage(html) ?? extractRetrieverImage(html);
 
 const extractFlightAwareDetailImage = (html) =>
-  extractSizedImage(html, 'fullsize') ??
   extractSizedImage(html, 'xga') ??
   extractOgImage(html) ??
   extractRetrieverImage(html);

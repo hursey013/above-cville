@@ -61,7 +61,7 @@ test('fetchPlanePhotoUrl extracts og:image when present', async () => {
   }
 });
 
-test('fetchPlanePhotoUrl follows first FlightAware detail page and prefers fullsize image', async () => {
+test('fetchPlanePhotoUrl follows first FlightAware detail page and prefers xga image', async () => {
   const galleryHtml = `
     <html>
       <head>${defaultMeta}</head>
@@ -107,7 +107,7 @@ test('fetchPlanePhotoUrl follows first FlightAware detail page and prefers fulls
     const result = await fetchPlanePhotoUrl('N3275F');
     assert.equal(
       result,
-      'https://photos.flightaware.com/photos/retriever/FULLSIZE456',
+      'https://photos.flightaware.com/photos/retriever/LARGEIMAGE123',
     );
     assert.equal(calls.length, 2);
   } finally {
