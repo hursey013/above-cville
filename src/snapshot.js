@@ -59,7 +59,7 @@ export const fetchAircraftSnapshot = async ({
   const rawAircraft = Array.isArray(payload?.aircraft) ? payload.aircraft : [];
   const aircraft = rawAircraft.map(normalizeReadsbPlane);
 
-  logger.info(
+  logger.debug(
     {
       source: 'readsb',
       url,
