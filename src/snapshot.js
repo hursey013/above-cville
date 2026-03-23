@@ -70,9 +70,3 @@ export const fetchAircraftSnapshot = async ({
 
   return { aircraft };
 };
-
-export default {
-  buildReadsbUrl,
-  fetchAircraftSnapshot,
-  normalizeReadsbPlane,
-};

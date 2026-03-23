@@ -1,4 +1,3 @@
-import logger from './logger.js';
 import {
   clampBearing,
   formatAircraftDescription,
@@ -68,7 +67,6 @@ const INTRO_VARIANTS = [
 
 const DB_FLAG_MILITARY = 1;
 const DB_FLAG_INTERESTING = 2;
-const KNOWN_DB_FLAG_MASK = 1 | 2 | 4 | 8;
 
 const parseDbFlags = (value) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -298,13 +296,6 @@ export const composeNotificationMessage = (
 
   const dbFlag = parseDbFlags(plane.dbFlags);
 
-  if (dbFlag !== null && (dbFlag < 0 || (dbFlag & ~KNOWN_DB_FLAG_MASK) !== 0)) {
-    logger.warn(
-      { dbFlag, plane },
-      'Unexpected dbFlags value from airplanes.live payload',
-    );
-  }
-
   const isMilitary = (dbFlag & DB_FLAG_MILITARY) === DB_FLAG_MILITARY;
   const isInteresting = (dbFlag & DB_FLAG_INTERESTING) === DB_FLAG_INTERESTING;
   const operatorName =
@@ -437,9 +428,4 @@ export const composeNotificationMessage = (
     title: undefined,
     body,
   };
-};
-
-export default {
-  summarizeSightings,
-  composeNotificationMessage,
 };

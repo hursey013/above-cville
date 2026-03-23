@@ -6,41 +6,6 @@ import { normalizeHex } from './utils.js';
 
 const defaultData = {};
 
-const isPlainObject = (value) =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
-const normalizeTimestamps = (timestamps) =>
-  Array.isArray(timestamps)
-    ? timestamps.filter(
-        (timestamp) =>
-          typeof timestamp === 'number' && Number.isFinite(timestamp),
-      )
-    : [];
-
-const normalizeRecord = (value) => {
-  const record = isPlainObject(value) ? value : {};
-  return {
-    timestamps: normalizeTimestamps(record.timestamps),
-    enrichment:
-      record.enrichment && typeof record.enrichment === 'object'
-        ? record.enrichment
-        : null,
-  };
-};
-const normalizeData = (data = {}) => {
-  const normalized = {};
-
-  for (const [key, value] of Object.entries(data)) {
-    const hex = normalizeHex(key);
-    if (!hex) {
-      continue;
-    }
-    normalized[hex] = normalizeRecord(value);
-  }
-
-  return normalized;
-};
-
 const ensureStorage = async (dataFilePath) => {
   const dir = dirname(dataFilePath);
   await fs.mkdir(dir, { recursive: true });
@@ -57,7 +22,7 @@ export const createDb = async ({ dataFile }) => {
   const adapter = new JSONFile(dataFilePath);
   const low = new Low(adapter, defaultData);
   await low.read();
-  low.data = normalizeData(low.data ?? defaultData);
+  low.data = low.data ?? defaultData;
 
   const findRecord = (hex) => {
     const normalizedHex = normalizeHex(hex);
@@ -75,12 +40,11 @@ export const createDb = async ({ dataFile }) => {
 
     let record = findRecord(normalizedHex);
     if (!record) {
-      record = normalizeRecord(null);
+      record = {
+        timestamps: [],
+        enrichment: null,
+      };
       low.data[normalizedHex] = record;
-    }
-
-    if (!Array.isArray(record.timestamps)) {
-      record.timestamps = [];
     }
 
     return record;
@@ -94,7 +58,7 @@ export const createDb = async ({ dataFile }) => {
     },
     getSightingTimestamps(hex) {
       const record = findRecord(hex);
-      return Array.isArray(record?.timestamps) ? record.timestamps : [];
+      return record?.timestamps ?? [];
     },
     recordSighting(hex, timestamp) {
       const record = ensureRecord(hex);
@@ -116,7 +80,7 @@ export const createDb = async ({ dataFile }) => {
       if (!record) {
         return;
       }
-      record.enrichment = entry && typeof entry === 'object' ? entry : null;
+      record.enrichment = entry;
     },
   };
 };

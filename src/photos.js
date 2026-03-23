@@ -235,7 +235,6 @@ const fetchFlightAwarePhoto = async (registration) => {
         url: pageUrl,
         detailUrl: detailUrl ?? null,
         foundImage: Boolean(imageUrl),
-        htmlPreview: html.slice(0, 200),
       },
       'FlightAware photo response received',
     );
@@ -572,17 +571,11 @@ export const fetchPlanePhoto = async ({ hex, registration } = {}) => {
 };
 
 /**
- * Convenience helper to fetch only the photo URL for legacy consumers.
+ * Fetch only the resolved photo URL for a registration.
  * @param {string|undefined|null} registration
  * @returns {Promise<string|null>}
  */
 export const fetchPlanePhotoUrl = async (registration) => {
   const photo = await fetchPlanePhoto({ registration });
   return photo?.imageUrl ?? null;
-};
-
-export default {
-  fetchPlanePhoto,
-  fetchPlanePhotoUrl,
-  buildPlanePhotoPageUrl,
 };

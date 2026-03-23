@@ -451,33 +451,3 @@ export const isAboveConfiguredCeiling = (altitudeFt, ceilingFt) => {
 
   return typeof altitudeFt === 'number' && altitudeFt > ceilingFt;
 };
-
-export default {
-  clampSeconds,
-  createApproxWordPicker,
-  CATEGORY_SUMMARIES,
-  clampBearing,
-  formatFeet,
-  formatAircraftDescription,
-  formatSegment,
-  getCategoryInfo,
-  buildIdentityHashtag,
-  isAboveConfiguredCeiling,
-  isGrounded,
-  matchTemplate,
-  lowercaseFirst,
-  normalizeRegistration,
-  normalizeHex,
-  normalizeWord,
-  parseNumber,
-  parseString,
-  parseStringList,
-  parseUpperStringList,
-  resolveApproxWord,
-  resolveAltitudeFt,
-  resolveSpeedMph,
-  stripTrailingPunctuation,
-  trimTrailingSlash,
-  truncateMessage,
-  variantIndex,
-};

@@ -89,7 +89,6 @@ export const createHealthcheckNotifier = ({
   };
 
   return {
-    notifyHealthcheckStart: () => sendPing('start'),
     notifyHealthcheckSuccess: (payload) => sendPing('success', payload),
     notifyHealthcheckFailure: (payload) => sendPing('fail', payload),
   };
@@ -100,12 +99,5 @@ const notifier = createHealthcheckNotifier({
   successIntervalSeconds: config?.healthchecks?.successIntervalSeconds || 0,
 });
 
-export const notifyHealthcheckStart = notifier.notifyHealthcheckStart;
 export const notifyHealthcheckSuccess = notifier.notifyHealthcheckSuccess;
 export const notifyHealthcheckFailure = notifier.notifyHealthcheckFailure;
-
-export default {
-  notifyHealthcheckStart,
-  notifyHealthcheckSuccess,
-  notifyHealthcheckFailure,
-};

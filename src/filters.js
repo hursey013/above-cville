@@ -44,8 +44,3 @@ export const shouldIgnoreCarrier = (flightRaw, ignoredCarrierCodes = []) => {
 
   return ignoredCarrierCodes.includes(carrierCode);
 };
-
-export default {
-  getCarrierCode,
-  shouldIgnoreCarrier,
-};

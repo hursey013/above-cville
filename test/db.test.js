@@ -53,16 +53,13 @@ test('createDb reads and writes the per-hex record format', async () => {
   });
 });
 
-test('createDb reads already-migrated per-hex records safely', async () => {
+test('createDb reads the per-hex record format', async () => {
   const file = await createTempDataFile('per-hex.json', {
     ad071d: {
       timestamps: [1000],
       enrichment: {
         flight: 'PDT5973',
       },
-    },
-    badkey: {
-      timestamps: ['oops'],
     },
   });
 
@@ -73,18 +70,4 @@ test('createDb reads already-migrated per-hex records safely', async () => {
     flight: 'PDT5973',
   });
   assert.equal(db.getTrackingCount(), 1);
-});
-
-test('createDb ignores invalid record keys and normalizes malformed values', async () => {
-  const file = await createTempDataFile('per-hex-malformed.json', {
-    abc123: {
-      timestamps: [42, 'bad', Number.NaN],
-      enrichment: 'wrong-shape',
-    },
-  });
-
-  const db = await createDb({ dataFile: file });
-
-  assert.deepEqual(db.getSightingTimestamps('abc123'), [42]);
-  assert.equal(db.getEnrichment('abc123'), null);
 });

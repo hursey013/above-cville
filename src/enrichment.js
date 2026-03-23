@@ -51,23 +51,6 @@ const readFieldValue = (record, fields = []) => {
   return null;
 };
 
-const extractAircraftArray = (payload) => {
-  if (Array.isArray(payload?.ac)) {
-    return payload.ac;
-  }
-  if (Array.isArray(payload?.aircraft)) {
-    return payload.aircraft;
-  }
-  if (
-    payload &&
-    typeof payload === 'object' &&
-    hasMeaningfulValue(payload.hex)
-  ) {
-    return [payload];
-  }
-  return [];
-};
-
 /**
  * Decide whether a plane is missing any fields that are worth fetching from
  * airplanes.live. This keeps enrichment focused on metadata, not telemetry.
@@ -240,11 +223,6 @@ export const enrichPlane = async ({
   }
 };
 
-/**
- * airplanes.live returns a few different wrapper shapes depending on the
- * endpoint. This helper extracts the aircraft object no matter which one we
- * get back.
- */
 export const fetchAirplanesLiveEnrichment = async ({ hex }) => {
   const normalizedHex = normalizeHex(hex);
   if (!normalizedHex) {
@@ -266,7 +244,7 @@ export const fetchAirplanesLiveEnrichment = async ({ hex }) => {
   }
 
   const payload = await response.json();
-  const aircraft = extractAircraftArray(payload);
+  const aircraft = Array.isArray(payload?.ac) ? payload.ac : [];
   const match =
     aircraft.find(
       (candidate) => normalizeHex(candidate?.hex) === normalizedHex,
@@ -298,7 +276,6 @@ export {
   AIRPLANES_LIVE_ENRICHMENT_BASE,
   ENRICHMENT_FIELDS,
   ENRICHMENT_USER_AGENT,
-  extractAircraftArray,
   hasMeaningfulValue,
   readFieldValue,
 };

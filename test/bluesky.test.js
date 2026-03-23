@@ -194,12 +194,12 @@ test('publish falls back to an external card when the image is too large', async
   );
 });
 
-test('createPoster normalizes the public Bluesky web host to the API service host', async () => {
+test('createPoster normalizes the configured Bluesky service URL', async () => {
   let receivedService = null;
   let logins = 0;
 
   const poster = createPoster({
-    service: 'https://bsky.app',
+    service: 'https://bsky.social/',
     identifier: 'test@example.com',
     appPassword: 'pass-1234',
     agentFactory: (serviceUrl) => {

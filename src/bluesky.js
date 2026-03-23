@@ -52,9 +52,6 @@ const normalizeServiceUrl = (value) => {
 
   try {
     const url = new URL(sanitized);
-    if (url.hostname === 'bsky.app' || url.hostname === 'www.bsky.app') {
-      return 'https://bsky.social';
-    }
     url.hash = '';
     url.search = '';
     url.pathname = url.pathname.replace(/\/$/, '') || '/';
@@ -364,8 +361,4 @@ export const createPoster = ({
   return {
     publish,
   };
-};
-
-export default {
-  createPoster,
 };

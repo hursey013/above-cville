@@ -286,7 +286,3 @@ export const createPoller = ({ config, db, publisher, logger }) => {
     runPoll,
   };
 };
-
-export default {
-  createPoller,
-};

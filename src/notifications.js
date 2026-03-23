@@ -149,7 +149,3 @@ export const prepareNotification = async ({
     photoSource: photo?.source ?? null,
   };
 };
-
-export default {
-  prepareNotification,
-};
