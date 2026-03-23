@@ -15,7 +15,6 @@ const cronExpression = `*/${config.pollIntervalSeconds} * * * * *`;
 const db = await createDb({ dataFile: config.dataFile });
 
 let publisher = {
-  isDryRun: false,
   async publish() {},
 };
 
@@ -24,10 +23,6 @@ try {
     service: config.bluesky.service,
     identifier: config.bluesky.handle,
     appPassword: config.bluesky.appPassword,
-    dryRun: config.dryRun,
-    onDryRun: async (payload) => {
-      logger.info(payload, 'Dry run Bluesky post');
-    },
   });
 } catch (error) {
   console.warn(`Bluesky posting disabled: ${error.message}`);
@@ -42,7 +37,6 @@ const poller = createPoller({
 
 logger.info(
   {
-    source: config.aircraftApi.source,
     baseUrl: config.aircraftApi.baseUrl,
   },
   'Starting aircraft poller',
@@ -54,7 +48,6 @@ logger.info(
     radiusNm: config.radius,
     cooldownMinutes: config.cooldownMinutes,
     pollIntervalSeconds: config.pollIntervalSeconds,
-    source: config.aircraftApi.source,
     baseUrl: config.aircraftApi.baseUrl,
   },
   'Watching location',

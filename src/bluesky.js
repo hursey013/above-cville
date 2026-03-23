@@ -300,15 +300,13 @@ export const createPoster = ({
   service,
   identifier,
   appPassword,
-  dryRun = false,
-  onDryRun = null,
   agentFactory = (serviceUrl) => new BskyAgent({ service: serviceUrl }),
 } = {}) => {
   const handle = typeof identifier === 'string' ? identifier.trim() : '';
   const password = typeof appPassword === 'string' ? appPassword.trim() : '';
   const serviceUrl = normalizeServiceUrl(service);
 
-  if (!dryRun && (!handle || !password)) {
+  if (!handle || !password) {
     throw new Error('Bluesky handle and app password are required.');
   }
 
@@ -331,30 +329,6 @@ export const createPoster = ({
     }
 
     const trimmed = text.trim();
-
-    if (dryRun) {
-      const richText = new RichText({ text: trimmed });
-      appendHashtagFacets(richText);
-
-      if (richText.graphemeLength > MAX_BSKY_CHARS) {
-        throw new Error('Bluesky post exceeds the 300 character limit.');
-      }
-
-      const normalizedAttachments = Array.isArray(attachments)
-        ? attachments.map(normalizeAttachment).filter(Boolean)
-        : [];
-
-      const payload = {
-        text: richText.text,
-        attachments: normalizedAttachments,
-      };
-
-      if (typeof onDryRun === 'function') {
-        await onDryRun(payload);
-      }
-
-      return;
-    }
 
     const attemptPublish = async (attempt = 0) => {
       const agent = await resolveAgent();
@@ -388,7 +362,6 @@ export const createPoster = ({
   };
 
   return {
-    isDryRun: dryRun,
     publish,
   };
 };

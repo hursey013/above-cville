@@ -1,7 +1,4 @@
-import {
-  LOCAL_READSB_SOURCE,
-  fetchAircraftSnapshot,
-} from './aircraftSource.js';
+import { fetchAircraftSnapshot } from './aircraftSource.js';
 import { enrichPlane } from './aircraftEnrichment.js';
 import { prepareNotification } from './notifications.js';
 import { shouldIgnoreCarrier } from './filters.js';
@@ -16,8 +13,8 @@ import {
   normalizeHex,
 } from './utils.js';
 
-// Local readsb feeds usually have most of what we need already. Limiting
-// enrichment to one request per poll keeps the fallback cheap and predictable.
+// Enrichment is only used to fill missing metadata from airplanes.live.
+// Limiting it to one request per poll keeps that fallback cheap and predictable.
 const MAX_ENRICHMENT_REQUESTS_PER_POLL = 1;
 
 /**
@@ -62,7 +59,7 @@ const resolveNotificationState = (timestamps, now, cooldownMinutes) => {
  * Create a single-run poller that can be scheduled by index.js.
  * The poller owns the runtime pipeline:
  * 1. fetch aircraft
- * 2. optionally enrich local-feed records
+ * 2. optionally enrich records with airplanes.live metadata
  * 3. apply filters/cooldown
  * 4. prepare and publish a notification
  * 5. persist any new timestamps/cache entries
@@ -95,7 +92,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
 
     try {
       const snapshot = await fetchAircraftSnapshot({
-        source: config.aircraftApi.source,
         baseUrl: config.aircraftApi.baseUrl,
         latitude: config.latitude,
         longitude: config.longitude,
@@ -107,7 +103,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
       logger.debug(
         {
           aircraftCount,
-          source: snapshot.source,
         },
         'Poll response received',
       );
@@ -167,32 +162,27 @@ export const createPoller = ({ config, db, publisher, logger }) => {
           continue;
         }
 
-        let planeRecord = plane;
-        if (snapshot.source === LOCAL_READSB_SOURCE) {
-          // Only local feeds need enrichment. airplanes.live already carries
-          // the extra identity metadata that this project uses for posts.
-          const cachedEnrichment = db.getEnrichment(hex);
-          const enrichmentResult = await enrichPlane({
-            plane,
-            now,
-            cacheEntry: cachedEnrichment,
-            successTtlMs: enrichmentSuccessTtlMs,
-            allowRequest: remainingEnrichmentRequests > 0,
-          });
-          planeRecord = enrichmentResult.plane;
+        const cachedEnrichment = db.getEnrichment(hex);
+        const enrichmentResult = await enrichPlane({
+          plane,
+          now,
+          cacheEntry: cachedEnrichment,
+          successTtlMs: enrichmentSuccessTtlMs,
+          allowRequest: remainingEnrichmentRequests > 0,
+        });
+        const planeRecord = enrichmentResult.plane;
 
-          if (enrichmentResult.requestUsed) {
-            enrichmentRequests += 1;
-            remainingEnrichmentRequests -= 1;
-          }
+        if (enrichmentResult.requestUsed) {
+          enrichmentRequests += 1;
+          remainingEnrichmentRequests -= 1;
+        }
 
-          if (
-            enrichmentResult.requestUsed &&
-            enrichmentResult.cacheEntry !== cachedEnrichment
-          ) {
-            db.setEnrichment(hex, enrichmentResult.cacheEntry);
-            hasChanges = true;
-          }
+        if (
+          enrichmentResult.requestUsed &&
+          enrichmentResult.cacheEntry !== cachedEnrichment
+        ) {
+          db.setEnrichment(hex, enrichmentResult.cacheEntry);
+          hasChanges = true;
         }
 
         if (
@@ -225,9 +215,7 @@ export const createPoller = ({ config, db, publisher, logger }) => {
               attachments: notification.attachments,
               photoSource: notification.photoSource,
             },
-            publisher.isDryRun
-              ? 'Bluesky update prepared (dry run)'
-              : 'Bluesky update published',
+            'Bluesky update published',
           );
           notifiedCount += 1;
         } catch (error) {
@@ -238,9 +226,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
           encounteredError = true;
           lastError = error;
         }
-
-        // Persist the timestamp even in dry-run mode. The bot should behave
-        // like a normal poll cycle except for the final external side effect.
         db.recordSighting(hex, now);
         hasChanges = true;
       }
@@ -248,7 +233,6 @@ export const createPoller = ({ config, db, publisher, logger }) => {
       logger.error(
         {
           err: error,
-          source: config.aircraftApi.source,
           baseUrl: config.aircraftApi.baseUrl,
         },
         'Failed to poll aircraft API',

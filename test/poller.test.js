@@ -90,7 +90,6 @@ test('readsb planes are filtered after enrichment fills an ignored carrier calls
       },
       db: createDb(),
       publisher: {
-        isDryRun: false,
         async publish(payload) {
           publishes.push(payload);
         },
@@ -151,7 +150,6 @@ test('grounded readsb planes are rejected before enrichment is attempted', async
       },
       db: createDb(),
       publisher: {
-        isDryRun: false,
         async publish() {
           throw new Error('publish should not be called for grounded planes');
         },
@@ -217,7 +215,6 @@ test('readsb planes inside cooldown are rejected before enrichment is attempted'
         },
       }),
       publisher: {
-        isDryRun: false,
         async publish() {
           throw new Error('publish should not be called during cooldown');
         },

@@ -18,15 +18,12 @@ dotenv.config();
  * Fully resolved configuration used by the running application.
  */
 export const config = {
-  dryRun: parseString(process.env.DRY_RUN).toLowerCase() === 'true',
   latitude: parseNumber(process.env.AIRPLANES_LAT, 38.0375),
   longitude: parseNumber(process.env.AIRPLANES_LON, -78.4863),
   radius: parseNumber(process.env.AIRPLANES_RADIUS, 5),
   aircraftApi: {
-    source: parseString(process.env.AIRCRAFT_API_SOURCE) || 'airplanes.live',
     baseUrl:
-      parseString(process.env.AIRCRAFT_API_BASE) ||
-      'https://api.airplanes.live/v2',
+      parseString(process.env.AIRCRAFT_API_BASE) || 'http://localhost:30152',
     enrichmentTtlMinutes: Math.max(
       1,
       parseNumber(process.env.AIRCRAFT_ENRICHMENT_TTL_MINUTES, 90 * 24 * 60),
