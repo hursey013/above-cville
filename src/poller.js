@@ -1,5 +1,5 @@
-import { fetchAircraftSnapshot } from './aircraftSource.js';
-import { enrichPlane } from './aircraftEnrichment.js';
+import { fetchAircraftSnapshot } from './snapshot.js';
+import { enrichPlane } from './enrichment.js';
 import { prepareNotification } from './notifications.js';
 import { shouldIgnoreCarrier } from './filters.js';
 import {

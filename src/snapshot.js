@@ -34,7 +34,7 @@ const readErrorBody = async (response) => {
 };
 
 /**
- * Fetch one aircraft snapshot from the local readsb API.
+ * Fetch one traffic snapshot from the local readsb API.
  * The returned shape is intentionally small: { aircraft }.
  */
 export const fetchAircraftSnapshot = async ({

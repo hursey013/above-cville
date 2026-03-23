@@ -7,7 +7,7 @@ import {
   fetchAirplanesLiveEnrichment,
   planeNeedsEnrichment,
   shouldRefreshEnrichment,
-} from '../src/aircraftEnrichment.js';
+} from '../src/enrichment.js';
 
 const originalFetch = global.fetch;
 

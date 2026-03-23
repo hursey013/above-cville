@@ -1,10 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
-import {
-  buildReadsbUrl,
-  fetchAircraftSnapshot,
-} from '../src/aircraftSource.js';
+import { buildReadsbUrl, fetchAircraftSnapshot } from '../src/snapshot.js';
 
 const originalFetch = global.fetch;
 
